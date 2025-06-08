@@ -259,21 +259,23 @@ Criada página em `/` que demonstra:
 
 ### **🔑 Credenciais de Produção**
 
+⚠️ **IMPORTANTE: As credenciais reais devem ser configuradas como variáveis de ambiente privadas.**
+
 #### **URL do Projeto**
 ```
-https://mqvjnhsuoiwoevddpanw.supabase.co
+https://your-project-id.supabase.co
 ```
 
 #### **Chaves de API**
 
 **Chave Anônima (Produção):**
 ```
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xdmpuaHN1b2l3b2V2ZGRwYW53Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzMTY0MTcsImV4cCI6MjA2Mzg5MjQxN30.gsD2PFbKTTnb_cIAXLh11jeJ4AwWf99nP6Jr1kBcJmU
+[CONFIGURAR_NA_VERCEL] - Chave anônima do seu projeto Supabase
 ```
 
 **Chave Service Role (NUNCA expor no cliente!):**
 ```
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xdmpuaHN1b2l3b2V2ZGRwYW53Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0ODMxNjQxNywiZXhwIjoyMDYzODkyNDE3fQ.UtZS1r57xu5OJl4WtRd_HoVoXmOdnCIE6DVlCIkD5Zw
+[CONFIGURAR_NA_VERCEL] - Chave service role do seu projeto Supabase
 ```
 
 ### **📁 Configuração de Arquivos .env**
@@ -293,9 +295,20 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhY
 # =============================================================================
 # SUPABASE - PRODUÇÃO
 # =============================================================================
-NEXT_PUBLIC_SUPABASE_URL=https://mqvjnhsuoiwoevddpanw.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xdmpuaHN1b2l3b2V2ZGRwYW53Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzMTY0MTcsImV4cCI6MjA2Mzg5MjQxN30.gsD2PFbKTTnb_cIAXLh11jeJ4AwWf99nP6Jr1kBcJmU
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xdmpuaHN1b2l3b2V2ZGRwYW53Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0ODMxNjQxNywiZXhwIjoyMDYzODkyNDE3fQ.UtZS1r57xu5OJl4WtRd_HoVoXmOdnCIE6DVlCIkD5Zw
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+
+# =============================================================================
+# OPLAB API
+# =============================================================================
+OPLAB_ACCESS_TOKEN=your_oplab_access_token_here
+OPLAB_BASE_URL=https://oplab.com.br/api
+
+# =============================================================================
+# OUTRAS APIS (se necessário)
+# =============================================================================
+ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key_here
 ```
 
 ### **🛠️ Comandos Úteis Supabase**
@@ -357,7 +370,7 @@ supabase logs
 
 ### **📱 URLs Importantes**
 - **Desenvolvimento:** http://127.0.0.1:54323 (Supabase Studio)
-- **Produção:** https://supabase.com/dashboard/project/mqvjnhsuoiwoevddpanw
+- **Produção:** https://supabase.com/dashboard/project/[SEU_PROJECT_ID]
 
 ---
 

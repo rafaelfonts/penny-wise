@@ -25,7 +25,7 @@ export interface UserAuth {
 export interface UserInfo {
   name: string;
   id: number;
-  preferences: Record<string, any>;
+  preferences: Record<string, unknown>;
   email: string;
   'last-login': string;
   category: string;
@@ -44,7 +44,7 @@ export interface UserInfo {
   'datafeed-access-token'?: string;
   endpoints?: string[];
   servers?: Array<{ url: string; level: number }>;
-  'system-config': Record<string, any>;
+  'system-config': Record<string, unknown>;
 }
 
 // Market Types
@@ -69,7 +69,7 @@ export interface Stock {
     contract_size: number;
     has_options: boolean;
   };
-  quant?: Record<string, any>;
+  quant?: Record<string, unknown>;
   staged: boolean;
 }
 
@@ -109,7 +109,7 @@ export interface Portfolio {
   active: boolean;
   name: string | null;
   is_default: boolean;
-  positions: any[];
+  positions: unknown[];
   balancings: string[];
   is_shared: boolean;
 }
@@ -167,7 +167,7 @@ export class OplabService {
   }
 
   // Domain/User Management
-  async authenticate(email: string, password: string, context: 'default' | 'chart' = 'default'): Promise<OplabResponse<UserInfo>> {
+  async authenticate(email: string, password: string): Promise<OplabResponse<UserInfo>> {
     return this.makeRequest<UserInfo>('/domain/users/authenticate', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
@@ -181,9 +181,9 @@ export class OplabService {
     return this.makeRequest<UserInfo>(`/domain/users/authorize?for=${context}`);
   }
 
-  async getUserSettings(group?: string): Promise<OplabResponse<any>> {
+  async getUserSettings(group?: string): Promise<OplabResponse<Record<string, unknown>>> {
     const params = group ? `?group=${group}` : '';
-    return this.makeRequest<any>(`/domain/users/settings${params}`);
+    return this.makeRequest<Record<string, unknown>>(`/domain/users/settings${params}`);
   }
 
   // Portfolio Management
@@ -236,15 +236,15 @@ export class OplabService {
     return this.makeRequest<Option>(`/market/options/detail/${optionSymbol}`);
   }
 
-  async getInstrumentQuotes(instruments: string[]): Promise<OplabResponse<any>> {
-    return this.makeRequest<any>('/market/instruments/quotes', {
+  async getInstrumentQuotes(instruments: string[]): Promise<OplabResponse<Record<string, unknown>>> {
+    return this.makeRequest<Record<string, unknown>>('/market/instruments/quotes', {
       method: 'POST',
       body: JSON.stringify({ instruments })
     });
   }
 
-  async getInstrument(symbol: string): Promise<OplabResponse<any>> {
-    return this.makeRequest<any>(`/market/instruments/${symbol}`);
+  async getInstrument(symbol: string): Promise<OplabResponse<Record<string, unknown>>> {
+    return this.makeRequest<Record<string, unknown>>(`/market/instruments/${symbol}`);
   }
 
   async getMarketStatus(): Promise<OplabResponse<MarketStatus>> {
@@ -252,50 +252,50 @@ export class OplabService {
   }
 
   // Interest Rates
-  async getInterestRates(): Promise<OplabResponse<any>> {
-    return this.makeRequest<any>('/market/interest-rates');
+  async getInterestRates(): Promise<OplabResponse<Record<string, unknown>>> {
+    return this.makeRequest<Record<string, unknown>>('/market/interest-rates');
   }
 
-  async getInterestRate(rateId: string): Promise<OplabResponse<any>> {
-    return this.makeRequest<any>(`/market/interest-rates/${rateId}`);
+  async getInterestRate(rateId: string): Promise<OplabResponse<Record<string, unknown>>> {
+    return this.makeRequest<Record<string, unknown>>(`/market/interest-rates/${rateId}`);
   }
 
   // Stock Exchanges
-  async getExchanges(): Promise<OplabResponse<any>> {
-    return this.makeRequest<any>('/market/exchanges');
+  async getExchanges(): Promise<OplabResponse<Record<string, unknown>>> {
+    return this.makeRequest<Record<string, unknown>>('/market/exchanges');
   }
 
-  async getExchange(exchangeId: string): Promise<OplabResponse<any>> {
-    return this.makeRequest<any>(`/market/exchanges/${exchangeId}`);
+  async getExchange(exchangeId: string): Promise<OplabResponse<Record<string, unknown>>> {
+    return this.makeRequest<Record<string, unknown>>(`/market/exchanges/${exchangeId}`);
   }
 
   // Rankings
-  async getTopVolumeOptions(): Promise<OplabResponse<any>> {
-    return this.makeRequest<any>('/market/rankings/options/volume');
+  async getTopVolumeOptions(): Promise<OplabResponse<Record<string, unknown>>> {
+    return this.makeRequest<Record<string, unknown>>('/market/rankings/options/volume');
   }
 
-  async getHighestProfitOptions(): Promise<OplabResponse<any>> {
-    return this.makeRequest<any>('/market/rankings/options/profit');
+  async getHighestProfitOptions(): Promise<OplabResponse<Record<string, unknown>>> {
+    return this.makeRequest<Record<string, unknown>>('/market/rankings/options/profit');
   }
 
-  async getBiggestVariationOptions(): Promise<OplabResponse<any>> {
-    return this.makeRequest<any>('/market/rankings/options/variation');
+  async getBiggestVariationOptions(): Promise<OplabResponse<Record<string, unknown>>> {
+    return this.makeRequest<Record<string, unknown>>('/market/rankings/options/variation');
   }
 
-  async getIbovCorrelationOptions(): Promise<OplabResponse<any>> {
-    return this.makeRequest<any>('/market/rankings/options/ibov-correlation');
+  async getIbovCorrelationOptions(): Promise<OplabResponse<Record<string, unknown>>> {
+    return this.makeRequest<Record<string, unknown>>('/market/rankings/options/ibov-correlation');
   }
 
-  async getFundamentalistCompanies(attribute: string): Promise<OplabResponse<any>> {
-    return this.makeRequest<any>(`/market/rankings/companies/fundamentalist/${attribute}`);
+  async getFundamentalistCompanies(attribute: string): Promise<OplabResponse<Record<string, unknown>>> {
+    return this.makeRequest<Record<string, unknown>>(`/market/rankings/companies/fundamentalist/${attribute}`);
   }
 
-  async getOplabScoreStocks(): Promise<OplabResponse<any>> {
-    return this.makeRequest<any>('/market/rankings/stocks/oplab-score');
+  async getOplabScoreStocks(): Promise<OplabResponse<Record<string, unknown>>> {
+    return this.makeRequest<Record<string, unknown>>('/market/rankings/stocks/oplab-score');
   }
 
   // Historical Data
-  async getHistoricalData(symbol: string, from?: string, to?: string): Promise<OplabResponse<any>> {
+  async getHistoricalData(symbol: string, from?: string, to?: string): Promise<OplabResponse<Record<string, unknown>>> {
     const params = new URLSearchParams();
     if (from) params.append('from', from);
     if (to) params.append('to', to);
@@ -303,12 +303,12 @@ export class OplabService {
     const queryString = params.toString();
     const endpoint = `/market/historical/${symbol}${queryString ? `?${queryString}` : ''}`;
     
-    return this.makeRequest<any>(endpoint);
+    return this.makeRequest<Record<string, unknown>>(endpoint);
   }
 
-  async getOptionsHistory(underlyingSymbol: string, date?: string): Promise<OplabResponse<any>> {
+  async getOptionsHistory(underlyingSymbol: string, date?: string): Promise<OplabResponse<Record<string, unknown>>> {
     const params = date ? `?date=${date}` : '';
-    return this.makeRequest<any>(`/market/historical/options/${underlyingSymbol}${params}`);
+    return this.makeRequest<Record<string, unknown>>(`/market/historical/options/${underlyingSymbol}${params}`);
   }
 
   // Health Check

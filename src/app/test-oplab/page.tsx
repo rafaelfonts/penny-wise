@@ -13,7 +13,7 @@ import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 interface TestResult {
   endpoint: string;
   status: 'success' | 'error' | 'loading';
-  data?: any;
+  data?: unknown;
   error?: string;
   timestamp?: string;
   responseTime?: number;
@@ -48,7 +48,7 @@ export default function TestOplabPage() {
     }));
   };
 
-  const makeApiCall = async (endpoint: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', body?: any) => {
+  const makeApiCall = async (endpoint: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', body?: unknown) => {
     const startTime = Date.now();
     
     try {
@@ -110,13 +110,8 @@ export default function TestOplabPage() {
   const testPortfolios = () => makeApiCall('?action=portfolios');
   const testPortfolio = () => makeApiCall(`?action=portfolio&portfolioId=${config.portfolioId}`);
   const testInterestRates = () => makeApiCall('?action=interest-rates');
-  const testInterestRate = () => makeApiCall(`?action=interest-rate&rateId=${config.rateId}`);
   const testExchanges = () => makeApiCall('?action=exchanges');
-  const testExchange = () => makeApiCall(`?action=exchange&exchangeId=${config.exchangeId}`);
   const testTopVolumeOptions = () => makeApiCall('?action=top-volume-options');
-  const testHighestProfitOptions = () => makeApiCall('?action=highest-profit-options');
-  const testBiggestVariationOptions = () => makeApiCall('?action=biggest-variation-options');
-  const testIbovCorrelationOptions = () => makeApiCall('?action=ibov-correlation-options');
   const testFundamentalistCompanies = () => makeApiCall(`?action=fundamentalist-companies&attribute=${config.attribute}`);
   const testOplabScoreStocks = () => makeApiCall('?action=oplab-score-stocks');
   const testHistoricalData = () => makeApiCall(`?action=historical&symbol=${config.symbol}&from=${config.from}&to=${config.to}`);
@@ -139,8 +134,8 @@ export default function TestOplabPage() {
     instruments: config.instruments
   });
 
-  // DELETE requests
-  const testDeletePortfolio = () => makeApiCall(`?action=delete-portfolio&portfolioId=${config.portfolioId}`, 'DELETE');
+  // DELETE requests - commented out unused function
+  // const testDeletePortfolio = () => makeApiCall(`?action=delete-portfolio&portfolioId=${config.portfolioId}`, 'DELETE');
 
   const runAllTests = async () => {
     setIsRunningAllTests(true);
@@ -189,7 +184,7 @@ export default function TestOplabPage() {
     setResults({});
   };
 
-  const formatJsonResponse = (data: any) => {
+  const formatJsonResponse = (data: unknown) => {
     try {
       return JSON.stringify(data, null, 2);
     } catch {
@@ -745,7 +740,7 @@ export default function TestOplabPage() {
                     </Alert>
                   )}
                   
-                  {result.data && (
+                  {result.data !== undefined && (
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <pre className="whitespace-pre-wrap text-xs overflow-x-auto">
                         {formatJsonResponse(result.data)}

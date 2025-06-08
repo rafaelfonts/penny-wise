@@ -12,8 +12,8 @@ export async function GET(request: NextRequest) {
   // Check if service is configured
   try {
     getOplabService();
-  } catch (error) {
-    // Initialize service with environment variable
+  } catch {
+    // Initialize service with environment variables
     const accessToken = process.env.OPLAB_ACCESS_TOKEN;
     if (!accessToken) {
       return NextResponse.json(
@@ -24,7 +24,9 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
-    createOplabService({ accessToken });
+    
+    const baseUrl = process.env.OPLAB_BASE_URL;
+    createOplabService({ accessToken, baseUrl });
   }
 
   const oplab = getOplabService();
@@ -113,7 +115,7 @@ export async function GET(request: NextRequest) {
           
           const result = await oplab.getInstrumentQuotes(instruments);
           return NextResponse.json(result);
-        } catch (parseError) {
+        } catch {
           return NextResponse.json({ 
             success: false, 
             error: 'Invalid instruments parameter. Must be a JSON array.' 
@@ -299,7 +301,7 @@ export async function POST(request: NextRequest) {
   // Check if service is configured
   try {
     getOplabService();
-  } catch (error) {
+  } catch {
     const accessToken = process.env.OPLAB_ACCESS_TOKEN;
     if (!accessToken) {
       return NextResponse.json(
@@ -310,7 +312,9 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-    createOplabService({ accessToken });
+    
+    const baseUrl = process.env.OPLAB_BASE_URL;
+    createOplabService({ accessToken, baseUrl });
   }
 
   const oplab = getOplabService();
@@ -319,7 +323,7 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case 'authenticate': {
         const body = await request.json();
-        const { email, password, context = 'default' } = body;
+        const { email, password } = body;
         
         if (!email || !password) {
           return NextResponse.json({ 
@@ -328,7 +332,7 @@ export async function POST(request: NextRequest) {
           }, { status: 400 });
         }
         
-        const result = await oplab.authenticate(email, password, context);
+        const result = await oplab.authenticate(email, password);
         return NextResponse.json(result);
       }
 
@@ -405,7 +409,7 @@ export async function DELETE(request: NextRequest) {
   // Check if service is configured
   try {
     getOplabService();
-  } catch (error) {
+  } catch {
     const accessToken = process.env.OPLAB_ACCESS_TOKEN;
     if (!accessToken) {
       return NextResponse.json(
@@ -416,7 +420,9 @@ export async function DELETE(request: NextRequest) {
         { status: 500 }
       );
     }
-    createOplabService({ accessToken });
+    
+    const baseUrl = process.env.OPLAB_BASE_URL;
+    createOplabService({ accessToken, baseUrl });
   }
 
   const oplab = getOplabService();
