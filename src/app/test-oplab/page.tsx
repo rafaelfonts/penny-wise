@@ -1,383 +1,771 @@
 'use client';
 
 import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { H1, H2, BodyText } from '@/components/ui/typography';
-import { Icon } from '@/components/ui/icon';
-import { CONTEXT_ICONS } from '@/lib/icons/context-icons';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface TestResult {
-  success: boolean;
-  data: unknown;
-  error: string | null;
-  timestamp: string;
-  source: string;
-  cached: boolean;
+  endpoint: string;
+  status: 'success' | 'error' | 'loading';
+  data?: any;
+  error?: string;
+  timestamp?: string;
+  responseTime?: number;
 }
 
 export default function TestOplabPage() {
-  const [symbol, setSymbol] = useState('PETR4');
-  const [optionSymbol, setOptionSymbol] = useState('PETR4O120');
-  const [interval, setInterval] = useState<string>('5min');
-  const [days, setDays] = useState('30');
-  const [limit, setLimit] = useState('10');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [loading, setLoading] = useState<string | null>(null);
+  const [config, setConfig] = useState({
+    accessToken: '',
+    symbol: 'PETR4',
+    portfolioId: '',
+    optionSymbol: 'PETR4C2800',
+    instruments: ['PETR4', 'VALE3'],
+    attribute: 'market-cap',
+    rateId: 'SELIC',
+    exchangeId: 'BOVESPA',
+    from: '2024-01-01',
+    to: '2024-12-31',
+    date: '2024-01-15',
+    email: '',
+    password: '',
+    context: 'default' as 'default' | 'chart',
+    portfolioName: 'Test Portfolio'
+  });
+
   const [results, setResults] = useState<Record<string, TestResult>>({});
+  const [isRunningAllTests, setIsRunningAllTests] = useState(false);
 
-  const apiTests = [
-    {
-      id: 'health',
-      name: 'Health Check',
-      description: 'Verificar status da API',
-      endpoint: '/api/market/oplab?action=health',
-      params: [],
-      icon: CONTEXT_ICONS.status.success
-    },
-    {
-      id: 'quote',
-      name: 'Cotação de Ação',
-      description: 'Obter cotação em tempo real',
-      endpoint: '/api/market/oplab?action=quote',
-      params: [{ key: 'symbol', value: symbol, required: true }],
-      icon: CONTEXT_ICONS.market.price
-    },
-    {
-      id: 'intraday',
-      name: 'Dados Intraday',
-      description: 'Dados de minutos/horas',
-      endpoint: '/api/market/oplab?action=intraday',
-      params: [
-        { key: 'symbol', value: symbol, required: true },
-        { key: 'interval', value: interval, required: false }
-      ],
-      icon: CONTEXT_ICONS.market.candlestick
-    },
-    {
-      id: 'daily',
-      name: 'Dados Diários',
-      description: 'Histórico de preços diários',
-      endpoint: '/api/market/oplab?action=daily',
-      params: [
-        { key: 'symbol', value: symbol, required: true },
-        { key: 'days', value: days, required: false }
-      ],
-      icon: CONTEXT_ICONS.market.volume
-    },
-    {
-      id: 'options-chain',
-      name: 'Cadeia de Opções',
-      description: 'Opções disponíveis para o ativo',
-      endpoint: '/api/market/oplab?action=options-chain',
-      params: [
-        { key: 'symbol', value: symbol, required: true },
-        { key: 'expiry', value: expiryDate, required: false }
-      ],
-      icon: CONTEXT_ICONS.market.options
-    },
-    {
-      id: 'option-quote',
-      name: 'Cotação de Opção',
-      description: 'Dados específicos de uma opção',
-      endpoint: '/api/market/oplab?action=option-quote',
-      params: [
-        { key: 'option_symbol', value: optionSymbol, required: true }
-      ],
-      icon: CONTEXT_ICONS.market.options
-    },
-    {
-      id: 'market-status',
-      name: 'Status do Mercado',
-      description: 'Verificar se o mercado está aberto',
-      endpoint: '/api/market/oplab?action=market-status',
-      params: [],
-      icon: CONTEXT_ICONS.status.info
-    },
-    {
-      id: 'top-stocks',
-      name: 'Top Ações',
-      description: 'Ações mais negociadas',
-      endpoint: '/api/market/oplab?action=top-stocks',
-      params: [
-        { key: 'limit', value: limit, required: false }
-      ],
-      icon: CONTEXT_ICONS.market.bullish
-    },
-    {
-      id: 'validate',
-      name: 'Validar Símbolo',
-      description: 'Verificar se o símbolo existe',
-      endpoint: '/api/market/oplab?action=validate',
-      params: [
-        { key: 'symbol', value: symbol, required: true }
-      ],
-      icon: CONTEXT_ICONS.status.warning
-    }
-  ];
+  const updateResult = (endpoint: string, result: Partial<TestResult>) => {
+    setResults(prev => ({
+      ...prev,
+      [endpoint]: { ...prev[endpoint], endpoint, ...result }
+    }));
+  };
 
-  const runTest = async (test: {
-    id: string;
-    name: string;
-    description: string;
-    endpoint: string;
-    params: Array<{ key: string; value: string; required: boolean }>;
-    icon: React.ComponentType;
-  }) => {
-    setLoading(test.id);
+  const makeApiCall = async (endpoint: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', body?: any) => {
+    const startTime = Date.now();
     
     try {
-      const params = new URLSearchParams();
-      params.append('action', test.id === 'health' ? 'health' : test.id);
+      updateResult(endpoint, { status: 'loading' });
+
+      const url = `/api/market/oplab${endpoint}`;
+      const options: RequestInit = {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      };
+
+      if (body && method !== 'GET') {
+        options.body = JSON.stringify(body);
+      }
+
+      const response = await fetch(url, options);
+      const data = await response.json();
       
-      test.params.forEach((param) => {
-        if (param.value) {
-          params.append(param.key, param.value);
-        }
-      });
+      const responseTime = Date.now() - startTime;
 
-      const response = await fetch(`/api/market/oplab?${params.toString()}`);
-      const result = await response.json();
-
-      setResults(prev => ({
-        ...prev,
-        [test.id]: result
-      }));
+      if (response.ok || data.success) {
+        updateResult(endpoint, {
+          status: 'success',
+          data,
+          responseTime,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        updateResult(endpoint, {
+          status: 'error',
+          error: data.error || `HTTP ${response.status}`,
+          responseTime,
+          timestamp: new Date().toISOString()
+        });
+      }
     } catch (error) {
-      setResults(prev => ({
-        ...prev,
-        [test.id]: {
-          success: false,
-          data: null,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          timestamp: new Date().toISOString(),
-          source: 'oplab',
-          cached: false
-        }
-      }));
-    } finally {
-      setLoading(null);
+      const responseTime = Date.now() - startTime;
+      updateResult(endpoint, {
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Network error',
+        responseTime,
+        timestamp: new Date().toISOString()
+      });
     }
   };
 
+  // Individual test functions
+  const testHealthCheck = () => makeApiCall('?action=health');
+  const testAuthorize = () => makeApiCall(`?action=authorize&context=${config.context}`);
+  const testMarketStatus = () => makeApiCall('?action=market-status');
+  const testStocks = () => makeApiCall('?action=stocks');
+  const testStock = () => makeApiCall(`?action=stock&symbol=${config.symbol}`);
+  const testStocksWithOptions = () => makeApiCall('?action=stocks-with-options');
+  const testOptions = () => makeApiCall(`?action=options&symbol=${config.symbol}`);
+  const testOption = () => makeApiCall(`?action=option&symbol=${config.optionSymbol}`);
+  const testInstrument = () => makeApiCall(`?action=instrument&symbol=${config.symbol}`);
+  const testPortfolios = () => makeApiCall('?action=portfolios');
+  const testPortfolio = () => makeApiCall(`?action=portfolio&portfolioId=${config.portfolioId}`);
+  const testInterestRates = () => makeApiCall('?action=interest-rates');
+  const testInterestRate = () => makeApiCall(`?action=interest-rate&rateId=${config.rateId}`);
+  const testExchanges = () => makeApiCall('?action=exchanges');
+  const testExchange = () => makeApiCall(`?action=exchange&exchangeId=${config.exchangeId}`);
+  const testTopVolumeOptions = () => makeApiCall('?action=top-volume-options');
+  const testHighestProfitOptions = () => makeApiCall('?action=highest-profit-options');
+  const testBiggestVariationOptions = () => makeApiCall('?action=biggest-variation-options');
+  const testIbovCorrelationOptions = () => makeApiCall('?action=ibov-correlation-options');
+  const testFundamentalistCompanies = () => makeApiCall(`?action=fundamentalist-companies&attribute=${config.attribute}`);
+  const testOplabScoreStocks = () => makeApiCall('?action=oplab-score-stocks');
+  const testHistoricalData = () => makeApiCall(`?action=historical&symbol=${config.symbol}&from=${config.from}&to=${config.to}`);
+  const testOptionsHistory = () => makeApiCall(`?action=options-history&symbol=${config.symbol}&date=${config.date}`);
+  const testUserSettings = () => makeApiCall('?action=user-settings');
+  
+  // POST requests
+  const testAuthenticate = () => makeApiCall('?action=authenticate', 'POST', {
+    email: config.email,
+    password: config.password,
+    context: config.context
+  });
+  
+  const testCreatePortfolio = () => makeApiCall('?action=create-portfolio', 'POST', {
+    name: config.portfolioName,
+    active: true
+  });
+  
+  const testInstrumentQuotes = () => makeApiCall('?action=instrument-quotes', 'POST', {
+    instruments: config.instruments
+  });
+
+  // DELETE requests
+  const testDeletePortfolio = () => makeApiCall(`?action=delete-portfolio&portfolioId=${config.portfolioId}`, 'DELETE');
+
   const runAllTests = async () => {
-    for (const test of apiTests) {
-      await runTest(test);
-      // Pequena pausa entre testes para não sobrecarregar a API
+    setIsRunningAllTests(true);
+    
+    // Basic tests (no authentication required)
+    await testHealthCheck();
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    await testMarketStatus();
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    await testStocks();
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (config.symbol) {
+      await testStock();
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      await testOptions();
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      await testHistoricalData();
       await new Promise(resolve => setTimeout(resolve, 500));
     }
+    
+    await testStocksWithOptions();
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    await testInterestRates();
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    await testExchanges();
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Ranking tests
+    await testTopVolumeOptions();
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    await testOplabScoreStocks();
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    setIsRunningAllTests(false);
   };
 
   const clearResults = () => {
     setResults({});
   };
 
+  const formatJsonResponse = (data: any) => {
+    try {
+      return JSON.stringify(data, null, 2);
+    } catch {
+      return String(data);
+    }
+  };
+
+  const getStatusIcon = (status: TestResult['status']) => {
+    switch (status) {
+      case 'loading':
+        return <Loader2 className="h-4 w-4 animate-spin" />;
+      case 'success':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'error':
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusBadge = (status: TestResult['status']) => {
+    switch (status) {
+      case 'loading':
+        return <Badge variant="secondary">Loading</Badge>;
+      case 'success':
+        return <Badge variant="default" className="bg-green-500">Success</Badge>;
+      case 'error':
+        return <Badge variant="destructive">Error</Badge>;
+      default:
+        return <Badge variant="outline">Ready</Badge>;
+    }
+  };
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="space-y-4">
-        <H1>Teste da API Oplab</H1>
-        <BodyText className="text-muted-foreground">
-          Teste as funcionalidades da API Oplab para dados do mercado brasileiro (B3)
-        </BodyText>
+    <div className="container mx-auto p-6 max-w-7xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Oplab API Test Suite</h1>
+        <p className="text-gray-600 mb-4">
+          Test real Oplab API endpoints. Configure your settings and run individual tests or the complete test suite.
+        </p>
+        
+        <Alert className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Importante:</strong> Esta página testa a API real do Oplab. Certifique-se de configurar a variável de ambiente 
+            <code className="bg-gray-100 px-1 rounded">OPLAB_ACCESS_TOKEN</code> com seu token de acesso válido.
+          </AlertDescription>
+        </Alert>
       </div>
 
       <Tabs defaultValue="config" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="config">Configuração</TabsTrigger>
-          <TabsTrigger value="tests">Testes Individuais</TabsTrigger>
-          <TabsTrigger value="results">Resultados</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="config">Configuration</TabsTrigger>
+          <TabsTrigger value="tests">Individual Tests</TabsTrigger>
+          <TabsTrigger value="results">Results</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="config" className="space-y-4">
+        <TabsContent value="config" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Parâmetros de Teste</CardTitle>
+              <CardTitle>API Configuration</CardTitle>
               <CardDescription>
-                Configure os parâmetros para os testes da API
+                Configure test parameters for Oplab API endpoints
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Símbolo da Ação</label>
-                <Input 
-                  value={symbol}
-                  onChange={(e) => setSymbol(e.target.value)}
-                  placeholder="Ex: PETR4, VALE3, ITUB4"
+                <Label htmlFor="symbol">Stock Symbol</Label>
+                <Input
+                  id="symbol"
+                  value={config.symbol}
+                  onChange={(e) => setConfig({ ...config, symbol: e.target.value })}
+                  placeholder="PETR4"
                 />
               </div>
-
+              
               <div className="space-y-2">
-                <label className="text-sm font-medium">Símbolo da Opção</label>
-                <Input 
-                  value={optionSymbol}
-                  onChange={(e) => setOptionSymbol(e.target.value)}
-                  placeholder="Ex: PETR4O120, VALE3K150"
+                <Label htmlFor="optionSymbol">Option Symbol</Label>
+                <Input
+                  id="optionSymbol"
+                  value={config.optionSymbol}
+                  onChange={(e) => setConfig({ ...config, optionSymbol: e.target.value })}
+                  placeholder="PETR4C2800"
                 />
               </div>
-
+              
               <div className="space-y-2">
-                <label className="text-sm font-medium">Intervalo Intraday</label>
-                <Select value={interval} onValueChange={setInterval}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1min">1 minuto</SelectItem>
-                    <SelectItem value="5min">5 minutos</SelectItem>
-                    <SelectItem value="15min">15 minutos</SelectItem>
-                    <SelectItem value="30min">30 minutos</SelectItem>
-                    <SelectItem value="60min">60 minutos</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Dias de Histórico</label>
-                <Input 
-                  type="number"
-                  value={days}
-                  onChange={(e) => setDays(e.target.value)}
-                  placeholder="Ex: 30, 90, 365"
+                <Label htmlFor="portfolioId">Portfolio ID</Label>
+                <Input
+                  id="portfolioId"
+                  value={config.portfolioId}
+                  onChange={(e) => setConfig({ ...config, portfolioId: e.target.value })}
+                  placeholder="123"
                 />
               </div>
-
+              
               <div className="space-y-2">
-                <label className="text-sm font-medium">Limite de Resultados</label>
-                <Input 
-                  type="number"
-                  value={limit}
-                  onChange={(e) => setLimit(e.target.value)}
-                  placeholder="Ex: 10, 20, 50"
+                <Label htmlFor="portfolioName">Portfolio Name</Label>
+                <Input
+                  id="portfolioName"
+                  value={config.portfolioName}
+                  onChange={(e) => setConfig({ ...config, portfolioName: e.target.value })}
+                  placeholder="Test Portfolio"
                 />
               </div>
-
+              
               <div className="space-y-2">
-                <label className="text-sm font-medium">Data de Vencimento (YYYY-MM-DD)</label>
-                <Input 
+                <Label htmlFor="attribute">Fundamentalist Attribute</Label>
+                <Input
+                  id="attribute"
+                  value={config.attribute}
+                  onChange={(e) => setConfig({ ...config, attribute: e.target.value })}
+                  placeholder="market-cap"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="rateId">Interest Rate ID</Label>
+                <Input
+                  id="rateId"
+                  value={config.rateId}
+                  onChange={(e) => setConfig({ ...config, rateId: e.target.value })}
+                  placeholder="SELIC"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="exchangeId">Exchange ID</Label>
+                <Input
+                  id="exchangeId"
+                  value={config.exchangeId}
+                  onChange={(e) => setConfig({ ...config, exchangeId: e.target.value })}
+                  placeholder="BOVESPA"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="from">From Date</Label>
+                <Input
+                  id="from"
                   type="date"
-                  value={expiryDate}
-                  onChange={(e) => setExpiryDate(e.target.value)}
+                  value={config.from}
+                  onChange={(e) => setConfig({ ...config, from: e.target.value })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="to">To Date</Label>
+                <Input
+                  id="to"
+                  type="date"
+                  value={config.to}
+                  onChange={(e) => setConfig({ ...config, to: e.target.value })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Email (for auth)</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={config.email}
+                  onChange={(e) => setConfig({ ...config, email: e.target.value })}
+                  placeholder="user@example.com"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="password">Password (for auth)</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={config.password}
+                  onChange={(e) => setConfig({ ...config, password: e.target.value })}
+                  placeholder="password"
                 />
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
 
-          <div className="flex gap-2">
-            <Button onClick={runAllTests} disabled={loading !== null}>
-              {loading ? 'Executando...' : 'Executar Todos os Testes'}
+        <TabsContent value="tests" className="space-y-6">
+          <div className="flex gap-4 mb-6">
+            <Button 
+              onClick={runAllTests} 
+              disabled={isRunningAllTests}
+              size="lg"
+            >
+              {isRunningAllTests && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Run All Tests
             </Button>
             <Button variant="outline" onClick={clearResults}>
-              Limpar Resultados
+              Clear Results
             </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* System Tests */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">System</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testHealthCheck}
+                    disabled={results.health?.status === 'loading'}
+                  >
+                    Health Check
+                  </Button>
+                  {getStatusIcon(results.health?.status)}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testMarketStatus}
+                    disabled={results['market-status']?.status === 'loading'}
+                  >
+                    Market Status
+                  </Button>
+                  {getStatusIcon(results['market-status']?.status)}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testUserSettings}
+                    disabled={results['user-settings']?.status === 'loading'}
+                  >
+                    User Settings
+                  </Button>
+                  {getStatusIcon(results['user-settings']?.status)}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Authentication Tests */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Authentication</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testAuthenticate}
+                    disabled={results.authenticate?.status === 'loading' || !config.email || !config.password}
+                  >
+                    Authenticate
+                  </Button>
+                  {getStatusIcon(results.authenticate?.status)}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testAuthorize}
+                    disabled={results.authorize?.status === 'loading'}
+                  >
+                    Authorize
+                  </Button>
+                  {getStatusIcon(results.authorize?.status)}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Stock Tests */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Stocks</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testStocks}
+                    disabled={results.stocks?.status === 'loading'}
+                  >
+                    All Stocks
+                  </Button>
+                  {getStatusIcon(results.stocks?.status)}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testStock}
+                    disabled={results.stock?.status === 'loading' || !config.symbol}
+                  >
+                    Single Stock
+                  </Button>
+                  {getStatusIcon(results.stock?.status)}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testStocksWithOptions}
+                    disabled={results['stocks-with-options']?.status === 'loading'}
+                  >
+                    With Options
+                  </Button>
+                  {getStatusIcon(results['stocks-with-options']?.status)}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Options Tests */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Options</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testOptions}
+                    disabled={results.options?.status === 'loading' || !config.symbol}
+                  >
+                    Options Chain
+                  </Button>
+                  {getStatusIcon(results.options?.status)}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testOption}
+                    disabled={results.option?.status === 'loading' || !config.optionSymbol}
+                  >
+                    Single Option
+                  </Button>
+                  {getStatusIcon(results.option?.status)}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testOptionsHistory}
+                    disabled={results['options-history']?.status === 'loading' || !config.symbol}
+                  >
+                    Options History
+                  </Button>
+                  {getStatusIcon(results['options-history']?.status)}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Portfolio Tests */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Portfolios</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testPortfolios}
+                    disabled={results.portfolios?.status === 'loading'}
+                  >
+                    All Portfolios
+                  </Button>
+                  {getStatusIcon(results.portfolios?.status)}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testPortfolio}
+                    disabled={results.portfolio?.status === 'loading' || !config.portfolioId}
+                  >
+                    Single Portfolio
+                  </Button>
+                  {getStatusIcon(results.portfolio?.status)}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testCreatePortfolio}
+                    disabled={results['create-portfolio']?.status === 'loading' || !config.portfolioName}
+                  >
+                    Create Portfolio
+                  </Button>
+                  {getStatusIcon(results['create-portfolio']?.status)}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Market Data Tests */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Market Data</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testInterestRates}
+                    disabled={results['interest-rates']?.status === 'loading'}
+                  >
+                    Interest Rates
+                  </Button>
+                  {getStatusIcon(results['interest-rates']?.status)}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testExchanges}
+                    disabled={results.exchanges?.status === 'loading'}
+                  >
+                    Exchanges
+                  </Button>
+                  {getStatusIcon(results.exchanges?.status)}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testHistoricalData}
+                    disabled={results.historical?.status === 'loading' || !config.symbol}
+                  >
+                    Historical Data
+                  </Button>
+                  {getStatusIcon(results.historical?.status)}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Rankings Tests */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Rankings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testTopVolumeOptions}
+                    disabled={results['top-volume-options']?.status === 'loading'}
+                  >
+                    Top Volume
+                  </Button>
+                  {getStatusIcon(results['top-volume-options']?.status)}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testOplabScoreStocks}
+                    disabled={results['oplab-score-stocks']?.status === 'loading'}
+                  >
+                    Oplab Score
+                  </Button>
+                  {getStatusIcon(results['oplab-score-stocks']?.status)}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testFundamentalistCompanies}
+                    disabled={results['fundamentalist-companies']?.status === 'loading' || !config.attribute}
+                  >
+                    Fundamentalist
+                  </Button>
+                  {getStatusIcon(results['fundamentalist-companies']?.status)}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Instruments Tests */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Instruments</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testInstrument}
+                    disabled={results.instrument?.status === 'loading' || !config.symbol}
+                  >
+                    Single Instrument
+                  </Button>
+                  {getStatusIcon(results.instrument?.status)}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={testInstrumentQuotes}
+                    disabled={results['instrument-quotes']?.status === 'loading'}
+                  >
+                    Quotes
+                  </Button>
+                  {getStatusIcon(results['instrument-quotes']?.status)}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
-        <TabsContent value="tests" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {apiTests.map((test) => (
-              <Card key={test.id} className="relative">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Icon icon={test.icon} className="h-5 w-5" />
-                    {test.name}
-                  </CardTitle>
-                  <CardDescription>{test.description}</CardDescription>
+        <TabsContent value="results" className="space-y-6">
+          <div className="grid gap-4">
+            {Object.entries(results).map(([endpoint, result]) => (
+              <Card key={endpoint}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">{endpoint}</CardTitle>
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(result.status)}
+                      {result.responseTime && (
+                        <Badge variant="outline">{result.responseTime}ms</Badge>
+                      )}
+                    </div>
+                  </div>
+                  {result.timestamp && (
+                    <CardDescription>
+                      {new Date(result.timestamp).toLocaleString()}
+                    </CardDescription>
+                  )}
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
-                    <div className="text-xs text-muted-foreground">
-                      Endpoint: {test.endpoint}
-                    </div>
-                    {test.params.length > 0 && (
-                      <div className="text-xs">
-                        <strong>Parâmetros:</strong>
-                        <ul className="list-disc list-inside">
-                          {test.params.map((param, idx: number) => (
-                            <li key={idx}>
-                              {param.key}: {param.value || 'vazio'} 
-                              {param.required && <span className="text-red-500">*</span>}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                  <Button 
-                    className="w-full mt-4"
-                    onClick={() => runTest(test)}
-                    disabled={loading === test.id}
-                  >
-                    {loading === test.id ? 'Testando...' : 'Testar'}
-                  </Button>
+                  {result.status === 'error' && result.error && (
+                    <Alert className="mb-4">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{result.error}</AlertDescription>
+                    </Alert>
+                  )}
                   
-                  {results[test.id] && (
-                    <div className="mt-2">
-                      <Badge 
-                        variant={results[test.id].success ? "default" : "destructive"}
-                      >
-                        {results[test.id].success ? 'Sucesso' : 'Erro'}
-                      </Badge>
+                  {result.data && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <pre className="whitespace-pre-wrap text-xs overflow-x-auto">
+                        {formatJsonResponse(result.data)}
+                      </pre>
                     </div>
                   )}
                 </CardContent>
               </Card>
             ))}
+            
+            {Object.keys(results).length === 0 && (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-center text-gray-500">
+                    No test results yet. Run some tests to see results here.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </div>
-        </TabsContent>
-
-        <TabsContent value="results" className="space-y-4">
-          {Object.keys(results).length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-6">
-                <BodyText className="text-muted-foreground">
-                  Nenhum teste executado ainda. Execute os testes na aba &quot;Testes Individuais&quot;.
-                </BodyText>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {Object.entries(results).map(([testId, result]) => {
-                const test = apiTests.find(t => t.id === testId);
-                return (
-                  <Card key={testId}>
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                          <Icon icon={test?.icon || CONTEXT_ICONS.status.info} className="h-5 w-5" />
-                          {test?.name || testId}
-                        </span>
-                        <Badge variant={result.success ? "default" : "destructive"}>
-                          {result.success ? 'Sucesso' : 'Erro'}
-                        </Badge>
-                      </CardTitle>
-                      <CardDescription>
-                        Executado em: {new Date(result.timestamp).toLocaleString('pt-BR')}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {result.error ? (
-                        <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                          <H2 className="text-red-800 text-sm font-medium mb-1">Erro:</H2>
-                          <BodyText className="text-red-700 text-sm">{result.error}</BodyText>
-                        </div>
-                      ) : (
-                        <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-                          <H2 className="text-green-800 text-sm font-medium mb-2">Dados Retornados:</H2>
-                          <pre className="text-xs text-green-700 overflow-auto max-h-40">
-                            {JSON.stringify(result.data, null, 2)}
-                          </pre>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
         </TabsContent>
       </Tabs>
     </div>

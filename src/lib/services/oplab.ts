@@ -2,640 +2,346 @@
 // OPLAB API SERVICE - Penny Wise
 // ==========================================
 
+const OPLAB_BASE_URL = 'https://api.oplab.com.br/v3';
+
+export interface OplabConfig {
+  accessToken: string;
+  baseUrl?: string;
+}
+
 export interface OplabResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
-  timestamp: string;
+  status: number;
 }
 
-export interface StockQuote {
+// Domain Types - User Management
+export interface UserAuth {
+  email: string;
+  password: string;
+}
+
+export interface UserInfo {
+  name: string;
+  id: number;
+  preferences: Record<string, any>;
+  email: string;
+  'last-login': string;
+  category: string;
+  permissions: string;
+  acl: string;
+  'access-token': string;
+  'data-access': 'REAL_TIME' | 'DELAYED' | 'EOD';
+  'display-name': string;
+  avatar: string;
+  versions: Record<string, string>;
+  'days-to-expiration': number | null;
+  'default-portfólio': number;
+  'minimum-version': number;
+  'phone-number': string;
+  'document-number': string;
+  'datafeed-access-token'?: string;
+  endpoints?: string[];
+  servers?: Array<{ url: string; level: number }>;
+  'system-config': Record<string, any>;
+}
+
+// Market Types
+export interface Stock {
   symbol: string;
   name: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  volume: number;
-  high: number;
-  low: number;
-  open: number;
-  previousClose: number;
-  marketCap?: number;
-  pe?: number;
-  eps?: number;
-  dividend?: number;
-  lastUpdate: string;
-  timestamp: string;
-  source: string;
-}
-
-export interface IntradayDataPoint {
-  timestamp: string;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
-
-export interface IntradayData {
-  symbol: string;
-  interval: '1min' | '5min' | '15min' | '30min' | '60min';
-  data: IntradayDataPoint[];
-  lastRefreshed: string;
-  source: string;
-}
-
-export interface DailyDataPoint {
-  date: string;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-  adjustedClose: number;
-}
-
-export interface DailyData {
-  symbol: string;
-  data: DailyDataPoint[];
-  lastRefreshed: string;
-  source: string;
-}
-
-export interface OptionsChain {
-  symbol: string;
-  expiration: string;
-  calls: Array<{
-    strike: number;
-    symbol: string;
+  market: {
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    vol: number;
+    fin_volume: number;
+    trades: number;
     bid: number;
     ask: number;
-    last: number;
-    volume: number;
-    openInterest: number;
-    impliedVolatility: number;
-  }>;
-  puts: Array<{
-    strike: number;
-    symbol: string;
-    bid: number;
-    ask: number;
-    last: number;
-    volume: number;
-    openInterest: number;
-    impliedVolatility: number;
-  }>;
+    variation: number;
+    previous_close: number;
+  };
+  info: {
+    category: string;
+    contract_size: number;
+    has_options: boolean;
+  };
+  quant?: Record<string, any>;
+  staged: boolean;
 }
 
-export interface OptionQuote {
+export interface Option {
   symbol: string;
-  underlyingSymbol: string;
-  type: 'CALL' | 'PUT';
-  strike: number;
-  expiration: string;
-  bid: number;
-  ask: number;
-  last: number;
-  volume: number;
-  openInterest: number;
-  impliedVolatility: number;
-  delta?: number;
-  gamma?: number;
-  theta?: number;
-  vega?: number;
+  name: string;
+  market: {
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    vol: number;
+    fin_volume: number;
+    trades: number;
+    bid: number;
+    ask: number;
+    variation: number;
+    previous_close: number;
+  };
+  info: {
+    maturity_type: 'AMERICAN' | 'EUROPEAN';
+    days_to_maturity: number;
+    due_date: string;
+    strike: number;
+    category: 'CALL' | 'PUT';
+    contract_size: number;
+    spot_price: number;
+  };
+  underlying_asset: Stock;
+}
+
+export interface Portfolio {
+  id: number;
+  user_id: number;
+  created_at: string;
+  updated_at: string;
+  active: boolean;
+  name: string | null;
+  is_default: boolean;
+  positions: any[];
+  balancings: string[];
+  is_shared: boolean;
 }
 
 export interface MarketStatus {
-  market: 'B3';
-  status: 'OPEN' | 'CLOSED' | 'PRE_MARKET' | 'AFTER_HOURS';
-  localTime: string;
-  nextOpen?: string;
-  nextClose?: string;
-  timezone: string;
+  open: boolean;
+  session: string;
+  next_session: string;
+  time: string;
 }
-
-export interface TopStock {
-  symbol: string;
-  name: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  volume: number;
-  marketCap?: number;
-}
-
-// Brazilian stock symbols with realistic data
-const BRAZILIAN_STOCKS = {
-  'PETR4': { name: 'Petróleo Brasileiro S.A. - Petrobras', sector: 'Energy', basePrice: 38.45 },
-  'VALE3': { name: 'Vale S.A.', sector: 'Mining', basePrice: 61.23 },
-  'ITUB4': { name: 'Itaú Unibanco Holding S.A.', sector: 'Banking', basePrice: 34.78 },
-  'BBDC4': { name: 'Banco Bradesco S.A.', sector: 'Banking', basePrice: 15.67 },
-  'ABEV3': { name: 'Ambev S.A.', sector: 'Beverages', basePrice: 17.89 },
-  'B3SA3': { name: 'B3 S.A. - Brasil, Bolsa, Balcão', sector: 'Financial', basePrice: 16.45 },
-  'RENT3': { name: 'Localiza Rent a Car S.A.', sector: 'Services', basePrice: 48.23 },
-  'WEGE3': { name: 'WEG S.A.', sector: 'Industrial', basePrice: 42.56 },
-  'MGLU3': { name: 'Magazine Luiza S.A.', sector: 'Retail', basePrice: 6.78 },
-  'LREN3': { name: 'Lojas Renner S.A.', sector: 'Retail', basePrice: 25.34 }
-};
 
 export class OplabService {
-  private static instance: OplabService;
-  
-  public static getInstance(): OplabService {
-    if (!OplabService.instance) {
-      OplabService.instance = new OplabService();
-    }
-    return OplabService.instance;
+  private config: OplabConfig;
+
+  constructor(config: OplabConfig) {
+    this.config = {
+      ...config,
+      baseUrl: config.baseUrl || OPLAB_BASE_URL
+    };
   }
 
-  private constructor() {}
-
-  /**
-   * Simulates a stock quote with realistic Brazilian market data
-   */
-  async getQuote(symbol: string): Promise<OplabResponse<StockQuote>> {
+  private async makeRequest<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<OplabResponse<T>> {
     try {
-      // Wait to simulate API call
-      await new Promise(resolve => setTimeout(resolve, 200 + Math.random() * 300));
-
-      const stockInfo = BRAZILIAN_STOCKS[symbol as keyof typeof BRAZILIAN_STOCKS];
+      const url = `${this.config.baseUrl}${endpoint}`;
       
-      if (!stockInfo) {
-        return {
-          success: false,
-          error: `Symbol ${symbol} not found`,
-          timestamp: new Date().toISOString()
-        };
-      }
-
-      // Generate realistic market data
-      const basePrice = stockInfo.basePrice;
-      const volatility = 0.02 + Math.random() * 0.03; // 2-5% volatility
-      const direction = Math.random() > 0.5 ? 1 : -1;
-      const changePercent = direction * Math.random() * volatility * 100;
-      const change = basePrice * (changePercent / 100);
-      const currentPrice = basePrice + change;
-
-      const quote: StockQuote = {
-        symbol,
-        name: stockInfo.name,
-        price: Number(currentPrice.toFixed(2)),
-        change: Number(change.toFixed(2)),
-        changePercent: Number(changePercent.toFixed(2)),
-        volume: Math.floor(1000000 + Math.random() * 50000000),
-        high: Number((currentPrice * (1 + Math.random() * 0.02)).toFixed(2)),
-        low: Number((currentPrice * (1 - Math.random() * 0.02)).toFixed(2)),
-        open: Number((basePrice * (1 + (Math.random() - 0.5) * 0.01)).toFixed(2)),
-        previousClose: basePrice,
-        marketCap: Math.floor(50000000000 + Math.random() * 200000000000),
-        pe: Number((10 + Math.random() * 20).toFixed(2)),
-        eps: Number((Math.random() * 5).toFixed(2)),
-        dividend: Number((Math.random() * 2).toFixed(2)),
-        lastUpdate: new Date().toISOString(),
-        timestamp: new Date().toISOString(),
-        source: 'oplab-mock'
-      };
-
-      return {
-        success: true,
-        data: quote,
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      };
-    }
-  }
-
-  /**
-   * Simulates intraday data
-   */
-  async getIntradayData(symbol: string, interval: '1min' | '5min' | '15min' | '30min' | '60min' = '5min'): Promise<OplabResponse<IntradayData>> {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 400));
-
-      const stockInfo = BRAZILIAN_STOCKS[symbol as keyof typeof BRAZILIAN_STOCKS];
-      
-      if (!stockInfo) {
-        return {
-          success: false,
-          error: `Symbol ${symbol} not found`,
-          timestamp: new Date().toISOString()
-        };
-      }
-
-      // Generate 20 data points for intraday
-      const data: IntradayDataPoint[] = [];
-      let currentPrice = stockInfo.basePrice;
-      const now = new Date();
-
-      for (let i = 19; i >= 0; i--) {
-        const time = new Date(now.getTime() - i * 5 * 60 * 1000); // 5 minutes intervals
-        const volatility = 0.005; // Lower volatility for intraday
-        const change = (Math.random() - 0.5) * 2 * volatility * currentPrice;
-        
-        const open = currentPrice;
-        const close = currentPrice + change;
-        const high = Math.max(open, close) * (1 + Math.random() * 0.002);
-        const low = Math.min(open, close) * (1 - Math.random() * 0.002);
-
-        data.push({
-          timestamp: time.toISOString(),
-          open: Number(open.toFixed(2)),
-          high: Number(high.toFixed(2)),
-          low: Number(low.toFixed(2)),
-          close: Number(close.toFixed(2)),
-          volume: Math.floor(10000 + Math.random() * 100000)
-        });
-
-        currentPrice = close;
-      }
-
-      return {
-        success: true,
-        data: {
-          symbol,
-          interval,
-          data,
-          lastRefreshed: new Date().toISOString(),
-          source: 'oplab-mock'
-        },
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      };
-    }
-  }
-
-  /**
-   * Simulates daily historical data
-   */
-  async getDailyData(symbol: string, days: number = 30): Promise<OplabResponse<DailyData>> {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 400 + Math.random() * 500));
-
-      const stockInfo = BRAZILIAN_STOCKS[symbol as keyof typeof BRAZILIAN_STOCKS];
-      
-      if (!stockInfo) {
-        return {
-          success: false,
-          error: `Symbol ${symbol} not found`,
-          timestamp: new Date().toISOString()
-        };
-      }
-
-      const data: DailyDataPoint[] = [];
-      let currentPrice = stockInfo.basePrice * 0.95; // Start slightly lower
-      const today = new Date();
-
-      for (let i = days - 1; i >= 0; i--) {
-        const date = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
-        const volatility = 0.02; // Daily volatility
-        const change = (Math.random() - 0.5) * 2 * volatility * currentPrice;
-        
-        const open = currentPrice;
-        const close = currentPrice + change;
-        const high = Math.max(open, close) * (1 + Math.random() * 0.02);
-        const low = Math.min(open, close) * (1 - Math.random() * 0.02);
-
-        data.push({
-          date: date.toISOString().split('T')[0],
-          open: Number(open.toFixed(2)),
-          high: Number(high.toFixed(2)),
-          low: Number(low.toFixed(2)),
-          close: Number(close.toFixed(2)),
-          volume: Math.floor(500000 + Math.random() * 5000000),
-          adjustedClose: Number(close.toFixed(2))
-        });
-
-        currentPrice = close;
-      }
-
-      return {
-        success: true,
-        data: {
-          symbol,
-          data,
-          lastRefreshed: new Date().toISOString(),
-          source: 'oplab-mock'
-        },
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      };
-    }
-  }
-
-  /**
-   * Simulates options chain data
-   */
-  async getOptionsChain(symbol: string): Promise<OplabResponse<OptionsChain>> {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 600));
-
-      const stockInfo = BRAZILIAN_STOCKS[symbol as keyof typeof BRAZILIAN_STOCKS];
-      
-      if (!stockInfo) {
-        return {
-          success: false,
-          error: `Symbol ${symbol} not found`,
-          timestamp: new Date().toISOString()
-        };
-      }
-
-      const currentPrice = stockInfo.basePrice;
-      const expiration = new Date();
-      expiration.setMonth(expiration.getMonth() + 1);
-      
-      const calls = [];
-      const puts = [];
-
-      // Generate options around current price
-      for (let i = -3; i <= 3; i++) {
-        const strike = Math.round((currentPrice + i * 2) * 100) / 100;
-        const moneyness = strike / currentPrice;
-        
-        // Call option
-        const callPrice = Math.max(0, currentPrice - strike);
-        const callIV = 0.20 + Math.abs(moneyness - 1) * 0.1 + Math.random() * 0.05;
-        
-        calls.push({
-          strike,
-          symbol: `${symbol}${String.fromCharCode(65 + i + 3)}${Math.round(strike * 100)}`,
-          bid: Number((callPrice * 0.95).toFixed(2)),
-          ask: Number((callPrice * 1.05).toFixed(2)),
-          last: Number(callPrice.toFixed(2)),
-          volume: Math.floor(Math.random() * 1000),
-          openInterest: Math.floor(Math.random() * 5000),
-          impliedVolatility: Number(callIV.toFixed(4))
-        });
-
-        // Put option
-        const putPrice = Math.max(0, strike - currentPrice);
-        const putIV = 0.20 + Math.abs(moneyness - 1) * 0.1 + Math.random() * 0.05;
-        
-        puts.push({
-          strike,
-          symbol: `${symbol}${String.fromCharCode(78 + i + 3)}${Math.round(strike * 100)}`,
-          bid: Number((putPrice * 0.95).toFixed(2)),
-          ask: Number((putPrice * 1.05).toFixed(2)),
-          last: Number(putPrice.toFixed(2)),
-          volume: Math.floor(Math.random() * 1000),
-          openInterest: Math.floor(Math.random() * 5000),
-          impliedVolatility: Number(putIV.toFixed(4))
-        });
-      }
-
-      return {
-        success: true,
-        data: {
-          symbol,
-          expiration: expiration.toISOString().split('T')[0],
-          calls,
-          puts
-        },
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      };
-    }
-  }
-
-  /**
-   * Simulates option quote data
-   */
-  async getOptionQuote(optionSymbol: string): Promise<OplabResponse<OptionQuote>> {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 250 + Math.random() * 350));
-
-      // Parse option symbol (simplified)
-      const underlyingMatch = optionSymbol.match(/^([A-Z]+\d)/);
-      if (!underlyingMatch) {
-        return {
-          success: false,
-          error: `Invalid option symbol format: ${optionSymbol}`,
-          timestamp: new Date().toISOString()
-        };
-      }
-
-      const underlyingSymbol = underlyingMatch[1];
-      const stockInfo = BRAZILIAN_STOCKS[underlyingSymbol as keyof typeof BRAZILIAN_STOCKS];
-      
-      if (!stockInfo) {
-        return {
-          success: false,
-          error: `Underlying symbol ${underlyingSymbol} not found`,
-          timestamp: new Date().toISOString()
-        };
-      }
-
-      const strike = 35 + Math.random() * 10; // Random strike around current price
-      const type = Math.random() > 0.5 ? 'CALL' : 'PUT';
-      const currentPrice = stockInfo.basePrice;
-      
-      let intrinsicValue = 0;
-      if (type === 'CALL') {
-        intrinsicValue = Math.max(0, currentPrice - strike);
-      } else {
-        intrinsicValue = Math.max(0, strike - currentPrice);
-      }
-
-      const timeValue = Math.random() * 2; // Random time value
-      const optionPrice = intrinsicValue + timeValue;
-
-      const option: OptionQuote = {
-        symbol: optionSymbol,
-        underlyingSymbol,
-        type,
-        strike: Number(strike.toFixed(2)),
-        expiration: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        bid: Number((optionPrice * 0.95).toFixed(2)),
-        ask: Number((optionPrice * 1.05).toFixed(2)),
-        last: Number(optionPrice.toFixed(2)),
-        volume: Math.floor(Math.random() * 500),
-        openInterest: Math.floor(Math.random() * 2000),
-        impliedVolatility: Number((0.15 + Math.random() * 0.15).toFixed(4)),
-        delta: Number((Math.random() * 0.8).toFixed(4)),
-        gamma: Number((Math.random() * 0.1).toFixed(4)),
-        theta: Number((-Math.random() * 0.05).toFixed(4)),
-        vega: Number((Math.random() * 0.2).toFixed(4))
-      };
-
-      return {
-        success: true,
-        data: option,
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      };
-    }
-  }
-
-  /**
-   * Simulates market status
-   */
-  async getMarketStatus(): Promise<OplabResponse<MarketStatus>> {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
-
-      const now = new Date();
-      const hour = now.getHours();
-      
-      let status: MarketStatus['status'] = 'CLOSED';
-      if (hour >= 9 && hour < 18) {
-        status = 'OPEN';
-      } else if (hour >= 8 && hour < 9) {
-        status = 'PRE_MARKET';
-      } else if (hour >= 18 && hour < 20) {
-        status = 'AFTER_HOURS';
-      }
-
-      const marketStatus: MarketStatus = {
-        market: 'B3',
-        status,
-        localTime: now.toISOString(),
-        timezone: 'America/Sao_Paulo'
-      };
-
-      if (status === 'CLOSED') {
-        const nextOpen = new Date(now);
-        nextOpen.setHours(9, 0, 0, 0);
-        if (nextOpen <= now) {
-          nextOpen.setDate(nextOpen.getDate() + 1);
-        }
-        marketStatus.nextOpen = nextOpen.toISOString();
-      }
-
-      if (status === 'OPEN') {
-        const nextClose = new Date(now);
-        nextClose.setHours(18, 0, 0, 0);
-        marketStatus.nextClose = nextClose.toISOString();
-      }
-
-      return {
-        success: true,
-        data: marketStatus,
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      };
-    }
-  }
-
-  /**
-   * Validates if a symbol exists
-   */
-  async validateSymbol(symbol: string): Promise<OplabResponse<{ valid: boolean; symbol: string }>> {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 150 + Math.random() * 250));
-
-      const valid = symbol in BRAZILIAN_STOCKS;
-      
-      return {
-        success: true,
-        data: {
-          valid,
-          symbol
-        },
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      };
-    }
-  }
-
-  /**
-   * Gets top performing stocks
-   */
-  async getTopStocks(limit: number = 10): Promise<OplabResponse<TopStock[]>> {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 400));
-
-      const stocks = Object.entries(BRAZILIAN_STOCKS).map(([symbol, info]) => {
-        const basePrice = info.basePrice;
-        const changePercent = (Math.random() - 0.5) * 10; // -5% to +5%
-        const change = basePrice * (changePercent / 100);
-        const currentPrice = basePrice + change;
-
-        return {
-          symbol,
-          name: info.name,
-          price: Number(currentPrice.toFixed(2)),
-          change: Number(change.toFixed(2)),
-          changePercent: Number(changePercent.toFixed(2)),
-          volume: Math.floor(1000000 + Math.random() * 50000000),
-          marketCap: Math.floor(50000000000 + Math.random() * 200000000000)
-        };
+      const headers = new Headers({
+        'Content-Type': 'application/json',
+        'Access-Token': this.config.accessToken,
+        ...options.headers as Record<string, string>
       });
 
-      // Sort by change percentage (descending) and take top N
-      stocks.sort((a, b) => b.changePercent - a.changePercent);
-      const topStocks = stocks.slice(0, Math.min(limit, stocks.length));
+      const response = await fetch(url, {
+        ...options,
+        headers
+      });
+
+      const data = await response.json();
 
       return {
-        success: true,
-        data: topStocks,
-        timestamp: new Date().toISOString()
+        success: response.ok,
+        data: response.ok ? data : undefined,
+        error: !response.ok ? data.error || `HTTP ${response.status}` : undefined,
+        status: response.status
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
+        error: error instanceof Error ? error.message : 'Network error',
+        status: 0
       };
     }
   }
 
-  /**
-   * Health check endpoint
-   */
-  async healthCheck(): Promise<OplabResponse<{ status: string; message: string; version: string }>> {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 100));
-
-      return {
-        success: true,
-        data: {
-          status: 'healthy',
-          message: 'Oplab Mock Service is running correctly',
-          version: '1.0.0'
-        },
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      };
-    }
+  // Domain/User Management
+  async authenticate(email: string, password: string, context: 'default' | 'chart' = 'default'): Promise<OplabResponse<UserInfo>> {
+    return this.makeRequest<UserInfo>('/domain/users/authenticate', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
   }
-} 
+
+  async authorize(context: 'default' | 'chart' = 'default'): Promise<OplabResponse<UserInfo>> {
+    return this.makeRequest<UserInfo>(`/domain/users/authorize?for=${context}`);
+  }
+
+  async getUserSettings(group?: string): Promise<OplabResponse<any>> {
+    const params = group ? `?group=${group}` : '';
+    return this.makeRequest<any>(`/domain/users/settings${params}`);
+  }
+
+  // Portfolio Management
+  async getPortfolios(): Promise<OplabResponse<Portfolio[]>> {
+    return this.makeRequest<Portfolio[]>('/domain/portfolios');
+  }
+
+  async getPortfolio(portfolioId: number): Promise<OplabResponse<Portfolio>> {
+    return this.makeRequest<Portfolio>(`/domain/portfolios/${portfolioId}`);
+  }
+
+  async createPortfolio(name: string, active: boolean = true): Promise<OplabResponse<Portfolio>> {
+    return this.makeRequest<Portfolio>('/domain/portfolios', {
+      method: 'POST',
+      body: JSON.stringify({ name, active })
+    });
+  }
+
+  async updatePortfolio(portfolioId: number, data: { name?: string; active?: boolean }): Promise<OplabResponse<Portfolio>> {
+    return this.makeRequest<Portfolio>(`/domain/portfolios/${portfolioId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async deletePortfolio(portfolioId: number): Promise<OplabResponse<void>> {
+    return this.makeRequest<void>(`/domain/portfolios/${portfolioId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // Market Data
+  async getStocks(): Promise<OplabResponse<Stock[]>> {
+    return this.makeRequest<Stock[]>('/market/stocks');
+  }
+
+  async getStock(symbol: string): Promise<OplabResponse<Stock>> {
+    return this.makeRequest<Stock>(`/market/stocks/${symbol}`);
+  }
+
+  async getStocksWithOptions(): Promise<OplabResponse<Stock[]>> {
+    return this.makeRequest<Stock[]>('/market/stocks/with-options');
+  }
+
+  async getOptions(underlyingSymbol: string): Promise<OplabResponse<Option[]>> {
+    return this.makeRequest<Option[]>(`/market/options/${underlyingSymbol}`);
+  }
+
+  async getOption(optionSymbol: string): Promise<OplabResponse<Option>> {
+    return this.makeRequest<Option>(`/market/options/detail/${optionSymbol}`);
+  }
+
+  async getInstrumentQuotes(instruments: string[]): Promise<OplabResponse<any>> {
+    return this.makeRequest<any>('/market/instruments/quotes', {
+      method: 'POST',
+      body: JSON.stringify({ instruments })
+    });
+  }
+
+  async getInstrument(symbol: string): Promise<OplabResponse<any>> {
+    return this.makeRequest<any>(`/market/instruments/${symbol}`);
+  }
+
+  async getMarketStatus(): Promise<OplabResponse<MarketStatus>> {
+    return this.makeRequest<MarketStatus>('/market/status');
+  }
+
+  // Interest Rates
+  async getInterestRates(): Promise<OplabResponse<any>> {
+    return this.makeRequest<any>('/market/interest-rates');
+  }
+
+  async getInterestRate(rateId: string): Promise<OplabResponse<any>> {
+    return this.makeRequest<any>(`/market/interest-rates/${rateId}`);
+  }
+
+  // Stock Exchanges
+  async getExchanges(): Promise<OplabResponse<any>> {
+    return this.makeRequest<any>('/market/exchanges');
+  }
+
+  async getExchange(exchangeId: string): Promise<OplabResponse<any>> {
+    return this.makeRequest<any>(`/market/exchanges/${exchangeId}`);
+  }
+
+  // Rankings
+  async getTopVolumeOptions(): Promise<OplabResponse<any>> {
+    return this.makeRequest<any>('/market/rankings/options/volume');
+  }
+
+  async getHighestProfitOptions(): Promise<OplabResponse<any>> {
+    return this.makeRequest<any>('/market/rankings/options/profit');
+  }
+
+  async getBiggestVariationOptions(): Promise<OplabResponse<any>> {
+    return this.makeRequest<any>('/market/rankings/options/variation');
+  }
+
+  async getIbovCorrelationOptions(): Promise<OplabResponse<any>> {
+    return this.makeRequest<any>('/market/rankings/options/ibov-correlation');
+  }
+
+  async getFundamentalistCompanies(attribute: string): Promise<OplabResponse<any>> {
+    return this.makeRequest<any>(`/market/rankings/companies/fundamentalist/${attribute}`);
+  }
+
+  async getOplabScoreStocks(): Promise<OplabResponse<any>> {
+    return this.makeRequest<any>('/market/rankings/stocks/oplab-score');
+  }
+
+  // Historical Data
+  async getHistoricalData(symbol: string, from?: string, to?: string): Promise<OplabResponse<any>> {
+    const params = new URLSearchParams();
+    if (from) params.append('from', from);
+    if (to) params.append('to', to);
+    
+    const queryString = params.toString();
+    const endpoint = `/market/historical/${symbol}${queryString ? `?${queryString}` : ''}`;
+    
+    return this.makeRequest<any>(endpoint);
+  }
+
+  async getOptionsHistory(underlyingSymbol: string, date?: string): Promise<OplabResponse<any>> {
+    const params = date ? `?date=${date}` : '';
+    return this.makeRequest<any>(`/market/historical/options/${underlyingSymbol}${params}`);
+  }
+
+  // Health Check
+  async healthCheck(): Promise<OplabResponse<{ status: string; timestamp: string }>> {
+    return this.makeRequest<{ status: string; timestamp: string }>('/health');
+  }
+
+  // Utility method to check if service is configured
+  isConfigured(): boolean {
+    return !!this.config.accessToken;
+  }
+
+  // Get current configuration (without sensitive data)
+  getConfig(): Omit<OplabConfig, 'accessToken'> {
+    return {
+      baseUrl: this.config.baseUrl
+    };
+  }
+}
+
+// Singleton instance
+let oplabInstance: OplabService | null = null;
+
+export const createOplabService = (config: OplabConfig): OplabService => {
+  oplabInstance = new OplabService(config);
+  return oplabInstance;
+};
+
+export const getOplabService = (): OplabService => {
+  if (!oplabInstance) {
+    throw new Error('Oplab service not initialized. Call createOplabService first.');
+  }
+  return oplabInstance;
+};
+
+export default OplabService; 
