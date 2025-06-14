@@ -1,42 +1,51 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { BarChart3, TrendingUp, TrendingDown, DollarSign, Activity } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { useState, useEffect } from 'react';
+import {
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Activity,
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface QuickStat {
-  id: string
-  title: string
-  value: string
-  change: number
-  changePercent: number
-  icon: React.ComponentType<{ className?: string }>
-  color: string
+  id: string;
+  title: string;
+  value: string;
+  change: number;
+  changePercent: number;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
 }
 
 interface QuickStatsWidgetProps {
-  className?: string
+  className?: string;
 }
 
 export function QuickStatsWidget({ className }: QuickStatsWidgetProps) {
-  const [stats, setStats] = useState<QuickStat[]>([])
-  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState<QuickStat[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadQuickStats()
-    
+    loadQuickStats();
+
     // Auto-refresh every 10 minutes
-    const interval = setInterval(() => {
-      loadQuickStats()
-    }, 10 * 60 * 1000)
-    return () => clearInterval(interval)
-  }, [])
+    const interval = setInterval(
+      () => {
+        loadQuickStats();
+      },
+      10 * 60 * 1000
+    );
+    return () => clearInterval(interval);
+  }, []);
 
   const loadQuickStats = async () => {
     try {
-      setLoading(true)
-      
+      setLoading(true);
+
       // Mock data - in real app this would come from various APIs
       const mockStats: QuickStat[] = [
         {
@@ -46,7 +55,7 @@ export function QuickStatsWidget({ className }: QuickStatsWidgetProps) {
           change: 23.45,
           changePercent: 0.52,
           icon: TrendingUp,
-          color: 'text-blue-600'
+          color: 'text-blue-600',
         },
         {
           id: 'nasdaq',
@@ -55,7 +64,7 @@ export function QuickStatsWidget({ className }: QuickStatsWidgetProps) {
           change: -45.67,
           changePercent: -0.32,
           icon: TrendingDown,
-          color: 'text-purple-600'
+          color: 'text-purple-600',
         },
         {
           id: 'dow',
@@ -64,7 +73,7 @@ export function QuickStatsWidget({ className }: QuickStatsWidgetProps) {
           change: 156.78,
           changePercent: 0.45,
           icon: BarChart3,
-          color: 'text-green-600'
+          color: 'text-green-600',
         },
         {
           id: 'vix',
@@ -73,7 +82,7 @@ export function QuickStatsWidget({ className }: QuickStatsWidgetProps) {
           change: -1.23,
           changePercent: -6.25,
           icon: Activity,
-          color: 'text-orange-600'
+          color: 'text-orange-600',
         },
         {
           id: 'gold',
@@ -82,7 +91,7 @@ export function QuickStatsWidget({ className }: QuickStatsWidgetProps) {
           change: 12.34,
           changePercent: 0.63,
           icon: DollarSign,
-          color: 'text-yellow-600'
+          color: 'text-yellow-600',
         },
         {
           id: 'oil',
@@ -91,28 +100,28 @@ export function QuickStatsWidget({ className }: QuickStatsWidgetProps) {
           change: -2.15,
           changePercent: -2.65,
           icon: BarChart3,
-          color: 'text-gray-600'
-        }
-      ]
-      
-      setStats(mockStats)
+          color: 'text-gray-600',
+        },
+      ];
+
+      setStats(mockStats);
     } catch (err) {
-      console.error('Error loading quick stats:', err)
+      console.error('Error loading quick stats:', err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const formatChange = (change: number, changePercent: number) => {
-    const isPositive = change >= 0
-    const sign = isPositive ? '+' : ''
+    const isPositive = change >= 0;
+    const sign = isPositive ? '+' : '';
     return {
       change: `${sign}${change.toFixed(2)}`,
       percent: `${sign}${changePercent.toFixed(2)}%`,
       color: isPositive ? 'text-green-600' : 'text-red-600',
-      bgColor: isPositive ? 'bg-green-50' : 'bg-red-50'
-    }
-  }
+      bgColor: isPositive ? 'bg-green-50' : 'bg-red-50',
+    };
+  };
 
   if (loading) {
     return (
@@ -127,15 +136,15 @@ export function QuickStatsWidget({ className }: QuickStatsWidgetProps) {
           <div className="grid grid-cols-2 gap-4">
             {[1, 2, 3, 4].map(i => (
               <div key={i} className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-6 bg-gray-200 rounded mb-1"></div>
-                <div className="h-3 bg-gray-200 rounded w-16"></div>
+                <div className="mb-2 h-4 rounded bg-gray-200"></div>
+                <div className="mb-1 h-6 rounded bg-gray-200"></div>
+                <div className="h-3 w-16 rounded bg-gray-200"></div>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -153,39 +162,43 @@ export function QuickStatsWidget({ className }: QuickStatsWidgetProps) {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-4">
-          {stats.map((stat) => {
-            const Icon = stat.icon
-            const changeFormat = formatChange(stat.change, stat.changePercent)
-            
+          {stats.map(stat => {
+            const Icon = stat.icon;
+            const changeFormat = formatChange(stat.change, stat.changePercent);
+
             return (
               <div key={stat.id} className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Icon className={`h-4 w-4 ${stat.color}`} />
-                  <span className="text-sm font-medium text-gray-700">{stat.title}</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    {stat.title}
+                  </span>
                 </div>
-                
+
                 <div className="space-y-1">
                   <div className="text-lg font-bold text-gray-900">
                     {stat.value}
                   </div>
-                  
-                  <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${changeFormat.color} ${changeFormat.bgColor}`}>
+
+                  <div
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${changeFormat.color} ${changeFormat.bgColor}`}
+                  >
                     <span>{changeFormat.change}</span>
                     <span>({changeFormat.percent})</span>
                   </div>
                 </div>
               </div>
-            )
+            );
           })}
         </div>
 
         {/* Market Status */}
-        <div className="mt-4 pt-4 border-t">
+        <div className="mt-4 border-t pt-4">
           <div className="flex items-center justify-between text-xs text-gray-500">
             <span>Market Status</span>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-green-600 font-medium">Open</span>
+              <div className="h-2 w-2 animate-pulse rounded-full bg-green-500"></div>
+              <span className="font-medium text-green-600">Open</span>
             </div>
           </div>
           <div className="mt-1 text-xs text-gray-500">
@@ -194,5 +207,5 @@ export function QuickStatsWidget({ className }: QuickStatsWidgetProps) {
         </div>
       </CardContent>
     </Card>
-  )
-} 
+  );
+}

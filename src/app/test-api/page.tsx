@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { marketDataService } from '@/lib/services/market-data'
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import marketDataService from '@/lib/services/market-data';
 
 interface ApiResult {
   yahoo?: unknown;
@@ -12,61 +12,66 @@ interface ApiResult {
 }
 
 export default function TestApiPage() {
-  const [results, setResults] = useState<ApiResult>({})
-  const [loading, setLoading] = useState<string | null>(null)
+  const [results, setResults] = useState<ApiResult>({});
+  const [loading, setLoading] = useState<string | null>(null);
 
   const testYahooFinance = async () => {
-    setLoading('yahoo')
+    setLoading('yahoo');
     try {
-      const result = await marketDataService.getQuote('AAPL')
-      setResults((prev) => ({ ...prev, yahoo: result }))
+      const result = await marketDataService.getQuote('AAPL');
+      setResults(prev => ({ ...prev, yahoo: result }));
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      setResults((prev) => ({ ...prev, yahoo: { error: errorMessage } }))
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      setResults(prev => ({ ...prev, yahoo: { error: errorMessage } }));
     }
-    setLoading(null)
-  }
+    setLoading(null);
+  };
 
   const testAlphaVantage = async () => {
-    setLoading('alpha')
+    setLoading('alpha');
     try {
-      const result = await marketDataService.getQuote('MSFT')
-      setResults((prev) => ({ ...prev, alpha: result }))
+      const result = await marketDataService.getQuote('MSFT');
+      setResults(prev => ({ ...prev, alpha: result }));
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      setResults((prev) => ({ ...prev, alpha: { error: errorMessage } }))
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      setResults(prev => ({ ...prev, alpha: { error: errorMessage } }));
     }
-    setLoading(null)
-  }
+    setLoading(null);
+  };
 
   const testQuickQuotes = async () => {
-    setLoading('quick')
+    setLoading('quick');
     try {
       const [spy, qqq, dia] = await Promise.all([
         marketDataService.getQuickQuote('SPY'),
         marketDataService.getQuickQuote('QQQ'),
-        marketDataService.getQuickQuote('DIA')
-      ])
-      setResults((prev) => ({ ...prev, quick: { spy, qqq, dia } }))
+        marketDataService.getQuickQuote('DIA'),
+      ]);
+      setResults(prev => ({ ...prev, quick: { spy, qqq, dia } }));
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      setResults((prev) => ({ ...prev, quick: { error: errorMessage } }))
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      setResults(prev => ({ ...prev, quick: { error: errorMessage } }));
     }
-    setLoading(null)
-  }
+    setLoading(null);
+  };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto space-y-6 p-6">
       <h1 className="text-3xl font-bold">API Test Page</h1>
-      <p className="text-gray-600">Teste para verificar se as APIs estão funcionando corretamente</p>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <p className="text-gray-600">
+        Teste para verificar se as APIs estão funcionando corretamente
+      </p>
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle>Yahoo Finance</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button 
+            <Button
               onClick={testYahooFinance}
               disabled={loading === 'yahoo'}
               className="w-full"
@@ -74,7 +79,7 @@ export default function TestApiPage() {
               {loading === 'yahoo' ? 'Testing...' : 'Test AAPL Quote'}
             </Button>
             {results.yahoo !== undefined && (
-              <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto max-h-32">
+              <pre className="max-h-32 overflow-auto rounded bg-gray-100 p-2 text-xs">
                 {JSON.stringify(results.yahoo, null, 2)}
               </pre>
             )}
@@ -86,7 +91,7 @@ export default function TestApiPage() {
             <CardTitle>Alpha Vantage</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button 
+            <Button
               onClick={testAlphaVantage}
               disabled={loading === 'alpha'}
               className="w-full"
@@ -94,7 +99,7 @@ export default function TestApiPage() {
               {loading === 'alpha' ? 'Testing...' : 'Test MSFT Quote'}
             </Button>
             {results.alpha !== undefined && (
-              <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto max-h-32">
+              <pre className="max-h-32 overflow-auto rounded bg-gray-100 p-2 text-xs">
                 {JSON.stringify(results.alpha, null, 2)}
               </pre>
             )}
@@ -106,7 +111,7 @@ export default function TestApiPage() {
             <CardTitle>Quick Quotes</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button 
+            <Button
               onClick={testQuickQuotes}
               disabled={loading === 'quick'}
               className="w-full"
@@ -114,7 +119,7 @@ export default function TestApiPage() {
               {loading === 'quick' ? 'Testing...' : 'Test Market Indices'}
             </Button>
             {results.quick !== undefined && (
-              <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto max-h-32">
+              <pre className="max-h-32 overflow-auto rounded bg-gray-100 p-2 text-xs">
                 {JSON.stringify(results.quick, null, 2)}
               </pre>
             )}
@@ -127,11 +132,11 @@ export default function TestApiPage() {
           <CardTitle>All Results</CardTitle>
         </CardHeader>
         <CardContent>
-          <pre className="text-xs bg-gray-50 p-4 rounded overflow-auto max-h-96">
+          <pre className="max-h-96 overflow-auto rounded bg-gray-50 p-4 text-xs">
             {JSON.stringify(results, null, 2)}
           </pre>
         </CardContent>
       </Card>
     </div>
-  )
-} 
+  );
+}

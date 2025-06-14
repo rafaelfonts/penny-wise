@@ -10,11 +10,18 @@ import {
   CompanyOverview,
   NewsItem,
   TechnicalIndicator,
-  SearchResult
+  SearchResult,
 } from '@/lib/types/market';
 
 interface ChatCommand {
-  command: 'analyze' | 'compare' | 'portfolio' | 'alert' | 'search' | 'news' | 'help';
+  command:
+    | 'analyze'
+    | 'compare'
+    | 'portfolio'
+    | 'alert'
+    | 'search'
+    | 'news'
+    | 'help';
   symbols?: string[];
   parameters?: Record<string, string | number>;
 }
@@ -45,7 +52,6 @@ interface ChatMarketResponse {
 }
 
 class ChatMarketIntegrationService {
-  
   // ==========================================
   // COMMAND PARSING
   // ==========================================
@@ -54,78 +60,112 @@ class ChatMarketIntegrationService {
     const text = message.trim().toLowerCase();
 
     // Comando /analyze [SYMBOL]
-    if (text.startsWith('/analyze') || text.includes('analise') || text.includes('análise')) {
+    if (
+      text.startsWith('/analyze') ||
+      text.includes('analise') ||
+      text.includes('análise')
+    ) {
       const symbols = this.extractSymbols(message);
       return {
         command: 'analyze',
-        symbols: symbols.length > 0 ? symbols : undefined
+        symbols: symbols.length > 0 ? symbols : undefined,
       };
     }
 
     // Comando /compare [SYMBOL1] [SYMBOL2]
-    if (text.startsWith('/compare') || text.includes('compar') || text.includes('versus') || text.includes('vs')) {
+    if (
+      text.startsWith('/compare') ||
+      text.includes('compar') ||
+      text.includes('versus') ||
+      text.includes('vs')
+    ) {
       const symbols = this.extractSymbols(message);
       return {
         command: 'compare',
-        symbols: symbols.length >= 2 ? symbols.slice(0, 2) : symbols
+        symbols: symbols.length >= 2 ? symbols.slice(0, 2) : symbols,
       };
     }
 
     // Comando /portfolio
-    if (text.startsWith('/portfolio') || text.includes('carteira') || text.includes('portfólio')) {
+    if (
+      text.startsWith('/portfolio') ||
+      text.includes('carteira') ||
+      text.includes('portfólio')
+    ) {
       return {
-        command: 'portfolio'
+        command: 'portfolio',
       };
     }
 
     // Comando /alert [SYMBOL] [PRICE]
-    if (text.startsWith('/alert') || text.includes('alerta') || text.includes('avisar')) {
+    if (
+      text.startsWith('/alert') ||
+      text.includes('alerta') ||
+      text.includes('avisar')
+    ) {
       const symbols = this.extractSymbols(message);
       const prices = this.extractNumbers(message);
       return {
         command: 'alert',
         symbols: symbols.length > 0 ? symbols : undefined,
-        parameters: prices.length > 0 ? { price: prices[0] } : undefined
+        parameters: prices.length > 0 ? { price: prices[0] } : undefined,
       };
     }
 
     // Comando /search [TERM]
-    if (text.startsWith('/search') || text.includes('buscar') || text.includes('procurar')) {
-      const searchTerm = message.replace(/\/(search|buscar|procurar)/i, '').trim();
+    if (
+      text.startsWith('/search') ||
+      text.includes('buscar') ||
+      text.includes('procurar')
+    ) {
+      const searchTerm = message
+        .replace(/\/(search|buscar|procurar)/i, '')
+        .trim();
       return {
         command: 'search',
-        parameters: { term: searchTerm }
+        parameters: { term: searchTerm },
       };
     }
 
     // Comando /news [SYMBOL]
-    if (text.startsWith('/news') || text.includes('notícias') || text.includes('noticias')) {
+    if (
+      text.startsWith('/news') ||
+      text.includes('notícias') ||
+      text.includes('noticias')
+    ) {
       const symbols = this.extractSymbols(message);
       return {
         command: 'news',
-        symbols: symbols.length > 0 ? symbols : undefined
+        symbols: symbols.length > 0 ? symbols : undefined,
       };
     }
 
     // Comando /help
-    if (text.startsWith('/help') || text.includes('ajuda') || text.includes('comandos')) {
+    if (
+      text.startsWith('/help') ||
+      text.includes('ajuda') ||
+      text.includes('comandos')
+    ) {
       return {
-        command: 'help'
+        command: 'help',
       };
     }
 
     // Se contém símbolos de ações, assumir análise
     const symbols = this.extractSymbols(message);
     if (symbols.length > 0) {
-      if (symbols.length >= 2 && (text.includes('compar') || text.includes('versus'))) {
+      if (
+        symbols.length >= 2 &&
+        (text.includes('compar') || text.includes('versus'))
+      ) {
         return {
           command: 'compare',
-          symbols: symbols.slice(0, 2)
+          symbols: symbols.slice(0, 2),
         };
       }
       return {
         command: 'analyze',
-        symbols: symbols.slice(0, 1)
+        symbols: symbols.slice(0, 1),
       };
     }
 
@@ -162,8 +202,8 @@ Por favor, forneça um símbolo para análise. Exemplos:
           command: 'analyze',
           model: 'chat-market-integration',
           tokens: 45,
-          processing_time: 100
-        }
+          processing_time: 100,
+        },
       };
     }
 
@@ -173,11 +213,11 @@ Por favor, forneça um símbolo para análise. Exemplos:
     try {
       // Classificar o símbolo para determinar qual serviço usar
       const classification = classifySymbol(symbol);
-      
+
       // Para símbolos brasileiros, usar intelligent-market service
       if (classification.region === 'BR') {
         const analysis = await intelligentMarket.analyzeSymbol(symbol);
-        
+
         // Retornar análise direta do intelligent-market para símbolos brasileiros
         return {
           response: analysis,
@@ -186,15 +226,19 @@ Por favor, forneça um símbolo para análise. Exemplos:
             symbols: [symbol],
             model: 'intelligent-market',
             tokens: 200,
-            processing_time: Date.now() - startTime
-          }
+            processing_time: Date.now() - startTime,
+          },
         };
       }
-      
+
       // Para outros símbolos, usar o market-data service tradicional
-      const analysis = await marketDataService.analyzeSymbol(symbol);
-      
-      if (!analysis.quote) {
+      const analysisResult = await marketDataService.analyzeSymbol(symbol);
+
+      if (
+        !analysisResult.success ||
+        !analysisResult.data ||
+        !analysisResult.data.quote
+      ) {
         return {
           response: `❌ **Símbolo não encontrado: ${symbol}**
 
@@ -205,13 +249,16 @@ Verifique se o símbolo está correto ou tente:
             symbols: [symbol],
             model: 'chat-market-integration',
             tokens: 30,
-            processing_time: Date.now() - startTime
-          }
+            processing_time: Date.now() - startTime,
+          },
         };
       }
 
-      return this.formatAnalysisResponse(analysis, symbol, startTime);
-
+      return this.formatAnalysisResponse(
+        analysisResult.data,
+        symbol,
+        startTime
+      );
     } catch (error) {
       return {
         response: `❌ **Erro na análise de ${symbol}**
@@ -224,8 +271,8 @@ Tente novamente em alguns momentos.`,
           symbols: [symbol],
           model: 'chat-market-integration',
           tokens: 25,
-          processing_time: Date.now() - startTime
-        }
+          processing_time: Date.now() - startTime,
+        },
       };
     }
   }
@@ -243,8 +290,8 @@ Forneça dois símbolos para comparar. Exemplos:
           command: 'compare',
           model: 'chat-market-integration',
           tokens: 45,
-          processing_time: 100
-        }
+          processing_time: 100,
+        },
       };
     }
 
@@ -252,9 +299,16 @@ Forneça dois símbolos para comparar. Exemplos:
     const startTime = Date.now();
 
     try {
-      const comparison = await marketDataService.compareSymbols([symbol1, symbol2]);
-      
-      if (comparison.quotes.length < 2) {
+      const comparisonResult = await marketDataService.compareSymbols([
+        symbol1,
+        symbol2,
+      ]);
+
+      if (
+        !comparisonResult.success ||
+        !comparisonResult.data ||
+        comparisonResult.data.quotes.length < 2
+      ) {
         return {
           response: `❌ **Não foi possível obter dados para comparação**
 
@@ -266,13 +320,15 @@ Símbolos verificados: ${symbol1}, ${symbol2}
             symbols: [symbol1, symbol2],
             model: 'chat-market-integration',
             tokens: 35,
-            processing_time: Date.now() - startTime
-          }
+            processing_time: Date.now() - startTime,
+          },
         };
       }
 
-      return this.formatComparisonResponse(comparison.quotes, startTime);
-
+      return this.formatComparisonResponse(
+        comparisonResult.data.quotes,
+        startTime
+      );
     } catch (error) {
       return {
         response: `❌ **Erro na comparação**
@@ -285,8 +341,8 @@ Tente novamente em alguns momentos.`,
           symbols: [symbol1, symbol2],
           model: 'chat-market-integration',
           tokens: 25,
-          processing_time: Date.now() - startTime
-        }
+          processing_time: Date.now() - startTime,
+        },
       };
     }
   }
@@ -295,9 +351,17 @@ Tente novamente em alguns momentos.`,
     const startTime = Date.now();
 
     try {
-      const newsResponse = await marketDataService.getNewsAndSentiment(symbols, undefined, 10);
-      
-      if (!newsResponse.success || !newsResponse.data || newsResponse.data.length === 0) {
+      const newsResponse = await marketDataService.getNewsAndSentiment(
+        symbols,
+        undefined,
+        10
+      );
+
+      if (
+        !newsResponse.success ||
+        !newsResponse.data ||
+        newsResponse.data.length === 0
+      ) {
         return {
           response: `❌ **Nenhuma notícia encontrada**
 
@@ -309,13 +373,12 @@ Tente novamente mais tarde.`,
             symbols,
             model: 'chat-market-integration',
             tokens: 30,
-            processing_time: Date.now() - startTime
-          }
+            processing_time: Date.now() - startTime,
+          },
         };
       }
 
       return this.formatNewsResponse(newsResponse.data, symbols, startTime);
-
     } catch (error) {
       return {
         response: `❌ **Erro ao buscar notícias**
@@ -326,8 +389,8 @@ ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
           symbols,
           model: 'chat-market-integration',
           tokens: 20,
-          processing_time: Date.now() - startTime
-        }
+          processing_time: Date.now() - startTime,
+        },
       };
     }
   }
@@ -342,8 +405,8 @@ Exemplo: \`/search petrobras\``,
           command: 'search',
           model: 'chat-market-integration',
           tokens: 15,
-          processing_time: 100
-        }
+          processing_time: 100,
+        },
       };
     }
 
@@ -351,8 +414,12 @@ Exemplo: \`/search petrobras\``,
 
     try {
       const searchResponse = await marketDataService.searchSymbol(term);
-      
-      if (!searchResponse.success || !searchResponse.data || searchResponse.data.length === 0) {
+
+      if (
+        !searchResponse.success ||
+        !searchResponse.data ||
+        searchResponse.data.length === 0
+      ) {
         return {
           response: `❌ **Nenhum resultado encontrado para "${term}"**
 
@@ -362,13 +429,12 @@ Tente termos mais específicos ou símbolos conhecidos.`,
             parameters: { term },
             model: 'chat-market-integration',
             tokens: 25,
-            processing_time: Date.now() - startTime
-          }
+            processing_time: Date.now() - startTime,
+          },
         };
       }
 
       return this.formatSearchResponse(searchResponse.data, term, startTime);
-
     } catch (error) {
       return {
         response: `❌ **Erro na busca por "${term}"**
@@ -379,8 +445,8 @@ ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
           parameters: { term },
           model: 'chat-market-integration',
           tokens: 20,
-          processing_time: Date.now() - startTime
-        }
+          processing_time: Date.now() - startTime,
+        },
       };
     }
   }
@@ -421,14 +487,14 @@ Você também pode fazer perguntas diretas:
         'Analisar um ativo específico',
         'Comparar duas ações',
         'Ver notícias do mercado',
-        'Buscar símbolo'
+        'Buscar símbolo',
       ],
       metadata: {
         command: 'help',
         model: 'chat-market-integration',
         tokens: 280,
-        processing_time: 150
-      }
+        processing_time: 150,
+      },
     };
   }
 
@@ -437,12 +503,20 @@ Você também pode fazer perguntas diretas:
   // ==========================================
 
   private formatAnalysisResponse(
-    analysis: { quote: StockQuote | null; overview: CompanyOverview | null; news: NewsItem[] | null; technicals: { rsi: TechnicalIndicator | null; macd: TechnicalIndicator | null } },
+    analysis: {
+      quote: StockQuote | null;
+      overview: CompanyOverview | null;
+      news: NewsItem[] | null;
+      technicals: {
+        rsi: TechnicalIndicator | null;
+        macd: TechnicalIndicator | null;
+      };
+    },
     symbol: string,
     startTime: number
   ): ChatMarketResponse {
     const { quote, overview, news, technicals } = analysis;
-    
+
     if (!quote) {
       return {
         response: `❌ Não foi possível obter dados para ${symbol}`,
@@ -451,14 +525,14 @@ Você também pode fazer perguntas diretas:
           symbols: [symbol],
           model: 'chat-market-integration',
           tokens: 15,
-          processing_time: Date.now() - startTime
-        }
+          processing_time: Date.now() - startTime,
+        },
       };
     }
 
     const changeDirection = quote.change >= 0 ? '📈' : '📉';
     const changeColor = quote.change >= 0 ? '+' : '';
-    
+
     let response = `## ${changeDirection} **${quote.symbol} - ${quote.name}**
 
 ### 💰 **Cotação Atual:**
@@ -486,14 +560,19 @@ Você também pode fazer perguntas diretas:
     if (technicals.rsi || technicals.macd) {
       response += `### 📊 **Indicadores Técnicos:**
 `;
-      
+
       if (technicals.rsi && technicals.rsi.data.length > 0) {
         const rsiValue = technicals.rsi.data[0].value;
-        const rsiSignal = rsiValue > 70 ? 'Sobrecompra 🔴' : rsiValue < 30 ? 'Sobrevenda 🟢' : 'Neutro 🟡';
+        const rsiSignal =
+          rsiValue > 70
+            ? 'Sobrecompra 🔴'
+            : rsiValue < 30
+              ? 'Sobrevenda 🟢'
+              : 'Neutro 🟡';
         response += `- **RSI**: ${rsiValue.toFixed(1)} (${rsiSignal})
 `;
       }
-      
+
       if (technicals.macd && technicals.macd.data.length > 0) {
         const macdValue = technicals.macd.data[0].value;
         const macdSignal = macdValue > 0 ? 'Bullish 🟢' : 'Bearish 🔴';
@@ -505,16 +584,24 @@ Você também pode fazer perguntas diretas:
 
     // Sentimento das notícias
     if (news && news.length > 0) {
-      const sentimentCounts = news.reduce((acc, item) => {
-        acc[item.overallSentimentLabel] = (acc[item.overallSentimentLabel] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
+      const sentimentCounts = news.reduce(
+        (acc, item) => {
+          acc[item.overallSentimentLabel] =
+            (acc[item.overallSentimentLabel] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
 
       response += `### 📰 **Sentimento das Notícias (${news.length} artigos):**
 `;
-      
+
       Object.entries(sentimentCounts).forEach(([sentiment, count]) => {
-        const emoji = sentiment.includes('Bullish') ? '🟢' : sentiment.includes('Bearish') ? '🔴' : '🟡';
+        const emoji = sentiment.includes('Bullish')
+          ? '🟢'
+          : sentiment.includes('Bearish')
+            ? '🔴'
+            : '🟡';
         response += `- ${emoji} **${sentiment}**: ${count} artigos
 `;
       });
@@ -534,19 +621,22 @@ Você também pode fazer perguntas diretas:
       followUp: [
         `Ver notícias sobre ${symbol}`,
         `Comparar ${symbol} com outro ativo`,
-        `Criar alerta para ${symbol}`
+        `Criar alerta para ${symbol}`,
       ],
       metadata: {
         command: 'analyze',
         symbols: [symbol],
         model: 'chat-market-integration',
         tokens: response.length / 4, // Estimativa
-        processing_time: Date.now() - startTime
-      }
+        processing_time: Date.now() - startTime,
+      },
     };
   }
 
-  private formatComparisonResponse(quotes: StockQuote[], startTime: number): ChatMarketResponse {
+  private formatComparisonResponse(
+    quotes: StockQuote[],
+    startTime: number
+  ): ChatMarketResponse {
     if (quotes.length < 2) {
       return {
         response: '❌ Dados insuficientes para comparação',
@@ -554,13 +644,13 @@ Você também pode fazer perguntas diretas:
           command: 'compare',
           model: 'chat-market-integration',
           tokens: 10,
-          processing_time: Date.now() - startTime
-        }
+          processing_time: Date.now() - startTime,
+        },
       };
     }
 
     const [quote1, quote2] = quotes;
-    
+
     const response = `## ⚖️ **Comparação: ${quote1.symbol} vs ${quote2.symbol}**
 
 | **Métrica** | **${quote1.symbol}** | **${quote2.symbol}** | **Vencedor** |
@@ -579,9 +669,10 @@ ${quote1.changePercent >= 0 ? '📈' : '📉'} ${quote1.changePercent >= 0 ? 'Em
 ${quote2.changePercent >= 0 ? '📈' : '📉'} ${quote2.changePercent >= 0 ? 'Em alta' : 'Em baixa'} de ${Math.abs(quote2.changePercent).toFixed(2)}%
 
 ### 🎯 **Conclusão:**
-${quote1.changePercent > quote2.changePercent 
-  ? `**${quote1.symbol}** está performando melhor hoje`
-  : `**${quote2.symbol}** está performando melhor hoje`
+${
+  quote1.changePercent > quote2.changePercent
+    ? `**${quote1.symbol}** está performando melhor hoje`
+    : `**${quote2.symbol}** está performando melhor hoje`
 }
 
 *Para análise mais detalhada, use:*
@@ -594,27 +685,34 @@ ${quote1.changePercent > quote2.changePercent
       followUp: [
         `Analisar ${quote1.symbol} detalhadamente`,
         `Analisar ${quote2.symbol} detalhadamente`,
-        'Comparar com outros ativos'
+        'Comparar com outros ativos',
       ],
       metadata: {
         command: 'compare',
         symbols: [quote1.symbol, quote2.symbol],
         model: 'chat-market-integration',
         tokens: response.length / 4,
-        processing_time: Date.now() - startTime
-      }
+        processing_time: Date.now() - startTime,
+      },
     };
   }
 
-  private formatNewsResponse(news: NewsItem[], symbols: string[] | undefined, startTime: number): ChatMarketResponse {
+  private formatNewsResponse(
+    news: NewsItem[],
+    symbols: string[] | undefined,
+    startTime: number
+  ): ChatMarketResponse {
     let response = `## 📰 **Notícias do Mercado${symbols ? ` - ${symbols.join(', ')}` : ''}**
 
 `;
 
     news.slice(0, 5).forEach((item, index) => {
-      const sentimentEmoji = item.overallSentimentLabel.includes('Bullish') ? '🟢' : 
-                            item.overallSentimentLabel.includes('Bearish') ? '🔴' : '🟡';
-      
+      const sentimentEmoji = item.overallSentimentLabel.includes('Bullish')
+        ? '🟢'
+        : item.overallSentimentLabel.includes('Bearish')
+          ? '🔴'
+          : '🟡';
+
       response += `### ${index + 1}. ${sentimentEmoji} ${item.title}
 
 **Fonte:** ${item.source} • **Sentimento:** ${item.overallSentimentLabel}
@@ -633,19 +731,23 @@ ${quote1.changePercent > quote2.changePercent
       followUp: [
         'Ver mais notícias',
         'Analisar sentimento detalhado',
-        'Buscar notícias específicas'
+        'Buscar notícias específicas',
       ],
       metadata: {
         command: 'news',
         symbols,
         model: 'chat-market-integration',
         tokens: response.length / 4,
-        processing_time: Date.now() - startTime
-      }
+        processing_time: Date.now() - startTime,
+      },
     };
   }
 
-  private formatSearchResponse(results: SearchResult[], term: string, startTime: number): ChatMarketResponse {
+  private formatSearchResponse(
+    results: SearchResult[],
+    term: string,
+    startTime: number
+  ): ChatMarketResponse {
     let response = `## 🔍 **Resultados da Busca: "${term}"**
 
 `;
@@ -671,8 +773,8 @@ ${quote1.changePercent > quote2.changePercent
         parameters: { term },
         model: 'chat-market-integration',
         tokens: response.length / 4,
-        processing_time: Date.now() - startTime
-      }
+        processing_time: Date.now() - startTime,
+      },
     };
   }
 
@@ -700,32 +802,34 @@ Digite \`/help\` para ver todos os comandos disponíveis.
         followUp: [
           'Ver comandos disponíveis (/help)',
           'Analisar um ativo específico',
-          'Buscar símbolos'
+          'Buscar símbolos',
         ],
         metadata: {
           model: 'chat-market-integration',
           tokens: 75,
-          processing_time: 100
-        }
+          processing_time: 100,
+        },
       };
     }
 
     switch (command.command) {
       case 'analyze':
         return await this.handleAnalyzeCommand(command.symbols || []);
-        
+
       case 'compare':
         return await this.handleCompareCommand(command.symbols || []);
-        
+
       case 'news':
         return await this.handleNewsCommand(command.symbols);
-        
+
       case 'search':
-        return await this.handleSearchCommand(command.parameters?.term as string || '');
-        
+        return await this.handleSearchCommand(
+          (command.parameters?.term as string) || ''
+        );
+
       case 'help':
         return this.handleHelpCommand();
-        
+
       case 'portfolio':
         return {
           response: `## 📈 **Portfolio**
@@ -740,19 +844,20 @@ Por enquanto você pode:
             command: 'portfolio',
             model: 'chat-market-integration',
             tokens: 45,
-            processing_time: 100
-          }
+            processing_time: 100,
+          },
         };
-        
+
       case 'alert':
         return {
           response: `## 🚨 **Alertas de Preço**
 
 Esta funcionalidade será implementada em breve!
 
-${command.symbols && command.parameters?.price 
-  ? `Você quer criar um alerta para **${command.symbols[0]}** ao atingir **$${command.parameters.price}**.`
-  : 'Formato: `/alert TICKER PREÇO`'
+${
+  command.symbols && command.parameters?.price
+    ? `Você quer criar um alerta para **${command.symbols[0]}** ao atingir **$${command.parameters.price}**.`
+    : 'Formato: `/alert TICKER PREÇO`'
 }
 
 Por enquanto, monitore manualmente com \`/analyze [TICKER]\``,
@@ -762,10 +867,10 @@ Por enquanto, monitore manualmente com \`/analyze [TICKER]\``,
             parameters: command.parameters,
             model: 'chat-market-integration',
             tokens: 40,
-            processing_time: 100
-          }
+            processing_time: 100,
+          },
         };
-        
+
       default:
         return this.handleHelpCommand();
     }
@@ -774,4 +879,4 @@ Por enquanto, monitore manualmente com \`/analyze [TICKER]\``,
 
 // Singleton instance
 export const chatMarketIntegrationService = new ChatMarketIntegrationService();
-export default chatMarketIntegrationService; 
+export default chatMarketIntegrationService;

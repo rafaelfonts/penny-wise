@@ -10,12 +10,15 @@ export class ErrorHandler {
     const timestamp = new Date().toISOString();
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
-    
+
     if (process.env.NODE_ENV === 'development') {
-      console.error(`[${timestamp}] ${context ? `[${context}] ` : ''}${errorMessage}`, {
-        error,
-        stack: errorStack
-      });
+      console.error(
+        `[${timestamp}] ${context ? `[${context}] ` : ''}${errorMessage}`,
+        {
+          error,
+          stack: errorStack,
+        }
+      );
     } else {
       // In production, log to monitoring service
       console.error(`[${context || 'Unknown'}] ${errorMessage}`);
@@ -30,37 +33,52 @@ export class ErrorHandler {
     let type: ApiError['type'] = 'unknown';
     let message = 'Unknown error occurred';
     let code: string | number | undefined;
-    
+
     if (error instanceof Error) {
       message = error.message;
-      
+
       // Categorize error based on message content
-      if (error.message.includes('network') || error.message.includes('fetch')) {
+      if (
+        error.message.includes('network') ||
+        error.message.includes('fetch')
+      ) {
         type = 'network';
       } else if (error.message.includes('timeout')) {
         type = 'timeout';
-      } else if (error.message.includes('401') || error.message.includes('unauthorized')) {
+      } else if (
+        error.message.includes('401') ||
+        error.message.includes('unauthorized')
+      ) {
         type = 'auth';
         retryable = false;
-      } else if (error.message.includes('validation') || error.message.includes('400')) {
+      } else if (
+        error.message.includes('validation') ||
+        error.message.includes('400')
+      ) {
         type = 'validation';
         retryable = false;
-      } else if (error.message.includes('429') || error.message.includes('rate limit')) {
+      } else if (
+        error.message.includes('429') ||
+        error.message.includes('rate limit')
+      ) {
         type = 'rate_limit';
-      } else if (error.message.includes('500') || error.message.includes('server')) {
+      } else if (
+        error.message.includes('500') ||
+        error.message.includes('server')
+      ) {
         type = 'server';
       }
     } else if (typeof error === 'string') {
       message = error;
     }
-    
+
     return {
       type,
       message,
       code,
       retryable,
       timestamp: new Date().toISOString(),
-      service
+      service,
     };
   }
 
@@ -70,9 +88,9 @@ export class ErrorHandler {
     source?: string
   ): StandardApiResponse<T> {
     this.logError(error, serviceName);
-    
+
     const apiError = this.createApiError(error, serviceName);
-    
+
     return {
       success: false,
       error: apiError.message,
@@ -82,8 +100,8 @@ export class ErrorHandler {
       metadata: {
         errorType: apiError.type,
         retryable: apiError.retryable,
-        service: serviceName
-      }
+        service: serviceName,
+      },
     };
   }
 
@@ -95,11 +113,11 @@ export class ErrorHandler {
     retryDelay: number = 1000
   ): Promise<StandardApiResponse<T>> {
     let lastError: unknown;
-    
+
     for (let attempt = 1; attempt <= retryAttempts; attempt++) {
       try {
         const result = await operation();
-        
+
         return {
           success: true,
           data: result,
@@ -108,26 +126,28 @@ export class ErrorHandler {
           cached: false,
           metadata: {
             attempt,
-            service: serviceName
-          }
+            service: serviceName,
+          },
         };
       } catch (error) {
         lastError = error;
-        
+
         const apiError = this.createApiError(error, serviceName);
-        
+
         // Don't retry if error is not retryable or on last attempt
         if (!apiError.retryable || attempt === retryAttempts) {
           break;
         }
-        
+
         // Wait before retry
         if (attempt < retryAttempts) {
-          await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+          await new Promise(resolve =>
+            setTimeout(resolve, retryDelay * attempt)
+          );
         }
       }
     }
-    
+
     return this.handleServiceError<T>(lastError, serviceName, source);
   }
 
@@ -153,9 +173,13 @@ export class ErrorHandler {
 
 // Decorator for automatic error handling
 export function handleErrors(service: string, source?: string) {
-  return function (target: unknown, propertyName: string, descriptor: PropertyDescriptor) {
+  return function (
+    target: unknown,
+    propertyName: string,
+    descriptor: PropertyDescriptor
+  ) {
     const method = descriptor.value;
-    
+
     descriptor.value = async function (...args: unknown[]) {
       try {
         const result = await method.apply(this, args);
@@ -163,7 +187,7 @@ export function handleErrors(service: string, source?: string) {
           success: true,
           data: result,
           timestamp: new Date().toISOString(),
-          source
+          source,
         };
       } catch (error) {
         return ErrorHandler.handleServiceError(error, service, source);

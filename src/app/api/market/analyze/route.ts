@@ -5,7 +5,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import marketDataService from '@/lib/services/market-data';
-import { StockQuote, CompanyOverview, NewsItem, TechnicalIndicator } from '@/lib/types/market';
+import {
+  StockQuote,
+  CompanyOverview,
+  NewsItem,
+  TechnicalIndicator,
+} from '@/lib/types/market';
 
 type AnalysisData = {
   quote: StockQuote | null;
@@ -21,13 +26,13 @@ export async function POST(request: NextRequest) {
   try {
     // Verificar autenticação
     const supabase = await createClient();
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    const {
+      data: { session },
+      error: authError,
+    } = await supabase.auth.getSession();
 
     if (authError || !session) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Parse do body
@@ -42,7 +47,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Executar análise completa
-    const analysis = await marketDataService.analyzeSymbol(symbol.toUpperCase());
+    const analysisResult = await marketDataService.analyzeSymbol(
+      symbol.toUpperCase()
+    );
+
+    // Verificar se a análise foi bem-sucedida
+    if (!analysisResult.success || !analysisResult.data) {
+      return NextResponse.json(
+        { error: 'Failed to analyze symbol' },
+        { status: 500 }
+      );
+    }
+
+    const analysis = analysisResult.data;
 
     // Preparar resposta estruturada
     const analysisResponse = {
@@ -56,23 +73,21 @@ export async function POST(request: NextRequest) {
         summary: generateAnalysisSummary(analysis),
         signals: generateTradingSignals(analysis),
         risks: generateRiskAnalysis(analysis),
-        recommendations: generateRecommendations(analysis)
-      }
+        recommendations: generateRecommendations(analysis),
+      },
     };
 
     // Salvar análise se solicitado
     if (saveAnalysis && analysis.quote) {
       try {
-        await supabase
-          .from('saved_analysis')
-          .insert({
-            symbol: symbol.toUpperCase(),
-            market: analysis.quote.source,
-            title: `Análise de ${symbol.toUpperCase()}`,
-            analysis_type: 'complete',
-            data: JSON.parse(JSON.stringify(analysisResponse)),
-            user_id: session.user.id
-          });
+        await supabase.from('saved_analysis').insert({
+          symbol: symbol.toUpperCase(),
+          market: analysis.quote.source,
+          title: `Análise de ${symbol.toUpperCase()}`,
+          analysis_type: 'complete',
+          data: JSON.parse(JSON.stringify(analysisResponse)),
+          user_id: session.user.id,
+        });
       } catch (dbError) {
         console.error('Error saving analysis:', dbError);
         // Não falhar a requisição se não conseguir salvar
@@ -81,9 +96,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: analysisResponse
+      data: analysisResponse,
     });
-
   } catch (error) {
     console.error('Market Analysis API Error:', error);
     return NextResponse.json(
@@ -99,12 +113,12 @@ export async function POST(request: NextRequest) {
 
 function generateAnalysisSummary(analysis: AnalysisData): string {
   const { quote, overview } = analysis;
-  
+
   if (!quote) return 'Não foi possível obter dados de cotação para análise.';
 
   const changeDirection = quote.change >= 0 ? 'alta' : 'baixa';
   const changePercent = Math.abs(quote.changePercent).toFixed(2);
-  
+
   let summary = `${quote.symbol} está cotada a $${quote.price.toFixed(2)}, `;
   summary += `com ${changeDirection} de ${changePercent}% no dia. `;
 
@@ -116,12 +130,16 @@ function generateAnalysisSummary(analysis: AnalysisData): string {
   return summary;
 }
 
-function generateTradingSignals(analysis: AnalysisData): Array<{ 
-  type: 'buy' | 'sell' | 'hold'; 
-  strength: 'weak' | 'moderate' | 'strong'; 
-  reason: string 
+function generateTradingSignals(analysis: AnalysisData): Array<{
+  type: 'buy' | 'sell' | 'hold';
+  strength: 'weak' | 'moderate' | 'strong';
+  reason: string;
 }> {
-  const signals: Array<{ type: 'buy' | 'sell' | 'hold'; strength: 'weak' | 'moderate' | 'strong'; reason: string }> = [];
+  const signals: Array<{
+    type: 'buy' | 'sell' | 'hold';
+    strength: 'weak' | 'moderate' | 'strong';
+    reason: string;
+  }> = [];
   const { quote, technicals } = analysis;
 
   if (!quote) return signals;
@@ -131,31 +149,31 @@ function generateTradingSignals(analysis: AnalysisData): Array<{
     signals.push({
       type: 'buy',
       strength: 'moderate',
-      reason: `Alta significativa de ${quote.changePercent.toFixed(2)}% no dia`
+      reason: `Alta significativa de ${quote.changePercent.toFixed(2)}% no dia`,
     });
   } else if (quote.changePercent < -5) {
     signals.push({
       type: 'sell',
       strength: 'moderate',
-      reason: `Queda significativa de ${Math.abs(quote.changePercent).toFixed(2)}% no dia`
+      reason: `Queda significativa de ${Math.abs(quote.changePercent).toFixed(2)}% no dia`,
     });
   }
 
   // Sinais baseados em RSI
   if (technicals.rsi?.data && technicals.rsi.data.length > 0) {
     const latestRSI = technicals.rsi.data[0].value;
-    
+
     if (latestRSI > 70) {
       signals.push({
         type: 'sell',
         strength: 'strong',
-        reason: `RSI em sobrecompra (${latestRSI.toFixed(1)})`
+        reason: `RSI em sobrecompra (${latestRSI.toFixed(1)})`,
       });
     } else if (latestRSI < 30) {
       signals.push({
         type: 'buy',
         strength: 'strong',
-        reason: `RSI em sobrevenda (${latestRSI.toFixed(1)})`
+        reason: `RSI em sobrevenda (${latestRSI.toFixed(1)})`,
       });
     }
   }
@@ -165,7 +183,7 @@ function generateTradingSignals(analysis: AnalysisData): Array<{
     signals.push({
       type: 'hold',
       strength: 'moderate',
-      reason: 'Sem sinais técnicos claros no momento'
+      reason: 'Sem sinais técnicos claros no momento',
     });
   }
 
@@ -178,21 +196,26 @@ function generateRiskAnalysis(analysis: AnalysisData): string[] {
 
   // Risco de volatilidade
   if (quote && Math.abs(quote.changePercent) > 10) {
-    risks.push(`Alta volatilidade detectada (${Math.abs(quote.changePercent).toFixed(2)}% no dia)`);
+    risks.push(
+      `Alta volatilidade detectada (${Math.abs(quote.changePercent).toFixed(2)}% no dia)`
+    );
   }
 
   // Risco de valuation
   if (overview && overview.peRatio && overview.peRatio > 30) {
-    risks.push(`P/E elevado (${overview.peRatio.toFixed(1)}) pode indicar sobrevaloração`);
+    risks.push(
+      `P/E elevado (${overview.peRatio.toFixed(1)}) pode indicar sobrevaloração`
+    );
   }
 
   // Risco baseado em sentimento das notícias
   if (news && Array.isArray(news)) {
-    const negativeNews = news.filter(item => 
-      item.overallSentimentLabel === 'Bearish' || 
-      item.overallSentimentLabel === 'Somewhat-Bearish'
+    const negativeNews = news.filter(
+      item =>
+        item.overallSentimentLabel === 'Bearish' ||
+        item.overallSentimentLabel === 'Somewhat-Bearish'
     ).length;
-    
+
     if (negativeNews > news.length / 2) {
       risks.push('Sentimento negativo predominante nas notícias recentes');
     }
@@ -218,7 +241,9 @@ function generateRecommendations(analysis: AnalysisData): string[] {
   if (quote.volume && overview?.sharesOutstanding) {
     const volumePercent = (quote.volume / overview.sharesOutstanding) * 100;
     if (volumePercent > 5) {
-      recommendations.push('Volume elevado - monitorar movimentações significativas');
+      recommendations.push(
+        'Volume elevado - monitorar movimentações significativas'
+      );
     }
   }
 

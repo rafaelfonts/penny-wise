@@ -10,13 +10,13 @@ export async function GET(request: NextRequest) {
   try {
     // Verificar autenticação
     const supabase = await createClient();
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    const {
+      data: { session },
+      error: authError,
+    } = await supabase.auth.getSession();
 
     if (authError || !session) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Extrair parâmetros da query
@@ -34,19 +34,16 @@ export async function GET(request: NextRequest) {
     // Se é uma única cotação
     if (symbol) {
       const response = await marketDataService.getQuote(symbol.toUpperCase());
-      
+
       if (!response.success) {
-        return NextResponse.json(
-          { error: response.error },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: response.error }, { status: 404 });
       }
 
       return NextResponse.json({
         success: true,
         data: response.data,
         source: response.source,
-        timestamp: response.timestamp
+        timestamp: response.timestamp,
       });
     }
 
@@ -60,10 +57,9 @@ export async function GET(request: NextRequest) {
         data: response.data,
         error: response.error,
         source: response.source,
-        timestamp: response.timestamp
+        timestamp: response.timestamp,
       });
     }
-
   } catch (error) {
     console.error('Market Quote API Error:', error);
     return NextResponse.json(
@@ -77,13 +73,13 @@ export async function POST(request: NextRequest) {
   try {
     // Verificar autenticação
     const supabase = await createClient();
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    const {
+      data: { session },
+      error: authError,
+    } = await supabase.auth.getSession();
 
     if (authError || !session) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Parse do body
@@ -109,16 +105,13 @@ export async function POST(request: NextRequest) {
           symbol: quote.symbol,
           name: quote.name,
           market: quote.source,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
         }));
 
-        await supabase
-          .from('watchlist')
-          .upsert(watchlistToSave, { 
-            onConflict: 'user_id,symbol',
-            ignoreDuplicates: false 
-          });
-
+        await supabase.from('watchlist').upsert(watchlistToSave, {
+          onConflict: 'user_id,symbol',
+          ignoreDuplicates: false,
+        });
       } catch (dbError) {
         console.error('Error saving watchlist:', dbError);
         // Não falhar a requisição se não conseguir salvar
@@ -130,9 +123,8 @@ export async function POST(request: NextRequest) {
       data: response.data,
       error: response.error,
       source: response.source,
-      timestamp: response.timestamp
+      timestamp: response.timestamp,
     });
-
   } catch (error) {
     console.error('Market Quote POST API Error:', error);
     return NextResponse.json(
@@ -140,4 +132,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

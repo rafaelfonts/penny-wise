@@ -117,12 +117,22 @@ export interface NewsItem {
     relevanceScore: number;
   }[];
   overallSentimentScore: number;
-  overallSentimentLabel: 'Bearish' | 'Somewhat-Bearish' | 'Neutral' | 'Somewhat-Bullish' | 'Bullish';
+  overallSentimentLabel:
+    | 'Bearish'
+    | 'Somewhat-Bearish'
+    | 'Neutral'
+    | 'Somewhat-Bullish'
+    | 'Bullish';
   tickerSentiment: {
     ticker: string;
     relevanceScore: number;
     tickerSentimentScore: number;
-    tickerSentimentLabel: 'Bearish' | 'Somewhat-Bearish' | 'Neutral' | 'Somewhat-Bullish' | 'Bullish';
+    tickerSentimentLabel:
+      | 'Bearish'
+      | 'Somewhat-Bearish'
+      | 'Neutral'
+      | 'Somewhat-Bullish'
+      | 'Bullish';
   }[];
 }
 
@@ -244,7 +254,12 @@ export interface MarketAnalysisRequest {
 
 export interface MarketAnalysisResponse {
   analysis: string;
-  data: StockQuote[] | CompanyOverview[] | NewsItem[] | TechnicalIndicator[] | TopGainersLosers;
+  data:
+    | StockQuote[]
+    | CompanyOverview[]
+    | NewsItem[]
+    | TechnicalIndicator[]
+    | TopGainersLosers;
   charts?: {
     type: 'line' | 'candlestick' | 'bar';
     data: Record<string, string | number>[];
@@ -253,4 +268,4 @@ export interface MarketAnalysisResponse {
   recommendations?: string[];
   risks?: string[];
   timestamp: string;
-} 
+}

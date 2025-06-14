@@ -32,11 +32,13 @@ OPLAB_BASE_URL=https://api.oplab.com.br/v3
 A API está organizada nos seguintes grupos:
 
 ### 🔧 Sistema
+
 - **Health Check**: `GET /api/market/oplab?action=health`
 - **Autorização**: `GET /api/market/oplab?action=authorize&context={default|chart}`
 - **Configurações do Usuário**: `GET /api/market/oplab?action=user-settings&group={optional}`
 
 ### 🔐 Autenticação
+
 - **Autenticar**: `POST /api/market/oplab?action=authenticate`
   ```json
   {
@@ -47,16 +49,19 @@ A API está organizada nos seguintes grupos:
   ```
 
 ### 📈 Ações
+
 - **Todas as Ações**: `GET /api/market/oplab?action=stocks`
 - **Ação Específica**: `GET /api/market/oplab?action=stock&symbol=PETR4`
 - **Ações com Opções**: `GET /api/market/oplab?action=stocks-with-options`
 
 ### 📊 Opções
+
 - **Cadeia de Opções**: `GET /api/market/oplab?action=options&symbol=PETR4`
 - **Opção Específica**: `GET /api/market/oplab?action=option&symbol=PETR4C2800`
 - **Histórico de Opções**: `GET /api/market/oplab?action=options-history&symbol=PETR4&date=2024-01-15`
 
 ### 🎯 Portfólios
+
 - **Todos os Portfólios**: `GET /api/market/oplab?action=portfolios`
 - **Portfólio Específico**: `GET /api/market/oplab?action=portfolio&portfolioId=123`
 - **Criar Portfólio**: `POST /api/market/oplab?action=create-portfolio`
@@ -77,6 +82,7 @@ A API está organizada nos seguintes grupos:
 - **Excluir Portfólio**: `DELETE /api/market/oplab?action=delete-portfolio&portfolioId=123`
 
 ### 💰 Dados de Mercado
+
 - **Status do Mercado**: `GET /api/market/oplab?action=market-status`
 - **Taxas de Juros**: `GET /api/market/oplab?action=interest-rates`
 - **Taxa Específica**: `GET /api/market/oplab?action=interest-rate&rateId=SELIC`
@@ -85,6 +91,7 @@ A API está organizada nos seguintes grupos:
 - **Dados Históricos**: `GET /api/market/oplab?action=historical&symbol=PETR4&from=2024-01-01&to=2024-12-31`
 
 ### 🏆 Rankings
+
 - **Opções por Volume**: `GET /api/market/oplab?action=top-volume-options`
 - **Opções com Maior Lucro**: `GET /api/market/oplab?action=highest-profit-options`
 - **Maior Variação**: `GET /api/market/oplab?action=biggest-variation-options`
@@ -93,6 +100,7 @@ A API está organizada nos seguintes grupos:
 - **Análise Fundamentalista**: `GET /api/market/oplab?action=fundamentalist-companies&attribute=market-cap`
 
 ### 📋 Instrumentos
+
 - **Instrumento Específico**: `GET /api/market/oplab?action=instrument&symbol=PETR4`
 - **Cotações de Instrumentos**: `POST /api/market/oplab?action=instrument-quotes`
   ```json
@@ -106,11 +114,13 @@ A API está organizada nos seguintes grupos:
 ### 1. Interface Web (Recomendado)
 
 Acesse a página de teste em desenvolvimento:
+
 ```
 http://localhost:3000/test-oplab
 ```
 
 A interface oferece:
+
 - **Aba Configuration**: Configure parâmetros de teste
 - **Aba Individual Tests**: Execute testes específicos por categoria
 - **Aba Results**: Visualize resultados detalhados com timing e dados
@@ -118,21 +128,25 @@ A interface oferece:
 ### 2. API REST Direta
 
 #### Health Check
+
 ```bash
 curl "http://localhost:3000/api/market/oplab?action=health"
 ```
 
 #### Obter Ações
+
 ```bash
 curl "http://localhost:3000/api/market/oplab?action=stocks"
 ```
 
 #### Cotação de Ação
+
 ```bash
 curl "http://localhost:3000/api/market/oplab?action=stock&symbol=PETR4"
 ```
 
 #### Autenticação
+
 ```bash
 curl -X POST "http://localhost:3000/api/market/oplab?action=authenticate" \
   -H "Content-Type: application/json" \
@@ -174,6 +188,7 @@ Em caso de erro:
 ## Exemplos de Resposta
 
 ### Cotação de Ação (Stock)
+
 ```json
 {
   "success": true,
@@ -181,9 +196,9 @@ Em caso de erro:
     "symbol": "PETR4",
     "name": "PETROBRAS PN",
     "market": {
-      "open": 28.50,
-      "high": 29.10,
-      "low": 28.20,
+      "open": 28.5,
+      "high": 29.1,
+      "low": 28.2,
       "close": 28.85,
       "vol": 45678900,
       "fin_volume": 1316445.65,
@@ -191,7 +206,7 @@ Em caso de erro:
       "bid": 28.84,
       "ask": 28.86,
       "variation": 1.23,
-      "previous_close": 28.50
+      "previous_close": 28.5
     },
     "info": {
       "category": "ON/PN",
@@ -205,6 +220,7 @@ Em caso de erro:
 ```
 
 ### Opção
+
 ```json
 {
   "success": true,
@@ -217,7 +233,7 @@ Em caso de erro:
       "low": 1.42,
       "close": 1.58,
       "vol": 345600,
-      "fin_volume": 546048.00,
+      "fin_volume": 546048.0,
       "trades": 890,
       "bid": 1.57,
       "ask": 1.59,
@@ -228,7 +244,7 @@ Em caso de erro:
       "maturity_type": "AMERICAN",
       "days_to_maturity": 15,
       "due_date": "2024-02-16",
-      "strike": 28.00,
+      "strike": 28.0,
       "category": "CALL",
       "contract_size": 100,
       "spot_price": 28.85
@@ -268,31 +284,37 @@ Em caso de erro:
 ## Checklist de Teste
 
 ### ✅ Testes Básicos
+
 - [ ] Health check respondendo
 - [ ] Autorização funcionando
 - [ ] Status do mercado
 
 ### ✅ Testes de Ações
+
 - [ ] Listar todas as ações
 - [ ] Obter ação específica (PETR4)
 - [ ] Ações com opções disponíveis
 
 ### ✅ Testes de Opções
+
 - [ ] Cadeia de opções para PETR4
 - [ ] Opção específica
 - [ ] Histórico de opções
 
 ### ✅ Testes de Portfólio
+
 - [ ] Listar portfólios
 - [ ] Criar novo portfólio
 - [ ] Obter portfólio específico
 
 ### ✅ Testes de Dados de Mercado
+
 - [ ] Taxas de juros
 - [ ] Bolsas de valores
 - [ ] Dados históricos
 
 ### ✅ Testes de Rankings
+
 - [ ] Top volume opções
 - [ ] Score Oplab
 - [ ] Análise fundamentalista
@@ -313,4 +335,4 @@ Em caso de erro:
 
 ---
 
-**Nota**: Esta implementação conecta com a API real do Oplab e requer autenticação adequada. Certifique-se de ter as credenciais corretas antes de executar os testes. 
+**Nota**: Esta implementação conecta com a API real do Oplab e requer autenticação adequada. Certifique-se de ter as credenciais corretas antes de executar os testes.

@@ -1,40 +1,53 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Icon } from '@/components/ui/icon'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { MessageCircle, Mail, Chrome, AlertCircle, Loader2, Twitter } from 'lucide-react'
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Icon } from '@/components/ui/icon';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  MessageCircle,
+  Mail,
+  Chrome,
+  AlertCircle,
+  Loader2,
+  Twitter,
+} from 'lucide-react';
 
 interface AuthFormProps {
-  mode: 'login' | 'signup'
+  mode: 'login' | 'signup';
 }
 
 export function AuthForm({ mode }: AuthFormProps) {
-  const router = useRouter()
-  const supabase = createClient()
-  
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [oauthLoading, setOauthLoading] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
+  const router = useRouter();
+  const supabase = createClient();
 
-  const isSignup = mode === 'signup'
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const isSignup = mode === 'signup';
 
   const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-    setMessage(null)
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setMessage(null);
 
     try {
       if (isSignup) {
@@ -45,52 +58,56 @@ export function AuthForm({ mode }: AuthFormProps) {
             data: {
               first_name: firstName,
               last_name: lastName,
-              full_name: `${firstName} ${lastName}`.trim()
-            }
-          }
-        })
+              full_name: `${firstName} ${lastName}`.trim(),
+            },
+          },
+        });
 
-        if (error) throw error
+        if (error) throw error;
 
-        setMessage('Verifique seu email para confirmar sua conta!')
+        setMessage('Verifique seu email para confirmar sua conta!');
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
-          password
-        })
+          password,
+        });
 
-        if (error) throw error
+        if (error) throw error;
 
-        router.push('/dashboard')
+        router.push('/dashboard');
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
-      setError(errorMessage)
+      const errorMessage =
+        error instanceof Error ? error.message : 'Erro desconhecido';
+      setError(errorMessage);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const handleOAuthLogin = async (provider: 'google' | 'discord' | 'twitter') => {
-    setOauthLoading(provider)
-    setError(null)
+  const handleOAuthLogin = async (
+    provider: 'google' | 'discord' | 'twitter'
+  ) => {
+    setOauthLoading(provider);
+    setError(null);
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
-      })
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
 
-      if (error) throw error
+      if (error) throw error;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
-      setError(errorMessage)
+      const errorMessage =
+        error instanceof Error ? error.message : 'Erro desconhecido';
+      setError(errorMessage);
     } finally {
-      setOauthLoading(null)
+      setOauthLoading(null);
     }
-  }
+  };
 
   return (
     <Card className="w-full max-w-md">
@@ -99,13 +116,12 @@ export function AuthForm({ mode }: AuthFormProps) {
           {isSignup ? 'Criar Conta' : 'Entrar'}
         </CardTitle>
         <CardDescription>
-          {isSignup 
+          {isSignup
             ? 'Crie sua conta para acessar a plataforma'
-            : 'Entre na sua conta para continuar'
-          }
+            : 'Entre na sua conta para continuar'}
         </CardDescription>
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
         {error && (
           <Alert variant="destructive">
@@ -171,7 +187,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
+            <span className="bg-background text-muted-foreground px-2">
               Ou continue com email
             </span>
           </div>
@@ -189,7 +205,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                     type="text"
                     placeholder="João"
                     value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
+                    onChange={e => setFirstName(e.target.value)}
                     required
                   />
                 </div>
@@ -200,7 +216,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                     type="text"
                     placeholder="Silva"
                     value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
+                    onChange={e => setLastName(e.target.value)}
                     required
                   />
                 </div>
@@ -215,7 +231,7 @@ export function AuthForm({ mode }: AuthFormProps) {
               type="email"
               placeholder="seu@email.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               required
             />
           </div>
@@ -227,16 +243,14 @@ export function AuthForm({ mode }: AuthFormProps) {
               type="password"
               placeholder="Sua senha"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               required
               minLength={6}
             />
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : null}
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {isSignup ? 'Criar Conta' : 'Entrar'}
           </Button>
         </form>
@@ -245,15 +259,17 @@ export function AuthForm({ mode }: AuthFormProps) {
           <span className="text-muted-foreground">
             {isSignup ? 'Já tem uma conta?' : 'Não tem uma conta?'}
           </span>{' '}
-          <Button 
-            variant="link" 
-            className="p-0 h-auto"
-            onClick={() => router.push(isSignup ? '/auth/login' : '/auth/signup')}
+          <Button
+            variant="link"
+            className="h-auto p-0"
+            onClick={() =>
+              router.push(isSignup ? '/auth/login' : '/auth/signup')
+            }
           >
             {isSignup ? 'Entrar' : 'Criar conta'}
           </Button>
         </div>
       </CardContent>
     </Card>
-  )
-} 
+  );
+}

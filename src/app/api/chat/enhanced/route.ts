@@ -40,43 +40,51 @@ export interface EnhancedChatResponse {
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
-  
+
   try {
     const supabase = await createClient();
-    
+
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Parse request body
     const body: EnhancedChatRequest = await request.json();
-    const { 
-      message, 
-      conversationId, 
-      includeMarketData = true, 
-      executeCommands = true 
+    const {
+      message,
+      conversationId,
+      includeMarketData = true,
+      executeCommands = true,
     } = body;
 
     if (!message?.trim()) {
-      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Message is required' },
+        { status: 400 }
+      );
     }
 
     // Process market context
     let marketContext;
     let marketPromptContext = '';
-    
+
     if (includeMarketData) {
-      const { marketContext: context } = await marketContextService.processMessage(message);
+      const { marketContext: context } =
+        await marketContextService.processMessage(message);
       marketContext = context;
-      marketPromptContext = marketContextService.formatContextForPrompt(context);
+      marketPromptContext =
+        marketContextService.formatContextForPrompt(context);
     }
 
     // Process commands (simplified for now)
     let executedCommands;
     let commandsResponse = '';
-    
+
     if (executeCommands && isCommand(message)) {
       try {
         const result = await executeCommand(message, user.id);
@@ -103,8 +111,8 @@ CONTEXTO: Você é um assistente financeiro especializado. Use os dados de merca
     `.trim();
 
     // Import and use DeepSeek service directly
-    const deepSeekService = (await import('@/lib/services/deepseek')).default
-    
+    const deepSeekService = (await import('@/lib/services/deepseek')).default;
+
     // Process with DeepSeek
     const aiData = await deepSeekService.processChatMessage(
       enhancedPrompt,
@@ -117,12 +125,12 @@ CONTEXTO: Você é um assistente financeiro especializado. Use os dados de merca
     // Build enhanced response
     const response: EnhancedChatResponse = {
       response: aiData.response || '',
-              conversationId: conversationId || generateUUID(),
+      conversationId: conversationId || generateUUID(),
       metadata: {
         processingTime,
         dataSource: marketContext?.source,
-        tokensUsed: aiData.metadata.tokens
-      }
+        tokensUsed: aiData.metadata.tokens,
+      },
     };
 
     // Add market context if available
@@ -132,7 +140,7 @@ CONTEXTO: Você é um assistente financeiro especializado. Use os dados de merca
         prices: marketContext.prices,
         changes: marketContext.changes,
         changePercents: marketContext.changePercents,
-        lastUpdated: marketContext.lastUpdated
+        lastUpdated: marketContext.lastUpdated,
       };
     }
 
@@ -141,24 +149,26 @@ CONTEXTO: Você é um assistente financeiro especializado. Use os dados de merca
       response.executedCommands = {
         alerts: [],
         analysis: [],
-        portfolio: []
+        portfolio: [],
       };
     }
 
     return NextResponse.json(response);
-
   } catch (error) {
     console.error('Enhanced chat error:', error);
-    
+
     const processingTime = Date.now() - startTime;
-    
-    return NextResponse.json({
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error',
-      metadata: {
-        processingTime
-      }
-    }, { status: 500 });
+
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        metadata: {
+          processingTime,
+        },
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -167,23 +177,26 @@ export async function GET() {
   try {
     // Test market data service
     const symbols = await marketContextService.getSymbolSuggestions('PETR', 1);
-    
+
     // Test commands service
     const hasCommands = isCommand('/test');
-    
+
     return NextResponse.json({
       status: 'healthy',
       services: {
         marketContext: symbols.length > 0,
-        chatCommands: typeof hasCommands === 'boolean'
+        chatCommands: typeof hasCommands === 'boolean',
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return NextResponse.json({
-      status: 'unhealthy',
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString()
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        status: 'unhealthy',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString(),
+      },
+      { status: 500 }
+    );
   }
-} 
+}

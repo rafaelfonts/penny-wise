@@ -1,47 +1,47 @@
-'use client'
+'use client';
 
-import { Bell, TrendingUp, BarChart3, Users, Clock } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import type { AlertStats } from '@/lib/types/alerts'
+import { Bell, TrendingUp, BarChart3, Users, Clock } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import type { AlertStats } from '@/lib/types/alerts';
 
 interface AlertStatsProps {
-  stats: AlertStats
+  stats: AlertStats;
 }
 
 export function AlertStats({ stats }: AlertStatsProps) {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'price':
-        return TrendingUp
+        return TrendingUp;
       case 'volume':
-        return BarChart3
+        return BarChart3;
       case 'technical':
-        return Users
+        return Users;
       default:
-        return Bell
+        return Bell;
     }
-  }
+  };
 
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'price':
-        return 'text-blue-600 bg-blue-100'
+        return 'text-blue-600 bg-blue-100';
       case 'volume':
-        return 'text-green-600 bg-green-100'
+        return 'text-green-600 bg-green-100';
       case 'technical':
-        return 'text-purple-600 bg-purple-100'
+        return 'text-purple-600 bg-purple-100';
       default:
-        return 'text-gray-600 bg-gray-100'
+        return 'text-gray-600 bg-gray-100';
     }
-  }
+  };
 
   const topSymbols = Object.entries(stats.by_symbol)
     .sort(([, a], [, b]) => b - a)
-    .slice(0, 5)
+    .slice(0, 5);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
       {/* Total Alerts */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -63,9 +63,14 @@ export function AlertStats({ stats }: AlertStatsProps) {
           <TrendingUp className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+          <div className="text-2xl font-bold text-green-600">
+            {stats.active}
+          </div>
           <p className="text-xs text-gray-500">
-            {stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0}% of total
+            {stats.total > 0
+              ? Math.round((stats.active / stats.total) * 100)
+              : 0}
+            % of total
           </p>
         </CardContent>
       </Card>
@@ -77,7 +82,9 @@ export function AlertStats({ stats }: AlertStatsProps) {
           <Clock className="h-4 w-4 text-orange-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-orange-600">{stats.triggered_today}</div>
+          <div className="text-2xl font-bold text-orange-600">
+            {stats.triggered_today}
+          </div>
           <p className="text-xs text-gray-500">
             {stats.triggered_this_week} this week
           </p>
@@ -91,10 +98,10 @@ export function AlertStats({ stats }: AlertStatsProps) {
           <BarChart3 className="h-4 w-4 text-blue-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-blue-600">{stats.triggered_this_week}</div>
-          <p className="text-xs text-gray-500">
-            alerts triggered
-          </p>
+          <div className="text-2xl font-bold text-blue-600">
+            {stats.triggered_this_week}
+          </div>
+          <p className="text-xs text-gray-500">alerts triggered</p>
         </CardContent>
       </Card>
 
@@ -106,28 +113,31 @@ export function AlertStats({ stats }: AlertStatsProps) {
         <CardContent>
           <div className="space-y-3">
             {Object.entries(stats.by_type).map(([type, count]) => {
-              const Icon = getTypeIcon(type)
-              const colorClass = getTypeColor(type)
-              const percentage = stats.total > 0 ? (count / stats.total) * 100 : 0
-              
+              const Icon = getTypeIcon(type);
+              const colorClass = getTypeColor(type);
+              const percentage =
+                stats.total > 0 ? (count / stats.total) * 100 : 0;
+
               return (
                 <div key={type} className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <div className={`p-2 rounded-md ${colorClass}`}>
+                    <div className={`rounded-md p-2 ${colorClass}`}>
                       <Icon className="h-4 w-4" />
                     </div>
                     <div>
                       <p className="text-sm font-medium capitalize">{type}</p>
-                      <p className="text-xs text-gray-500">{percentage.toFixed(1)}% of alerts</p>
+                      <p className="text-xs text-gray-500">
+                        {percentage.toFixed(1)}% of alerts
+                      </p>
                     </div>
                   </div>
                   <Badge variant="secondary">{count}</Badge>
                 </div>
-              )
+              );
             })}
-            
+
             {Object.keys(stats.by_type).length === 0 && (
-              <p className="text-sm text-gray-500 text-center py-4">
+              <p className="py-4 text-center text-sm text-gray-500">
                 No alerts created yet
               </p>
             )}
@@ -138,24 +148,29 @@ export function AlertStats({ stats }: AlertStatsProps) {
       {/* Top Symbols */}
       <Card className="md:col-span-2">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Most Watched Symbols</CardTitle>
+          <CardTitle className="text-sm font-medium">
+            Most Watched Symbols
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {topSymbols.map(([symbol, count]) => {
-              const percentage = stats.total > 0 ? (count / stats.total) * 100 : 0
-              
+              const percentage =
+                stats.total > 0 ? (count / stats.total) * 100 : 0;
+
               return (
                 <div key={symbol} className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
-                      <span className="text-xs font-bold text-blue-600">{symbol[0]}</span>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-100">
+                      <span className="text-xs font-bold text-blue-600">
+                        {symbol[0]}
+                      </span>
                     </div>
                     <div>
                       <p className="text-sm font-medium">{symbol}</p>
-                      <div className="w-24 bg-gray-200 rounded-full h-1.5">
+                      <div className="h-1.5 w-24 rounded-full bg-gray-200">
                         <div
-                          className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                          className="h-1.5 rounded-full bg-blue-600 transition-all duration-300"
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
@@ -163,11 +178,11 @@ export function AlertStats({ stats }: AlertStatsProps) {
                   </div>
                   <Badge variant="outline">{count} alerts</Badge>
                 </div>
-              )
+              );
             })}
-            
+
             {topSymbols.length === 0 && (
-              <p className="text-sm text-gray-500 text-center py-4">
+              <p className="py-4 text-center text-sm text-gray-500">
                 No symbols tracked yet
               </p>
             )}
@@ -175,5 +190,5 @@ export function AlertStats({ stats }: AlertStatsProps) {
         </CardContent>
       </Card>
     </div>
-  )
-} 
+  );
+}

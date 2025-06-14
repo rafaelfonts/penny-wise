@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { TrendingUp, TrendingDown, Minus, Clock } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, TrendingDown, Minus, Clock } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface MarketContext {
   symbols: string[];
@@ -20,7 +20,10 @@ interface MarketContextCardProps {
   className?: string;
 }
 
-export function MarketContextCard({ marketContext, className }: MarketContextCardProps) {
+export function MarketContextCard({
+  marketContext,
+  className,
+}: MarketContextCardProps) {
   if (!marketContext.symbols || marketContext.symbols.length === 0) {
     return null;
   }
@@ -30,21 +33,26 @@ export function MarketContextCard({ marketContext, className }: MarketContextCar
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     }).format(value);
   };
 
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString('pt-BR', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
   return (
-    <Card className={cn('border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20', className)}>
+    <Card
+      className={cn(
+        'border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20',
+        className
+      )}
+    >
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300 flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-sm font-medium text-blue-700 dark:text-blue-300">
           📊 Dados de Mercado
           <Badge variant="outline" className="text-xs">
             {marketContext.source}
@@ -52,7 +60,7 @@ export function MarketContextCard({ marketContext, className }: MarketContextCar
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {marketContext.symbols.map((symbol) => {
+        {marketContext.symbols.map(symbol => {
           const price = marketContext.prices[symbol];
           const change = marketContext.changes[symbol];
           const changePercent = marketContext.changePercents[symbol];
@@ -66,7 +74,7 @@ export function MarketContextCard({ marketContext, className }: MarketContextCar
           return (
             <div
               key={symbol}
-              className="flex items-center justify-between p-3 rounded-lg bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700"
+              className="flex items-center justify-between rounded-lg border border-gray-200 bg-white/50 p-3 dark:border-gray-700 dark:bg-gray-800/50"
             >
               <div className="flex items-center gap-3">
                 <div className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -79,14 +87,16 @@ export function MarketContextCard({ marketContext, className }: MarketContextCar
 
               <div className="flex items-center gap-2">
                 {/* Change indicator */}
-                <div className={cn(
-                  'flex items-center gap-1 px-2 py-1 rounded text-sm font-medium',
-                  isPositive && !isNeutral
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                    : isNeutral
-                    ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                )}>
+                <div
+                  className={cn(
+                    'flex items-center gap-1 rounded px-2 py-1 text-sm font-medium',
+                    isPositive && !isNeutral
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                      : isNeutral
+                        ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                        : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                  )}
+                >
                   {isNeutral ? (
                     <Minus className="h-3 w-3" />
                   ) : isPositive ? (
@@ -95,17 +105,20 @@ export function MarketContextCard({ marketContext, className }: MarketContextCar
                     <TrendingDown className="h-3 w-3" />
                   )}
                   <span>
-                    {isPositive && !isNeutral ? '+' : ''}{change.toFixed(2)}
+                    {isPositive && !isNeutral ? '+' : ''}
+                    {change.toFixed(2)}
                   </span>
                   <span className="text-xs">
-                    ({isPositive && !isNeutral ? '+' : ''}{changePercent.toFixed(2)}%)
+                    ({isPositive && !isNeutral ? '+' : ''}
+                    {changePercent.toFixed(2)}%)
                   </span>
                 </div>
 
                 {/* Volume indicator (if available) */}
                 {volume > 0 && (
                   <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Vol: {volume.toLocaleString('pt-BR', { notation: 'compact' })}
+                    Vol:{' '}
+                    {volume.toLocaleString('pt-BR', { notation: 'compact' })}
                   </div>
                 )}
               </div>
@@ -114,9 +127,11 @@ export function MarketContextCard({ marketContext, className }: MarketContextCar
         })}
 
         {/* Footer with timestamp */}
-        <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-1 border-t border-gray-200 pt-2 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
           <Clock className="h-3 w-3" />
-          <span>Última atualização: {formatTime(marketContext.lastUpdated)}</span>
+          <span>
+            Última atualização: {formatTime(marketContext.lastUpdated)}
+          </span>
         </div>
       </CardContent>
     </Card>
@@ -133,13 +148,13 @@ export function InlineMarketContext({ marketContext }: MarketContextCardProps) {
     return price.toLocaleString('pt-BR', {
       style: 'currency',
       currency: 'USD',
-      minimumFractionDigits: 2
+      minimumFractionDigits: 2,
     });
   };
 
   return (
-    <div className="inline-flex flex-wrap gap-2 my-2">
-      {marketContext.symbols.map((symbol) => {
+    <div className="my-2 inline-flex flex-wrap gap-2">
+      {marketContext.symbols.map(symbol => {
         const price = marketContext.prices[symbol];
         const change = marketContext.changes[symbol];
         const changePercent = marketContext.changePercents[symbol];
@@ -158,8 +173,8 @@ export function InlineMarketContext({ marketContext }: MarketContextCardProps) {
               isPositive && !isNeutral
                 ? 'border-green-300 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-900/20 dark:text-green-400'
                 : isNeutral
-                ? 'border-gray-300 bg-gray-50 text-gray-600 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400'
-                : 'border-red-300 bg-red-50 text-red-700 dark:border-red-600 dark:bg-red-900/20 dark:text-red-400'
+                  ? 'border-gray-300 bg-gray-50 text-gray-600 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                  : 'border-red-300 bg-red-50 text-red-700 dark:border-red-600 dark:bg-red-900/20 dark:text-red-400'
             )}
           >
             <span className="font-semibold">{symbol}</span>
@@ -174,4 +189,4 @@ export function InlineMarketContext({ marketContext }: MarketContextCardProps) {
       })}
     </div>
   );
-} 
+}

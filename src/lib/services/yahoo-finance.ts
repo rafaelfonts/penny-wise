@@ -7,7 +7,7 @@ import {
   IntradayData,
   DailyData,
   ApiResponse,
-  MarketDataConfig
+  MarketDataConfig,
 } from '@/lib/types/market';
 
 class YahooFinanceService {
@@ -23,7 +23,7 @@ class YahooFinanceService {
       cacheEnabled: true,
       cacheDuration: 5, // 5 minutos para dados em tempo real
       retryAttempts: 3,
-      retryDelay: 1000
+      retryDelay: 1000,
     };
   }
 
@@ -35,17 +35,18 @@ class YahooFinanceService {
       symbol,
       interval: '1d',
       range: '1y',
-      ...additionalParams
+      ...additionalParams,
     });
 
     // Use nossa rota API proxy ao invés de fazer requisição direta
     // Check if we're on the server side or client side
     const isServer = typeof window === 'undefined';
     let url: string;
-    
+
     if (isServer) {
       // On server side, use the full URL
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+      const baseUrl =
+        process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
       url = `${baseUrl}/api/market/yahoo?${params.toString()}`;
     } else {
       // On client side, use relative URL
@@ -58,20 +59,27 @@ class YahooFinanceService {
         headers: {
           'Content-Type': 'application/json',
         },
-        next: { 
-          revalidate: this.config.cacheEnabled ? this.config.cacheDuration * 60 : 0 
-        }
+        next: {
+          revalidate: this.config.cacheEnabled
+            ? this.config.cacheDuration * 60
+            : 0,
+        },
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Yahoo Finance API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          errorData.error ||
+            `Yahoo Finance API error: ${response.status} ${response.statusText}`
+        );
       }
 
       const result = await response.json();
 
       if (!result.success || !result.data) {
-        throw new Error(result.error || 'No data returned from Yahoo Finance API');
+        throw new Error(
+          result.error || 'No data returned from Yahoo Finance API'
+        );
       }
 
       return {
@@ -80,9 +88,8 @@ class YahooFinanceService {
         success: true,
         source: 'yahoo_finance',
         timestamp: result.timestamp,
-        cached: this.config.cacheEnabled
+        cached: this.config.cacheEnabled,
       };
-
     } catch (error) {
       console.error('Yahoo Finance API Error:', error);
       return {
@@ -91,7 +98,7 @@ class YahooFinanceService {
         success: false,
         source: 'yahoo_finance',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
   }
@@ -137,7 +144,7 @@ class YahooFinanceService {
         success: false,
         source: 'yahoo_finance',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
 
@@ -163,12 +170,12 @@ class YahooFinanceService {
         open: meta.regularMarketOpen,
         previousClose: previousClose,
         timestamp: new Date().toISOString(),
-        source: 'yahoo_finance'
+        source: 'yahoo_finance',
       };
 
       return {
         ...response,
-        data: quote
+        data: quote,
       };
     } catch (error) {
       return {
@@ -177,7 +184,7 @@ class YahooFinanceService {
         success: false,
         source: 'yahoo_finance',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
   }
@@ -214,7 +221,7 @@ class YahooFinanceService {
         success: false,
         source: 'yahoo_finance',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
 
@@ -224,32 +231,37 @@ class YahooFinanceService {
       const quote = result.indicators.quote[0];
 
       // Mapear intervalo do Yahoo para formato Alpha Vantage
-      const intervalMap: Record<string, '1min' | '5min' | '15min' | '30min' | '60min'> = {
+      const intervalMap: Record<
+        string,
+        '1min' | '5min' | '15min' | '30min' | '60min'
+      > = {
         '1m': '1min',
         '5m': '5min',
         '15m': '15min',
         '30m': '30min',
-        '60m': '60min'
+        '60m': '60min',
       };
 
       const data: IntradayData = {
         symbol: result.meta.symbol,
         interval: intervalMap[interval],
-        data: timestamps.map((timestamp, index) => ({
-          timestamp: new Date(timestamp * 1000).toISOString(),
-          open: quote.open[index] || 0,
-          high: quote.high[index] || 0,
-          low: quote.low[index] || 0,
-          close: quote.close[index] || 0,
-          volume: quote.volume[index] || 0
-        })).filter(item => item.close > 0), // Filtrar dados inválidos
+        data: timestamps
+          .map((timestamp, index) => ({
+            timestamp: new Date(timestamp * 1000).toISOString(),
+            open: quote.open[index] || 0,
+            high: quote.high[index] || 0,
+            low: quote.low[index] || 0,
+            close: quote.close[index] || 0,
+            volume: quote.volume[index] || 0,
+          }))
+          .filter(item => item.close > 0), // Filtrar dados inválidos
         lastRefreshed: new Date().toISOString(),
-        source: 'yahoo_finance'
+        source: 'yahoo_finance',
       };
 
       return {
         ...response,
-        data
+        data,
       };
     } catch (error) {
       return {
@@ -258,7 +270,7 @@ class YahooFinanceService {
         success: false,
         source: 'yahoo_finance',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
   }
@@ -297,7 +309,7 @@ class YahooFinanceService {
         success: false,
         source: 'yahoo_finance',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
 
@@ -309,22 +321,24 @@ class YahooFinanceService {
 
       const data: DailyData = {
         symbol: result.meta.symbol,
-        data: timestamps.map((timestamp, index) => ({
-          date: new Date(timestamp * 1000).toISOString().split('T')[0],
-          open: quote.open[index] || 0,
-          high: quote.high[index] || 0,
-          low: quote.low[index] || 0,
-          close: quote.close[index] || 0,
-          adjustedClose: adjClose?.[index] || quote.close[index] || 0,
-          volume: quote.volume[index] || 0
-        })).filter(item => item.close > 0), // Filtrar dados inválidos
+        data: timestamps
+          .map((timestamp, index) => ({
+            date: new Date(timestamp * 1000).toISOString().split('T')[0],
+            open: quote.open[index] || 0,
+            high: quote.high[index] || 0,
+            low: quote.low[index] || 0,
+            close: quote.close[index] || 0,
+            adjustedClose: adjClose?.[index] || quote.close[index] || 0,
+            volume: quote.volume[index] || 0,
+          }))
+          .filter(item => item.close > 0), // Filtrar dados inválidos
         lastRefreshed: new Date().toISOString(),
-        source: 'yahoo_finance'
+        source: 'yahoo_finance',
       };
 
       return {
         ...response,
-        data
+        data,
       };
     } catch (error) {
       return {
@@ -333,7 +347,7 @@ class YahooFinanceService {
         success: false,
         source: 'yahoo_finance',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
   }
@@ -353,13 +367,15 @@ class YahooFinanceService {
   }
 
   // Função para tentar múltiplos formatos de símbolo (útil para ações brasileiras)
-  async getQuoteWithFallback(baseSymbol: string): Promise<ApiResponse<StockQuote>> {
+  async getQuoteWithFallback(
+    baseSymbol: string
+  ): Promise<ApiResponse<StockQuote>> {
     const symbolVariations = [
       baseSymbol,
       `${baseSymbol}.SA`, // Bovespa
       `${baseSymbol}.BO`, // BSE
       `${baseSymbol}.NS`, // NSE
-      baseSymbol.replace('.SA', '').replace('.BO', '').replace('.NS', '') // Remove sufixos
+      baseSymbol.replace('.SA', '').replace('.BO', '').replace('.NS', ''), // Remove sufixos
     ];
 
     for (const symbol of symbolVariations) {
@@ -375,11 +391,11 @@ class YahooFinanceService {
       success: false,
       source: 'yahoo_finance',
       timestamp: new Date().toISOString(),
-      cached: false
+      cached: false,
     };
   }
 }
 
 // Singleton instance
 export const yahooFinanceService = new YahooFinanceService();
-export default yahooFinanceService; 
+export default yahooFinanceService;

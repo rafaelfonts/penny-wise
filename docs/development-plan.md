@@ -7,6 +7,7 @@
 ### Stack Tecnológico
 
 **Frontend:**
+
 - **Next.js 14** (App Router) - Performance otimizada
 - **React 18** + **TypeScript**
 - **Tailwind CSS** + **Framer Motion**
@@ -14,6 +15,7 @@
 - **React Query/TanStack Query** - Cache e sincronização
 
 **Backend (100% Supabase):**
+
 - **Supabase Edge Functions** - Serverless Functions (Deno runtime)
 - **Supabase Database** - PostgreSQL gerenciado
 - **Supabase Auth** - Autenticação completa
@@ -22,12 +24,14 @@
 - **Supabase Vector/pgvector** - Embeddings para RAG
 
 **Integrações Externas:**
+
 - **DeepSeek-V3 API** - Chat principal
 - **Alpha Vantage** - Dados de ações gratuitos
 - **Yahoo Finance API** - Backup de cotações
 - **Oplab** - Dados de opções e ações (Brasil)
 
 **Deploy:**
+
 - **Vercel** (frontend) + **Supabase** (backend completo)
 
 ---
@@ -39,12 +43,14 @@
 #### **Padrão de Ícones: Lucide + Tabler Icons (Outline Style)**
 
 **Biblioteca Principal: Lucide React**
+
 - **Pacote:** `lucide-react` (já incluído)
 - **Estilo:** Outline/Stroke (consistente e moderno)
 - **Tamanho padrão:** 20px (1.25rem)
 - **Stroke width:** 1.5px (padrão Lucide)
 
 **Biblioteca Complementar: Tabler Icons**
+
 - **Pacote:** `@tabler/icons-react`
 - **Uso:** Ícones específicos não disponíveis no Lucide
 - **Estilo:** Outline (matching Lucide)
@@ -53,44 +59,102 @@
 #### **Convenções de Uso**
 
 **1. Hierarquia de Ícones:**
+
 ```typescript
 // src/lib/icons/index.ts
-import { 
+import {
   // Navegação e UI
-  Menu, X, ChevronDown, ChevronRight, Search, Settings,
+  Menu,
+  X,
+  ChevronDown,
+  ChevronRight,
+  Search,
+  Settings,
   // Financeiro
-  TrendingUp, TrendingDown, DollarSign, BarChart3, PieChart,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  BarChart3,
+  PieChart,
   // Ações do usuário
-  Plus, Edit, Trash2, Download, Upload, Share, Save, Copy,
+  Plus,
+  Edit,
+  Trash2,
+  Download,
+  Upload,
+  Share,
+  Save,
+  Copy,
   // Status e feedback
-  Check, AlertCircle, Info, XCircle, Loader2, AlertTriangle,
+  Check,
+  AlertCircle,
+  Info,
+  XCircle,
+  Loader2,
+  AlertTriangle,
   // Ícones adicionais necessários
-  MessageSquare, Briefcase, Bell, Target, ThumbsUp, ThumbsDown, 
-  Minus, Brain
+  MessageSquare,
+  Briefcase,
+  Bell,
+  Target,
+  ThumbsUp,
+  ThumbsDown,
+  Minus,
+  Brain,
 } from 'lucide-react';
 
-import { 
+import {
   // Ícones específicos do Tabler (quando não disponível no Lucide)
-  IconCandlestick, IconChartLine, IconReportMoney 
+  IconCandlestick,
+  IconChartLine,
+  IconReportMoney,
 } from '@tabler/icons-react';
 
 // Re-export padronizado
 export {
   // Lucide icons
-  Menu, X, ChevronDown, ChevronRight, Search, Settings,
-  TrendingUp, TrendingDown, DollarSign, BarChart3, PieChart,
-  Plus, Edit, Trash2, Download, Upload, Share, Save, Copy,
-  Check, AlertCircle, Info, XCircle, Loader2, AlertTriangle,
-  MessageSquare, Briefcase, Bell, Target, ThumbsUp, ThumbsDown,
-  Minus, Brain,
+  Menu,
+  X,
+  ChevronDown,
+  ChevronRight,
+  Search,
+  Settings,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  BarChart3,
+  PieChart,
+  Plus,
+  Edit,
+  Trash2,
+  Download,
+  Upload,
+  Share,
+  Save,
+  Copy,
+  Check,
+  AlertCircle,
+  Info,
+  XCircle,
+  Loader2,
+  AlertTriangle,
+  MessageSquare,
+  Briefcase,
+  Bell,
+  Target,
+  ThumbsUp,
+  ThumbsDown,
+  Minus,
+  Brain,
   // Tabler icons (prefixados para clareza)
   IconCandlestick as Candlestick,
   IconChartLine as ChartLine,
-  IconReportMoney as ReportMoney
+  IconReportMoney as ReportMoney,
 };
 ```
 
 **2. Componente Icon Wrapper:**
+
 ```typescript
 // src/components/ui/icon.tsx
 import { LucideIcon } from 'lucide-react';
@@ -104,7 +168,7 @@ interface IconProps {
 
 const iconSizes = {
   xs: 'w-3 h-3',    // 12px
-  sm: 'w-4 h-4',    // 16px  
+  sm: 'w-4 h-4',    // 16px
   md: 'w-5 h-5',    // 20px (padrão)
   lg: 'w-6 h-6',    // 24px
   xl: 'w-8 h-8'     // 32px
@@ -112,8 +176,8 @@ const iconSizes = {
 
 export function Icon({ icon: IconComponent, size = 'md', className }: IconProps) {
   return (
-    <IconComponent 
-      className={cn(iconSizes[size], className)} 
+    <IconComponent
+      className={cn(iconSizes[size], className)}
       strokeWidth={1.5}
     />
   );
@@ -121,6 +185,7 @@ export function Icon({ icon: IconComponent, size = 'md', className }: IconProps)
 ```
 
 **3. Mapeamento de Contexto:**
+
 ```typescript
 // src/lib/icons/context-icons.ts
 export const CONTEXT_ICONS = {
@@ -131,9 +196,9 @@ export const CONTEXT_ICONS = {
     portfolio: Briefcase,
     market: TrendingUp,
     alerts: Bell,
-    settings: Settings
+    settings: Settings,
   },
-  
+
   // Mercado Financeiro
   market: {
     bullish: TrendingUp,
@@ -142,17 +207,17 @@ export const CONTEXT_ICONS = {
     volume: BarChart3,
     price: DollarSign,
     candlestick: Candlestick, // Tabler
-    options: Target
+    options: Target,
   },
-  
+
   // Sentimento (Multi-modelo)
   sentiment: {
     positive: ThumbsUp,
     negative: ThumbsDown,
     neutral: Minus,
-    analysis: Brain // ou IconReportMoney do Tabler
+    analysis: Brain, // ou IconReportMoney do Tabler
   },
-  
+
   // Ações do usuário
   actions: {
     add: Plus,
@@ -162,17 +227,17 @@ export const CONTEXT_ICONS = {
     export: Download,
     import: Upload,
     share: Share,
-    copy: Copy
+    copy: Copy,
   },
-  
+
   // Status
   status: {
     success: Check,
     error: XCircle,
     warning: AlertTriangle,
     info: Info,
-    loading: Loader2
-  }
+    loading: Loader2,
+  },
 } as const;
 ```
 
@@ -181,12 +246,14 @@ export const CONTEXT_ICONS = {
 #### **Fontes: Outfit + Inter (Google Fonts)**
 
 **Fonte Principal: Outfit**
+
 - **Uso:** Títulos (h1, h2, h3) e subtítulos (h4, h5, h6)
 - **Características:** Moderna, geométrica, alta legibilidade
 - **Peso:** Regular (400), Medium (500) e SemiBold (600)
 - **Fallback:** `'Outfit', 'Helvetica Neue', Arial, sans-serif`
 
 **Fonte Secundária: Inter**
+
 - **Uso:** Corpo de texto, labels, botões, inputs
 - **Peso principal:** Light (300) para textos gerais
 - **Pesos adicionais:** Regular (400), Medium (500), SemiBold (600)
@@ -195,6 +262,7 @@ export const CONTEXT_ICONS = {
 #### **Configuração das Fontes**
 
 **1. Next.js Font Optimization (Google Fonts):**
+
 ```typescript
 // src/app/layout.tsx
 import { Inter, Outfit } from 'next/font/google';
@@ -225,79 +293,94 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ```
 
 **2. Tailwind CSS Configuration:**
+
 ```javascript
 // tailwind.config.js
 module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        'outfit': ['var(--font-outfit)', '"Outfit"', 'Helvetica Neue', 'Arial', 'sans-serif'],
-        'inter': ['var(--font-inter)', '"Inter"', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        outfit: [
+          'var(--font-outfit)',
+          '"Outfit"',
+          'Helvetica Neue',
+          'Arial',
+          'sans-serif',
+        ],
+        inter: [
+          'var(--font-inter)',
+          '"Inter"',
+          'Helvetica Neue',
+          'Arial',
+          'sans-serif',
+        ],
       },
       fontWeight: {
-        'light': '300',
-        'normal': '400',
-        'medium': '500',
-        'semibold': '600',
-      }
-    }
-  }
-}
+        light: '300',
+        normal: '400',
+        medium: '500',
+        semibold: '600',
+      },
+    },
+  },
+};
 ```
 
 **3. Classes de Tipografia:**
+
 ```css
 /* src/app/globals.css */
 .heading-1 {
-  @apply font-outfit text-4xl font-medium leading-tight tracking-tight;
+  @apply font-outfit text-4xl leading-tight font-medium tracking-tight;
 }
 
 .heading-2 {
-  @apply font-outfit text-3xl font-medium leading-tight tracking-tight;
+  @apply font-outfit text-3xl leading-tight font-medium tracking-tight;
 }
 
 .heading-3 {
-  @apply font-outfit text-2xl font-normal leading-tight;
+  @apply font-outfit text-2xl leading-tight font-normal;
 }
 
 .heading-4 {
-  @apply font-outfit text-xl font-normal leading-snug;
+  @apply font-outfit text-xl leading-snug font-normal;
 }
 
 .heading-5 {
-  @apply font-outfit text-lg font-normal leading-snug;
+  @apply font-outfit text-lg leading-snug font-normal;
 }
 
 .heading-6 {
-  @apply font-outfit text-base font-normal leading-normal;
+  @apply font-outfit text-base leading-normal font-normal;
 }
 
 .body-large {
-  @apply font-inter text-lg font-light leading-relaxed;
+  @apply font-inter text-lg leading-relaxed font-light;
 }
 
 .body-normal {
-  @apply font-inter text-base font-light leading-normal;
+  @apply font-inter text-base leading-normal font-light;
 }
 
 .body-small {
-  @apply font-inter text-sm font-light leading-normal;
+  @apply font-inter text-sm leading-normal font-light;
 }
 
 .body-xs {
-  @apply font-inter text-xs font-normal leading-tight;
+  @apply font-inter text-xs leading-tight font-normal;
 }
 
 .label {
-  @apply font-inter text-sm font-medium leading-none;
+  @apply font-inter text-sm leading-none font-medium;
 }
 
 .caption {
-  @apply font-inter text-xs font-normal leading-tight text-gray-600;
+  @apply font-inter text-xs leading-tight font-normal text-gray-600;
 }
 ```
 
 #### **Componente Typography:**
+
 ```typescript
 // src/components/ui/typography.tsx
 import { cn } from '@/lib/utils';
@@ -339,7 +422,7 @@ export function BodyText({ children, className, size = 'normal' }: TypographyPro
     small: 'body-small',
     xs: 'body-xs'
   };
-  
+
   return (
     <p className={cn(sizeClasses[size], className)}>
       {children}
@@ -369,12 +452,14 @@ export function Caption({ children, className }: TypographyProps) {
 #### **Especificação: Todos os botões são arredondados**
 
 **Padrão de Border Radius:**
+
 - **Botões pequenos:** `rounded-lg` (8px)
-- **Botões médios:** `rounded-xl` (12px) 
+- **Botões médios:** `rounded-xl` (12px)
 - **Botões grandes:** `rounded-2xl` (16px)
 - **Botões de ação flutuante:** `rounded-full` (50%)
 
 #### **Componente Button Atualizado:**
+
 ```typescript
 // src/components/ui/button.tsx
 import * as React from "react";
@@ -438,6 +523,7 @@ export { Button, buttonVariants };
 #### **Outros Componentes com Bordas Arredondadas:**
 
 **1. Input Fields:**
+
 ```typescript
 // src/components/ui/input.tsx (atualizado)
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
@@ -458,6 +544,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 ```
 
 **2. Cards:**
+
 ```typescript
 // src/components/ui/card.tsx (atualizado)
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
@@ -475,6 +562,7 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
 ```
 
 **3. Dialog/Modal:**
+
 ```typescript
 // src/components/ui/dialog.tsx (atualizado)
 const DialogContent = React.forwardRef<
@@ -498,26 +586,28 @@ const DialogContent = React.forwardRef<
 ```
 
 #### **Configuração Tailwind para Bordas Arredondadas:**
+
 ```javascript
 // tailwind.config.js (atualizado)
 module.exports = {
   theme: {
     extend: {
       borderRadius: {
-        'lg': '8px',
-        'xl': '12px',
+        lg: '8px',
+        xl: '12px',
         '2xl': '16px',
         '3xl': '20px',
-        'full': '9999px',
-      }
-    }
-  }
-}
+        full: '9999px',
+      },
+    },
+  },
+};
 ```
 
 ### Cronograma de Implementação
 
 #### **Semana 1: Setup e Design System**
+
 - [ ] Configurar Google Fonts (Outfit + Inter)
 - [ ] Configurar Tabler Icons como dependência
 - [ ] Implementar sistema de tipografia
@@ -530,6 +620,7 @@ module.exports = {
 - [ ] Documentar convenções de uso
 
 #### **Semana 2: Internacionalização e Aplicação do Design System**
+
 - [ ] Configurar next-intl
 - [ ] Criar estrutura de traduções
 - [ ] Implementar middleware de localização
@@ -541,6 +632,7 @@ module.exports = {
 - [ ] Validar consistência visual
 
 #### **Semana 2.5: Integração Multi-Modelo**
+
 - [ ] Configurar Hugging Face API e tokens
 - [ ] Implementar serviço FinBERT
 - [ ] Criar function calling setup
@@ -548,12 +640,14 @@ module.exports = {
 - [ ] Testar integração DeepSeek + FinBERT
 
 #### **Semana 3: Dados de Mercado**
+
 - [ ] Integrar traduções com análise de sentimento
 - [ ] Localizar componentes de mercado
 - [ ] Implementar formatação de números por locale
 - [ ] Testar fluxos em ambos idiomas
 
 #### **Semana 4: Integração Avançada e Análises**
+
 - [ ] Adicionar análise de sentimento ao chat
 - [ ] Implementar componentes de visualização
 - [ ] Criar dashboard de sentimento
@@ -565,6 +659,7 @@ module.exports = {
 #### **Biblioteca: next-intl (Open Source)**
 
 **Por que next-intl:**
+
 - **Open source** e mantido ativamente
 - **Integração nativa** com Next.js 14 App Router
 - **Type-safe** com TypeScript
@@ -575,6 +670,7 @@ module.exports = {
 #### **Configuração Base**
 
 **1. Estrutura de Arquivos:**
+
 ```
 src/
 ├── i18n/
@@ -596,25 +692,27 @@ src/
 ```
 
 **2. Configuração next-intl:**
+
 ```typescript
 // src/i18n/config.ts
 export const locales = ['en', 'pt-BR'] as const;
-export type Locale = typeof locales[number];
+export type Locale = (typeof locales)[number];
 
 export const defaultLocale: Locale = 'pt-BR';
 
 export const localeNames: Record<Locale, string> = {
-  'en': 'English',
-  'pt-BR': 'Português (Brasil)'
+  en: 'English',
+  'pt-BR': 'Português (Brasil)',
 };
 
 export const localeFlags: Record<Locale, string> = {
-  'en': '🇺🇸',
-  'pt-BR': '🇧🇷'
+  en: '🇺🇸',
+  'pt-BR': '🇧🇷',
 };
 ```
 
 **3. Middleware de Localização:**
+
 ```typescript
 // src/middleware.ts
 import createMiddleware from 'next-intl/middleware';
@@ -623,24 +721,25 @@ import { locales, defaultLocale } from './i18n/config';
 export default createMiddleware({
   locales,
   defaultLocale,
-  localePrefix: 'as-needed' // /en/dashboard ou /dashboard (pt-BR)
+  localePrefix: 'as-needed', // /en/dashboard ou /dashboard (pt-BR)
 });
 
 export const config = {
-  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)']
+  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'],
 };
 ```
 
 #### **Estrutura de Traduções**
 
 **1. Traduções Comuns (common.json):**
+
 ```json
 // src/i18n/locales/pt-BR/common.json
 {
   "navigation": {
     "dashboard": "Dashboard",
     "chat": "Chat",
-    "portfolio": "Portfólio", 
+    "portfolio": "Portfólio",
     "market": "Mercado",
     "alerts": "Alertas",
     "settings": "Configurações"
@@ -673,6 +772,7 @@ export const config = {
 ```
 
 **2. Traduções do Chat (chat.json):**
+
 ```json
 // src/i18n/locales/pt-BR/chat.json
 {
@@ -684,7 +784,7 @@ export const config = {
   },
   "commands": {
     "analyze": "Analisar",
-    "compare": "Comparar", 
+    "compare": "Comparar",
     "alert": "Criar alerta",
     "portfolio": "Portfólio",
     "scan": "Escanear mercado"
@@ -699,6 +799,7 @@ export const config = {
 ```
 
 **3. Traduções de Mercado (market.json):**
+
 ```json
 // src/i18n/locales/pt-BR/market.json
 {
@@ -714,7 +815,7 @@ export const config = {
   },
   "sentiment": {
     "positive": "Positivo",
-    "negative": "Negativo", 
+    "negative": "Negativo",
     "neutral": "Neutro",
     "confidence": "Confiança",
     "analysis": "Análise de sentimento",
@@ -733,6 +834,7 @@ export const config = {
 #### **Implementação nos Componentes**
 
 **1. Hook de Tradução:**
+
 ```typescript
 // src/hooks/use-translations.ts
 import { useTranslations } from 'next-intl';
@@ -755,6 +857,7 @@ export function useSentimentTranslations() {
 ```
 
 **2. Componente com Tradução:**
+
 ```typescript
 // src/components/market/sentiment-indicator.tsx
 import { useSentimentTranslations } from '@/hooks/use-translations';
@@ -769,7 +872,7 @@ interface SentimentIndicatorProps {
 
 export function SentimentIndicator({ sentiment, score }: SentimentIndicatorProps) {
   const t = useSentimentTranslations();
-  
+
   const getColor = () => {
     switch (sentiment) {
       case 'positive': return 'text-green-600';
@@ -780,9 +883,9 @@ export function SentimentIndicator({ sentiment, score }: SentimentIndicatorProps
 
   return (
     <div className={`flex items-center gap-2 ${getColor()}`}>
-      <Icon 
-        icon={CONTEXT_ICONS.sentiment[sentiment]} 
-        size="sm" 
+      <Icon
+        icon={CONTEXT_ICONS.sentiment[sentiment]}
+        size="sm"
       />
       <span className="font-medium">{t(sentiment)}</span>
       <span className="text-sm opacity-75">
@@ -794,6 +897,7 @@ export function SentimentIndicator({ sentiment, score }: SentimentIndicatorProps
 ```
 
 **3. Seletor de Idioma:**
+
 ```
 // src/components/layout/language-selector.tsx
 import { useLocale } from 'next-intl';
@@ -839,6 +943,7 @@ export function LanguageSelector() {
 #### **Integração com Multi-Modelo**
 
 **Tradução Automática de Sentimento:**
+
 ```
 // src/lib/services/finbert.ts (atualizado)
 import { getTranslations } from 'next-intl/server';
@@ -848,15 +953,15 @@ export async function analyzeFinancialSentiment(
   locale: string = 'pt-BR'
 ): Promise<FinBERTResponse> {
   const usePortuguese = locale === 'pt-BR';
-  const model = usePortuguese 
+  const model = usePortuguese
     ? "lucas-leme/FinBERT-PT-BR"
     : "ProsusAI/finbert";
-    
+
   // ... análise do FinBERT ...
-  
+
   // Traduzir resultado se necessário
   const t = await getTranslations({ locale, namespace: 'market.sentiment' });
-  
+
   return {
     label: result[0].label,
     score: result[0].score,
@@ -869,6 +974,7 @@ export async function analyzeFinancialSentiment(
 ### Cronograma de Implementação
 
 #### **Semana 1.5: Design System** (Inserir na Semana 1)
+
 - [ ] Configurar Tabler Icons como dependência
 - [ ] Criar sistema de ícones padronizado
 - [ ] Implementar componente Icon wrapper
@@ -876,6 +982,7 @@ export async function analyzeFinancialSentiment(
 - [ ] Documentar convenções de uso
 
 #### **Semana 2: Internacionalização** (Expandir Semana 2)
+
 - [ ] Configurar next-intl
 - [ ] Criar estrutura de traduções
 - [ ] Implementar middleware de localização
@@ -883,6 +990,7 @@ export async function analyzeFinancialSentiment(
 - [ ] Implementar seletor de idioma
 
 #### **Semana 2.5: Integração Multi-Modelo** (Inserir entre Semana 2 e 3)
+
 - [ ] Configurar Hugging Face API e tokens
 - [ ] Implementar serviço FinBERT
 - [ ] Criar function calling setup
@@ -890,6 +998,7 @@ export async function analyzeFinancialSentiment(
 - [ ] Testar integração DeepSeek + FinBERT
 
 #### **Semana 3: Dados de Mercado** (Expandir seção existente)
+
 - [ ] Integrar traduções com análise de sentimento
 - [ ] Localizar componentes de mercado
 - [ ] Implementar formatação de números por locale
@@ -900,6 +1009,7 @@ export async function analyzeFinancialSentiment(
 ## Sistema Multi-Modelo Inteligente (Baseado em multi-model.md)
 
 ### Visão Geral da Integração
+
 Implementação de um sistema híbrido que combina **DeepSeek-V3** como orquestrador principal com modelos especializados como **FinBERT** para análise de sentimento financeiro, maximizando eficiência e reduzindo custos.
 
 ### Arquitetura Multi-Modelo
@@ -928,12 +1038,14 @@ Implementação de um sistema híbrido que combina **DeepSeek-V3** como orquestr
 ### Modelos Especializados Integrados
 
 #### 1. **FinBERT para Análise de Sentimento**
+
 - **Modelo:** `ProsusAI/finbert` (Hugging Face)
 - **Versão PT-BR:** `lucas-leme/FinBERT-PT-BR`
 - **Função:** Classificação de sentimento financeiro (positive/neutral/negative)
 - **Integração:** Function Calling do DeepSeek-V3
 
 #### 2. **Casos de Uso Específicos**
+
 - **Análise de notícias** financeiras em tempo real
 - **Sentimento de earnings calls** e relatórios
 - **Classificação de posts** em redes sociais sobre ações
@@ -942,6 +1054,7 @@ Implementação de um sistema híbrido que combina **DeepSeek-V3** como orquestr
 ### Implementação Técnica
 
 #### 1. **Function Calling Setup**
+
 ```
 // src/lib/services/multi-model.ts
 import OpenAI from "openai";
@@ -964,7 +1077,7 @@ const FINBERT_TOOLS = [{
           description: "Texto financeiro para análise de sentimento"
         },
         contexto: {
-          type: "string", 
+          type: "string",
           description: "Contexto adicional (empresa, setor, etc.)"
         }
       },
@@ -975,6 +1088,7 @@ const FINBERT_TOOLS = [{
 ```
 
 #### 2. **FinBERT Service Integration**
+
 ```
 // src/lib/services/finbert.ts
 interface FinBERTResponse {
@@ -987,10 +1101,10 @@ export async function analyzeFinancialSentiment(
   text: string,
   usePortuguese = true
 ): Promise<FinBERTResponse> {
-  const model = usePortuguese 
+  const model = usePortuguese
     ? "lucas-leme/FinBERT-PT-BR"
     : "ProsusAI/finbert";
-    
+
   const response = await fetch(
     `https://api-inference.huggingface.co/models/${model}`,
     {
@@ -1002,7 +1116,7 @@ export async function analyzeFinancialSentiment(
       body: JSON.stringify({ inputs: text })
     }
   );
-  
+
   const result = await response.json();
   return {
     label: result[0].label,
@@ -1013,6 +1127,7 @@ export async function analyzeFinancialSentiment(
 ```
 
 #### 3. **API Route com Multi-Modelo**
+
 ```
 // src/app/api/chat/enhanced/route.ts
 import { NextRequest, NextResponse } from 'next/server';
@@ -1021,12 +1136,12 @@ import { analyzeFinancialSentiment } from '@/lib/services/finbert';
 
 export async function POST(request: NextRequest) {
   const { message, conversation_id } = await request.json();
-  
+
   // Verificar autenticação
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  
+
   // Configurar tools para DeepSeek
   const completion = await deepseek.chat.completions.create({
     model: "deepseek-chat",
@@ -1034,22 +1149,22 @@ export async function POST(request: NextRequest) {
     tools: FINBERT_TOOLS,
     stream: false
   });
-  
+
   const toolCall = completion.choices[0].message.tool_calls?.[0];
-  
+
   if (toolCall?.function.name === "analisar_sentimento_financeiro") {
     const args = JSON.parse(toolCall.function.arguments);
-    
+
     // Chamar FinBERT
     const sentiment = await analyzeFinancialSentiment(args.texto);
-    
+
     // Cache do resultado
     await redis.setex(
       `sentiment:${Buffer.from(args.texto).toString('base64')}`,
       3600, // 1 hora
       JSON.stringify(sentiment)
     );
-    
+
     // Segunda chamada ao DeepSeek com resultado
     const finalResponse = await deepseek.chat.completions.create({
       model: "deepseek-chat",
@@ -1062,13 +1177,13 @@ export async function POST(request: NextRequest) {
         }
       ]
     });
-    
+
     return NextResponse.json({
       response: finalResponse.choices[0].message.content,
       sentiment_analysis: sentiment
     });
   }
-  
+
   return NextResponse.json({
     response: completion.choices[0].message.content
   });
@@ -1078,6 +1193,7 @@ export async function POST(request: NextRequest) {
 ### Cache e Otimizações
 
 #### 1. **Cache Inteligente de Sentimento**
+
 ```
 // src/lib/services/sentiment-cache.ts
 import { redis } from '@/lib/redis';
@@ -1095,13 +1211,14 @@ export async function cacheSentiment(text: string, result: FinBERTResponse) {
 ```
 
 #### 2. **Paralelização de Chamadas**
+
 ```
 // Para múltiplas análises simultâneas
 export async function analyzeBatchSentiment(texts: string[]) {
-  const promises = texts.map(text => 
+  const promises = texts.map(text =>
     getCachedSentiment(text) || analyzeFinancialSentiment(text)
   );
-  
+
   return Promise.all(promises);
 }
 ```
@@ -1109,6 +1226,7 @@ export async function analyzeBatchSentiment(texts: string[]) {
 ### Database Schema Extensions
 
 #### 1. **Tabela de Análises de Sentimento**
+
 ```
 // Adicionar à migration existente
 create table sentiment_analysis (
@@ -1129,6 +1247,7 @@ create index idx_sentiment_created_at on sentiment_analysis(created_at);
 ```
 
 #### 2. **Função PostgreSQL para Agregação**
+
 ```
 // Função para calcular sentimento médio por período
 create or replace function get_sentiment_trend(
@@ -1142,7 +1261,7 @@ begin
     'symbol', symbol_param,
     'period_days', days_back,
     'avg_sentiment', avg(
-      case 
+      case
         when sentiment_label = 'positive' then 1
         when sentiment_label = 'neutral' then 0
         when sentiment_label = 'negative' then -1
@@ -1158,7 +1277,7 @@ begin
   from sentiment_analysis sa
   where sa.context_data->>'symbol' = symbol_param
     and sa.created_at >= now() - interval '1 day' * days_back;
-  
+
   return result;
 end;
 $$ language plpgsql security definer;
@@ -1167,6 +1286,7 @@ $$ language plpgsql security definer;
 ### Frontend Components
 
 #### 1. **Componente de Sentimento**
+
 ```
 // src/components/market/sentiment-indicator.tsx
 interface SentimentIndicatorProps {
@@ -1203,6 +1323,7 @@ export function SentimentIndicator({ sentiment, score, symbol }: SentimentIndica
 ```
 
 #### 2. **Chat com Análise de Sentimento**
+
 ```
 // src/components/chat/enhanced-message.tsx
 interface EnhancedMessageProps {
@@ -1216,14 +1337,14 @@ export function EnhancedMessage({ content, sentimentAnalysis }: EnhancedMessageP
       <div className="prose prose-sm max-w-none">
         <ReactMarkdown>{content}</ReactMarkdown>
       </div>
-      
+
       {sentimentAnalysis && (
         <div className="bg-gray-50 rounded-lg p-3 border-l-4 border-blue-500">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700">
               Análise de Sentimento
             </span>
-            <SentimentIndicator 
+            <SentimentIndicator
               sentiment={sentimentAnalysis.label}
               score={sentimentAnalysis.score}
             />
@@ -1238,6 +1359,7 @@ export function EnhancedMessage({ content, sentimentAnalysis }: EnhancedMessageP
 ### Cronograma de Implementação
 
 #### **Semana 1.5: Design System** (Inserir na Semana 1)
+
 - [ ] Configurar Tabler Icons como dependência
 - [ ] Criar sistema de ícones padronizado
 - [ ] Implementar componente Icon wrapper
@@ -1245,6 +1367,7 @@ export function EnhancedMessage({ content, sentimentAnalysis }: EnhancedMessageP
 - [ ] Documentar convenções de uso
 
 #### **Semana 2: Internacionalização** (Expandir Semana 2)
+
 - [ ] Configurar next-intl
 - [ ] Criar estrutura de traduções
 - [ ] Implementar middleware de localização
@@ -1252,6 +1375,7 @@ export function EnhancedMessage({ content, sentimentAnalysis }: EnhancedMessageP
 - [ ] Implementar seletor de idioma
 
 #### **Semana 2.5: Integração Multi-Modelo** (Inserir entre Semana 2 e 3)
+
 - [ ] Configurar Hugging Face API e tokens
 - [ ] Implementar serviço FinBERT
 - [ ] Criar function calling setup
@@ -1259,12 +1383,14 @@ export function EnhancedMessage({ content, sentimentAnalysis }: EnhancedMessageP
 - [ ] Testar integração DeepSeek + FinBERT
 
 #### **Semana 3: Dados de Mercado** (Expandir seção existente)
+
 - [ ] Integrar traduções com análise de sentimento
 - [ ] Localizar componentes de mercado
 - [ ] Implementar formatação de números por locale
 - [ ] Testar fluxos em ambos idiomas
 
 #### **Semana 4: Integração Avançada e Análises**
+
 - [ ] Adicionar análise de sentimento ao chat
 - [ ] Implementar componentes de visualização
 - [ ] Criar dashboard de sentimento
@@ -1272,6 +1398,7 @@ export function EnhancedMessage({ content, sentimentAnalysis }: EnhancedMessageP
 - [ ] Implementar trending de sentimento
 
 ### Variáveis de Ambiente Adicionais
+
 ```
 # Multi-Model APIs
 HF_TOKEN=hf_your_hugging_face_token
@@ -1284,6 +1411,7 @@ BATCH_ANALYSIS_LIMIT=10
 ```
 
 ### Dependências Adicionais
+
 ```
 {
   "dependencies": {
@@ -1301,18 +1429,21 @@ BATCH_ANALYSIS_LIMIT=10
 ### Benefícios da Integração Multi-Modelo
 
 #### 1. **Técnicos**
+
 - **Redução de custos:** 40-60% menor que usar apenas GPT-4
 - **Latência otimizada:** Análises paralelas com Promise.all
 - **Especialização:** FinBERT 95%+ accuracy em sentimento financeiro
 - **Escalabilidade:** Cache inteligente reduz chamadas repetidas
 
 #### 2. **Funcionais**
+
 - **Análise de sentimento** em tempo real para notícias
 - **Trending de sentimento** por ação/setor
 - **Alertas baseados em sentimento** (ex: sentimento muito negativo)
 - **Contexto enriquecido** para decisões de investimento
 
 #### 3. **Experiência do Usuário**
+
 - **Respostas mais precisas** com dados quantitativos
 - **Visualizações de sentimento** integradas ao chat
 - **Histórico de análises** para acompanhamento
@@ -1323,6 +1454,7 @@ BATCH_ANALYSIS_LIMIT=10
 ## Arquitetura do Sistema
 
 ### Estrutura Unificada do Projeto
+
 ```
 penny-wise/
 ├── src/                     # Next.js Application (Frontend + API Routes)
@@ -1364,6 +1496,7 @@ penny-wise/
 ```
 
 ### Core Features
+
 1. **Chat Interface** - Conversa fluida com histórico e context-aware responses
 2. **Análise de Ações** - Consulta preços, gráficos, indicadores técnicos
 3. **Análise de Opções** - Greeks, volatilidade, estratégias, payoff diagrams
@@ -1376,18 +1509,21 @@ penny-wise/
 ### Melhorias Arquiteturais Propostas
 
 #### 1. **Arquitetura Híbrida Inteligente**
+
 - **Next.js API Routes** para lógica de negócio e integração com APIs externas
 - **Supabase Edge Functions** apenas para processamento pesado e jobs em background
 - **Server Components** para renderização otimizada de dados de mercado
 - **Client Components** para interatividade e real-time updates
 
 #### 2. **Sistema de Cache Multicamadas**
+
 - **Redis/Upstash** para cache de alta performance
 - **Next.js Cache** para dados estáticos
 - **TanStack Query** para cache client-side
 - **Supabase Cache** para dados de banco
 
 #### 3. **Real-time Architecture**
+
 - **Supabase Realtime** para updates de mercado
 - **WebSocket** para chat em tempo real
 - **Server-Sent Events** para notificações
@@ -1400,6 +1536,7 @@ penny-wise/
 ## SEMANA 1: Setup e Configuração Base
 
 ### Setup Unificado do Projeto
+
 - [ ] Criar projeto Next.js 14 com TypeScript
 - [ ] Configurar Tailwind CSS + shadcn/ui
 - [ ] Configurar ESLint + Prettier + Husky
@@ -1409,6 +1546,7 @@ penny-wise/
 - [ ] Configurar monitoramento (Sentry/LogRocket)
 
 **Comandos de Setup:**
+
 ```
 # Criar projeto Next.js
 npx create-next-app@latest penny-wise --typescript --tailwind --eslint --app
@@ -1433,12 +1571,14 @@ npx shadcn-ui@latest add button input card dialog
 ```
 
 ### Database Schema Base
+
 - [ ] Criar migration inicial
 - [ ] Implementar tabelas core
 - [ ] Configurar Row Level Security (RLS)
 - [ ] Testar políticas de segurança
 
 **Schema Principal:**
+
 ```
 -- Usuários (estende auth.users)
 create table profiles (
@@ -1494,6 +1634,7 @@ create table saved_analysis (
 ```
 
 ### Autenticação
+
 - [ ] Configurar providers OAuth (Google, GitHub)
 - [ ] Configurar Magic Link
 - [ ] Configurar templates de email
@@ -1504,6 +1645,7 @@ create table saved_analysis (
 ## SEMANA 2: Autenticação e Chat Inteligente
 
 ### Sistema de Autenticação Unificado
+
 - [ ] Configurar Supabase Auth com providers sociais
 - [ ] Implementar middleware de autenticação Next.js
 - [ ] Criar componentes de login/registro
@@ -1511,6 +1653,7 @@ create table saved_analysis (
 - [ ] Gerenciamento de sessão com cookies seguros
 
 ### API Routes para Chat
+
 - [ ] Criar `/api/chat/send` - Endpoint principal do chat
 - [ ] Implementar integração com DeepSeek-V3
 - [ ] Sistema de context injection inteligente
@@ -1518,6 +1661,7 @@ create table saved_analysis (
 - [ ] Rate limiting por usuário
 
 **API Route Example:**
+
 ```
 // src/app/api/chat/send/route.ts
 import { NextRequest, NextResponse } from 'next/server'
@@ -1528,22 +1672,22 @@ import { redis } from '@/lib/redis'
 
 export async function POST(request: NextRequest) {
   const { message, conversation_id } = await request.json()
-  
+
   // Verificar autenticação
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  
+
   // Rate limiting
   const rateLimitKey = `rate_limit:${user.id}`
   const requests = await redis.incr(rateLimitKey)
   if (requests === 1) await redis.expire(rateLimitKey, 60)
   if (requests > 10) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
-  
+
   // Buscar histórico com cache
   const cacheKey = `conversation:${conversation_id}`
   let history = await redis.get(cacheKey)
-  
+
   if (!history) {
     const { data } = await supabase
       .from('messages')
@@ -1553,31 +1697,32 @@ export async function POST(request: NextRequest) {
     history = data
     await redis.setex(cacheKey, 300, JSON.stringify(history)) // 5min cache
   }
-  
+
   // Context injection inteligente
   const marketContext = await getMarketContext(message)
-  
+
   // Chamar Deepseek com streaming
   const response = await callDeepseek({
     messages: [...history, { role: 'user', content: message }],
     context: marketContext,
     stream: true
   })
-  
+
   // Salvar mensagens
   await supabase.from('messages').insert([
     { conversation_id, role: 'user', content: message, user_id: user.id },
     { conversation_id, role: 'assistant', content: response, user_id: user.id }
   ])
-  
+
   // Invalidar cache
   await redis.del(cacheKey)
-  
+
   return NextResponse.json({ response })
 }
 ```
 
 ### Interface de Chat Avançada
+
 - [ ] Chat com streaming de respostas
 - [ ] Markdown rendering com syntax highlighting
 - [ ] Comandos especiais (/analyze, /compare, /alert)
@@ -1586,6 +1731,7 @@ export async function POST(request: NextRequest) {
 - [ ] Export de conversas
 
 **Componentes Principais:**
+
 - `ChatInterface` - Container principal
 - `MessageStream` - Streaming de respostas
 - `CommandPalette` - Comandos especiais
@@ -1593,6 +1739,7 @@ export async function POST(request: NextRequest) {
 - `ConversationHistory` - Histórico com busca
 
 ### Layout e Navegação
+
 - [ ] Layout responsivo com sidebar colapsável
 - [ ] Navegação contextual baseada na página
 - [ ] Breadcrumbs dinâmicos
@@ -1600,6 +1747,7 @@ export async function POST(request: NextRequest) {
 - [ ] Tema dark/light com persistência
 
 **Componentes de Layout:**
+
 - `AppShell` - Container principal
 - `NavigationSidebar` - Navegação lateral
 - `TopBar` - Barra superior com user menu
@@ -1610,6 +1758,7 @@ export async function POST(request: NextRequest) {
 ## SEMANA 2.5: Integração Multi-Modelo
 
 ### Sistema Multi-Modelo com FinBERT
+
 - [ ] Configurar Hugging Face API e tokens
 - [ ] Implementar serviço FinBERT para análise de sentimento
 - [ ] Criar function calling setup para DeepSeek-V3
@@ -1617,12 +1766,14 @@ export async function POST(request: NextRequest) {
 - [ ] Testar integração DeepSeek + FinBERT
 
 ### Database Schema para Sentimento
+
 - [ ] Criar tabela sentiment_analysis
 - [ ] Implementar índices para performance
 - [ ] Criar função PostgreSQL para agregação de sentimento
 - [ ] Configurar políticas RLS para análises
 
 **Sentiment Analysis Schema:**
+
 ```sql
 -- Tabela de análises de sentimento
 create table sentiment_analysis (
@@ -1643,6 +1794,7 @@ create index idx_sentiment_created_at on sentiment_analysis(created_at);
 ```
 
 ### API Routes para Multi-Modelo
+
 - [ ] Criar `/api/chat/enhanced` - Chat com análise de sentimento
 - [ ] Implementar cache inteligente de sentimento
 - [ ] Configurar rate limiting para APIs externas
@@ -1653,6 +1805,7 @@ create index idx_sentiment_created_at on sentiment_analysis(created_at);
 ## SEMANA 3: Dados de Mercado
 
 ### Backend: Market Data APIs
+
 - [ ] Integração com Alpha Vantage API
 - [ ] Integração com Yahoo Finance (fallback)
 - [ ] Sistema de cache inteligente
@@ -1660,30 +1813,34 @@ create index idx_sentiment_created_at on sentiment_analysis(created_at);
 - [ ] Tratamento de rate limits
 
 **Market Data Function:**
+
 ```typescript
 // supabase/functions/market-data/index.ts
-serve(async (req) => {
-  const { symbols, dataType } = await req.json()
-  
+serve(async req => {
+  const { symbols, dataType } = await req.json();
+
   // Verificar cache primeiro
-  const cachedData = await checkCache(symbols)
-  const needsUpdate = symbols.filter(s => !cachedData[s] || isStale(cachedData[s]))
-  
+  const cachedData = await checkCache(symbols);
+  const needsUpdate = symbols.filter(
+    s => !cachedData[s] || isStale(cachedData[s])
+  );
+
   // Buscar dados frescos das APIs
   const freshData = await Promise.all([
     fetchAlphaVantage(needsUpdate),
     fetchYahooFinance(needsUpdate), // fallback
-    fetchPolygonFree(needsUpdate)   // backup
-  ])
-  
+    fetchPolygonFree(needsUpdate), // backup
+  ]);
+
   // Atualizar cache
-  await updateCache(freshData)
-  
-  return new Response(JSON.stringify(freshData))
-})
+  await updateCache(freshData);
+
+  return new Response(JSON.stringify(freshData));
+});
 ```
 
 ### Frontend: Visualização de Dados
+
 - [ ] Componentes de mercado
 - [ ] Cards de ações
 - [ ] Tabelas de cotações
@@ -1691,6 +1848,7 @@ serve(async (req) => {
 - [ ] Watchlist interface
 
 **Componentes:**
+
 - `StockCard`
 - `PriceTable`
 - `SimpleChart`
@@ -1698,6 +1856,7 @@ serve(async (req) => {
 - `MarketOverview`
 
 ### Real-time Features
+
 - [ ] WebSocket connection
 - [ ] Real-time messages
 - [ ] Real-time market data
@@ -1705,19 +1864,24 @@ serve(async (req) => {
 - [ ] Reconnection logic
 
 **Real-time Setup:**
+
 ```typescript
 // Real-time para watchlist
 const subscription = supabase
   .channel('watchlist-updates')
-  .on('postgres_changes', {
-    event: '*',
-    schema: 'public',
-    table: 'market_cache',
-    filter: `symbol=in.(${userWatchlist.join(',')})`
-  }, (payload) => {
-    updatePrices(payload.new)
-  })
-  .subscribe()
+  .on(
+    'postgres_changes',
+    {
+      event: '*',
+      schema: 'public',
+      table: 'market_cache',
+      filter: `symbol=in.(${userWatchlist.join(',')})`,
+    },
+    payload => {
+      updatePrices(payload.new);
+    }
+  )
+  .subscribe();
 ```
 
 ---
@@ -1725,6 +1889,7 @@ const subscription = supabase
 ## SEMANA 4: Integração Avançada e Análises
 
 ### Backend: Options Analysis
+
 - [ ] Implementar cálculos de Greeks
 - [ ] Cálculo de volatilidade implícita
 - [ ] Análise de estratégias de opções
@@ -1732,33 +1897,36 @@ const subscription = supabase
 - [ ] Cache de cálculos complexos
 
 **Options Analysis Function:**
+
 ```typescript
 // supabase/functions/options-analysis/index.ts
-serve(async (req) => {
-  const { symbol, expiration, strategy } = await req.json()
-  
+serve(async req => {
+  const { symbol, expiration, strategy } = await req.json();
+
   // Buscar cadeia de opções
-  const options = await getOptionsChain(symbol, expiration)
-  
+  const options = await getOptionsChain(symbol, expiration);
+
   // Calcular Greeks e métricas
   const analysis = {
     greeks: calculateGreeks(options),
     volatility: calculateIV(options),
     strategies: analyzeStrategies(options, strategy),
-    riskMetrics: calculateRisk(options)
-  }
-  
-  return new Response(JSON.stringify(analysis))
-})
+    riskMetrics: calculateRisk(options),
+  };
+
+  return new Response(JSON.stringify(analysis));
+});
 ```
 
 ### Database Functions (PostgreSQL)
+
 - [ ] Função para cálculo de portfolio
 - [ ] Função para análise técnica
 - [ ] Função para ranking de ações
 - [ ] Otimização de queries complexas
 
 **Portfolio Function:**
+
 ```sql
 -- Função para calcular portfolio performance
 create or replace function calculate_portfolio_performance(user_uuid uuid)
@@ -1774,13 +1942,14 @@ begin
   from watchlist w
   join market_cache m on w.symbol = m.symbol
   where w.user_id = user_uuid;
-  
+
   return result;
 end;
 $$ language plpgsql security definer;
 ```
 
 ### Vector Search (RAG)
+
 - [ ] Habilitar extensão pgvector
 - [ ] Criar tabela de embeddings
 - [ ] Implementar geração de embeddings
@@ -1788,6 +1957,7 @@ $$ language plpgsql security definer;
 - [ ] Integração com chat
 
 **Vector Setup:**
+
 ```sql
 -- Habilitar pgvector
 create extension if not exists vector;
@@ -1809,6 +1979,7 @@ limit 5;
 ```
 
 ### Frontend: Gráficos Avançados
+
 - [ ] Integração com Chart.js/Recharts
 - [ ] Gráficos de candlestick
 - [ ] Gráficos de volume
@@ -1816,6 +1987,7 @@ limit 5;
 - [ ] Análise de opções
 
 **Componentes:**
+
 - `AdvancedChart`
 - `CandlestickChart`
 - `OptionsTable`
@@ -1823,6 +1995,7 @@ limit 5;
 - `PayoffDiagram`
 
 ### Integração de Análise de Sentimento
+
 - [ ] Adicionar análise de sentimento ao chat
 - [ ] Implementar componentes de visualização de sentimento
 - [ ] Criar dashboard de sentimento
@@ -1831,6 +2004,7 @@ limit 5;
 - [ ] Configurar alertas baseados em sentimento
 
 **Componentes de Sentimento:**
+
 - `SentimentIndicator`
 - `SentimentDashboard`
 - `SentimentTrend`
@@ -1841,6 +2015,7 @@ limit 5;
 ## SEMANA 5: Features Avançadas e Alertas
 
 ### Backend: Sistema de Alertas
+
 - [ ] Sistema de alertas de preço
 - [ ] Alertas de volume
 - [ ] Alertas técnicos (RSI, MACD, etc.)
@@ -1848,12 +2023,14 @@ limit 5;
 - [ ] Histórico de alertas
 
 ### Scheduled Jobs (Cron)
+
 - [ ] Job para atualização de cache
 - [ ] Job para processamento de alertas
 - [ ] Job para limpeza de dados antigos
 - [ ] Monitoramento de jobs
 
 **Cron Jobs:**
+
 ```sql
 -- Atualizar cache de mercado a cada 5 minutos
 select cron.schedule(
@@ -1864,6 +2041,7 @@ select cron.schedule(
 ```
 
 ### Frontend: Dashboard e Features
+
 - [ ] Dashboard personalizado
 - [ ] Widgets configuráveis
 - [ ] Sistema de notificações
@@ -1871,6 +2049,7 @@ select cron.schedule(
 - [ ] Exportação de dados
 
 **Componentes:**
+
 - `Dashboard`
 - `Widget`
 - `NotificationCenter`
@@ -1878,22 +2057,24 @@ select cron.schedule(
 - `ExportDialog`
 
 ### Storage e Otimizações
+
 - [ ] Configurar buckets para charts
 - [ ] Configurar buckets para exports
 - [ ] Políticas de acesso
 - [ ] Limpeza automática de arquivos
 
 **Storage Setup:**
+
 ```typescript
 // Salvar gráficos gerados
 const { data, error } = await supabase.storage
   .from('charts')
-  .upload(`${userId}/${symbol}-${timestamp}.png`, chartBlob)
+  .upload(`${userId}/${symbol}-${timestamp}.png`, chartBlob);
 
 // URLs públicas temporárias
-const { data: { publicUrl } } = supabase.storage
-  .from('charts')
-  .getPublicUrl(filePath)
+const {
+  data: { publicUrl },
+} = supabase.storage.from('charts').getPublicUrl(filePath);
 ```
 
 ---
@@ -1901,12 +2082,14 @@ const { data: { publicUrl } } = supabase.storage
 ## SEMANA 6: Otimização e Deploy
 
 ### Performance e Cache
+
 - [ ] Implementar Redis-like cache
 - [ ] Otimização de queries
 - [ ] Índices de banco otimizados
 - [ ] Compressão de dados
 
 ### Frontend: PWA e Otimizações
+
 - [ ] Code splitting
 - [ ] Lazy loading
 - [ ] Image optimization
@@ -1914,12 +2097,14 @@ const { data: { publicUrl } } = supabase.storage
 - [ ] Offline functionality
 
 ### Testes Completos
+
 - [ ] Testes de carga
 - [ ] Testes de stress
 - [ ] Testes de segurança
 - [ ] Testes de integração completa
 
 ### Deploy e CI/CD
+
 - [ ] Setup de staging environment
 - [ ] Pipeline de deploy automático
 - [ ] Rollback strategies
@@ -1927,6 +2112,7 @@ const { data: { publicUrl } } = supabase.storage
 - [ ] Monitoramento e logs
 
 ### Documentação
+
 - [ ] Documentação da API (OpenAPI)
 - [ ] Guias de desenvolvimento
 - [ ] Troubleshooting guide
@@ -2061,10 +2247,12 @@ penny-wise/
 ## Melhorias Arquiteturais Implementadas
 
 ### 1. **Arquitetura Unificada Full-Stack**
+
 **Antes:** Frontend e backend separados  
 **Agora:** Next.js 14 com API Routes integradas
 
 **Vantagens:**
+
 - **Desenvolvimento simplificado** - Um único repositório e deploy
 - **Type safety completo** - Tipos compartilhados entre frontend e backend
 - **Performance otimizada** - Server Components e caching nativo
@@ -2072,48 +2260,55 @@ penny-wise/
 - **Debugging facilitado** - Stack trace completo em um só lugar
 
 ### 2. **Sistema de Cache Inteligente Multicamadas**
+
 ```typescript
 // Exemplo de implementação do cache
 export async function getMarketData(symbol: string) {
   // 1. Cache Redis (mais rápido)
-  const cached = await redis.get(`market:${symbol}`)
-  if (cached) return JSON.parse(cached)
-  
+  const cached = await redis.get(`market:${symbol}`);
+  if (cached) return JSON.parse(cached);
+
   // 2. Cache Next.js (revalidação automática)
   const data = await fetch(`/api/market/quote/${symbol}`, {
-    next: { revalidate: 60 } // 1 minuto
-  })
-  
+    next: { revalidate: 60 }, // 1 minuto
+  });
+
   // 3. Cache no Supabase
   await supabase.from('market_cache').upsert({
     symbol,
     data: data,
-    updated_at: new Date()
-  })
-  
+    updated_at: new Date(),
+  });
+
   // 4. Cache Redis com TTL
-  await redis.setex(`market:${symbol}`, 300, JSON.stringify(data))
-  
-  return data
+  await redis.setex(`market:${symbol}`, 300, JSON.stringify(data));
+
+  return data;
 }
 ```
 
 ### 3. **Portfolio Tracker Avançado**
+
 Nova funcionalidade que não estava no plano original:
+
 - **Tracking automático** de posições
 - **Métricas de risco** em tempo real
 - **Performance attribution** por setor/ativo
 - **Rebalanceamento inteligente** com sugestões da IA
 
 ### 4. **Market Scanner com ML**
+
 Sistema de descoberta de oportunidades:
+
 - **Screening automático** baseado em critérios técnicos
 - **Alertas preditivos** usando análise de padrões
 - **Ranking de ações** por potencial de alta/baixa
 - **Backtesting** de estratégias
 
 ### 5. **Sistema de Comandos Avançado**
+
 Chat com comandos especiais:
+
 ```
 /analyze PETR4 - Análise completa da ação
 /compare PETR4 VALE3 - Comparação entre ativos
@@ -2124,33 +2319,38 @@ Chat com comandos especiais:
 ```
 
 ### 6. **Real-time Architecture Otimizada**
+
 ```typescript
 // Implementação de real-time otimizada
 export function useRealtimeMarketData(symbols: string[]) {
-  const [data, setData] = useState<MarketData[]>([])
-  
+  const [data, setData] = useState<MarketData[]>([]);
+
   useEffect(() => {
     // WebSocket para dados críticos (preços)
-    const ws = new WebSocket('/api/realtime/market')
-    
+    const ws = new WebSocket('/api/realtime/market');
+
     // Supabase Realtime para dados menos críticos
     const subscription = supabase
       .channel('market-updates')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'market_cache',
-        filter: `symbol=in.(${symbols.join(',')})`
-      }, handleUpdate)
-      .subscribe()
-    
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'market_cache',
+          filter: `symbol=in.(${symbols.join(',')})`,
+        },
+        handleUpdate
+      )
+      .subscribe();
+
     return () => {
-      ws.close()
-      subscription.unsubscribe()
-    }
-  }, [symbols])
-  
-  return data
+      ws.close();
+      subscription.unsubscribe();
+    };
+  }, [symbols]);
+
+  return data;
 }
 ```
 
@@ -2159,21 +2359,25 @@ export function useRealtimeMarketData(symbols: string[]) {
 ## APIs Externas e Integrações
 
 ### 1. DeepSeek-V3 API
+
 - **Endpoint:** `https://api.deepseek.com/v1/chat/completions`
 - **Autenticação:** API Key
 - **Rate Limit:** Verificar documentação
 
 ### 2. Alpha Vantage (Gratuito)
+
 - **Endpoint:** `https://www.alphavantage.co/query`
 - **Rate Limit:** 5 calls/minute, 500 calls/day
 - **Dados:** Ações, forex, crypto
 
 ### 3. Yahoo Finance (Backup)
+
 - **Endpoint:** Não oficial, usar biblioteca
 - **Rate Limit:** Não documentado
 - **Dados:** Ações globais
 
 ### 4. Oplab (Opções Brasil)
+
 - **Endpoint:** Verificar documentação
 - **Autenticação:** API Key
 - **Dados:** Opções B3
@@ -2183,6 +2387,7 @@ export function useRealtimeMarketData(symbols: string[]) {
 ## Dependências e Configuração
 
 ### Dependências Completas
+
 ```json
 {
   "dependencies": {
@@ -2243,6 +2448,7 @@ export function useRealtimeMarketData(symbols: string[]) {
 ```
 
 ### Variáveis de Ambiente
+
 ```env
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=
@@ -2277,6 +2483,7 @@ LOG_LEVEL=debug
 ## Custos e Recursos
 
 ### Supabase Free Tier
+
 - **Database:** 500MB
 - **Auth:** 50,000 usuários
 - **Storage:** 1GB
@@ -2284,6 +2491,7 @@ LOG_LEVEL=debug
 - **Realtime:** 200 conexões simultâneas
 
 ### Custos Externos (Mensal)
+
 - **Deepseek API:** $10-30/mês
 - **Upstash Redis:** $0-10/mês (tier gratuito até 10k requests)
 - **Market Data APIs:** Gratuito (tiers iniciais)
@@ -2291,13 +2499,16 @@ LOG_LEVEL=debug
 - **Total:** $10-40/mês
 
 ### Comparação de Custos: Antes vs Depois
+
 **Arquitetura Anterior (Separada):**
+
 - Supabase Pro: $25/mês
 - Vercel Pro: $20/mês (para backend)
 - APIs: $10-30/mês
 - **Total: $55-75/mês**
 
 **Nova Arquitetura (Unificada):**
+
 - Supabase Free: $0/mês
 - Upstash Redis: $0-10/mês
 - Vercel Free: $0/mês
@@ -2311,6 +2522,7 @@ LOG_LEVEL=debug
 ## Métricas de Sucesso
 
 ### Performance Targets
+
 - [ ] **Response Time:** < 200ms para 95% das requests
 - [ ] **First Contentful Paint:** < 1.5s
 - [ ] **Largest Contentful Paint:** < 2.5s
@@ -2318,6 +2530,7 @@ LOG_LEVEL=debug
 - [ ] **Bundle Size:** < 500KB (gzipped)
 
 ### Qualidade e Segurança
+
 - [ ] **Disponibilidade:** 99.9% uptime
 - [ ] **Escalabilidade:** Suportar 1000+ usuários simultâneos
 - [ ] **Segurança:** Zero vulnerabilidades críticas
@@ -2337,16 +2550,17 @@ LOG_LEVEL=debug
 5. **MSW (Mock Service Worker):** Simular APIs durante testes
 
 ### Exemplo de Mock:
+
 ```typescript
 // lib/mocks/market-data.ts
 export const mockMarketData = {
-  'PETR4': {
+  PETR4: {
     price: 32.45,
     change: 0.85,
     changePercent: 2.69,
-    volume: 15420000
-  }
-}
+    volume: 15420000,
+  },
+};
 ```
 
 ---
@@ -2354,6 +2568,7 @@ export const mockMarketData = {
 ## Vantagens da Nova Arquitetura Unificada
 
 ### Técnicas
+
 1. **Custo 60-70% menor** com tier gratuito otimizado
 2. **Performance superior** com cache multicamadas
 3. **Type safety completo** entre frontend e backend
@@ -2363,6 +2578,7 @@ export const mockMarketData = {
 7. **Escalabilidade automática** com Vercel + Supabase
 
 ### Funcionais
+
 1. **Portfolio Tracker** - Gestão completa de investimentos
 2. **Market Scanner** - Descoberta automática de oportunidades
 3. **Comandos Inteligentes** - Chat com ações diretas
@@ -2373,30 +2589,35 @@ export const mockMarketData = {
 ## Diferenciais Competitivos Únicos
 
 ### 1. **Chat Financeiro Mais Avançado do Mercado**
+
 - Context injection automático com dados de mercado
 - Comandos especiais para ações diretas
 - Streaming de respostas em tempo real
 - Upload e análise de planilhas
 
 ### 2. **Portfolio Intelligence**
+
 - Tracking automático de posições
 - Métricas de risco em tempo real
 - Sugestões de rebalanceamento com IA
 - Performance attribution detalhada
 
 ### 3. **Market Discovery Engine**
+
 - Scanner automático de oportunidades
 - Alertas preditivos com ML
 - Backtesting integrado
 - Ranking inteligente de ativos
 
 ### 4. **Performance e Custo Imbatíveis**
+
 - Carregamento sub-segundo
 - 60-70% mais barato que concorrentes
 - Escalabilidade automática
 - Zero downtime
 
 ### 5. **Developer Experience Superior**
+
 - Stack unificada moderna
 - Type safety completo
 - Hot reload em desenvolvimento
@@ -2414,7 +2635,7 @@ export const mockMarketData = {
 
 ---
 
-*Este documento serve como guia completo para o desenvolvimento do Penny Wise, combinando planejamento de backend, frontend e estratégia de MVP em um cronograma executável de 6 semanas.*
+_Este documento serve como guia completo para o desenvolvimento do Penny Wise, combinando planejamento de backend, frontend e estratégia de MVP em um cronograma executável de 6 semanas._
 
 ---
 
@@ -2427,44 +2648,51 @@ A integração do sistema multi-modelo baseado no `multi-model.md` no Penny Wise
 ### Pontos-Chave da Integração
 
 #### 1. **Timing Perfeito**
+
 - **Semana 2.5:** Implementação core do sistema multi-modelo
 - **Semana 4:** Expansão com análises avançadas de sentimento
 - **Zero atraso** no cronograma original
 
 #### 2. **Arquitetura Híbrida Inteligente**
+
 ```
 DeepSeek-V3 (Orquestrador) + FinBERT (Especialista) = Solução Completa
 ```
+
 - **DeepSeek-V3:** Mantém como modelo principal para chat e reasoning
 - **FinBERT:** Adiciona análise de sentimento financeiro especializada
 - **Function Calling:** Integração nativa e transparente
 
 #### 3. **ROI Imediato**
+
 - **Redução de custos:** 40-60% vs. usar apenas GPT-4
 - **Precisão superior:** FinBERT 95%+ accuracy em sentimento financeiro
 - **Diferencial competitivo:** Análise de sentimento em tempo real
 
 #### 4. **Implementação Progressiva**
 
-| Fase | Semana | Entregáveis | Impacto |
-|------|--------|-------------|---------|
-| **Setup** | 2.5 | FinBERT integration, Function calling | Base técnica |
-| **Core** | 4 | Sentiment analysis no chat | Feature completa |
-| **Advanced** | 5-6 | Dashboard, trending, alertas | Diferencial |
+| Fase         | Semana | Entregáveis                           | Impacto          |
+| ------------ | ------ | ------------------------------------- | ---------------- |
+| **Setup**    | 2.5    | FinBERT integration, Function calling | Base técnica     |
+| **Core**     | 4      | Sentiment analysis no chat            | Feature completa |
+| **Advanced** | 5-6    | Dashboard, trending, alertas          | Diferencial      |
 
 #### 5. **Benefícios Técnicos**
 
 **Performance:**
+
 - Cache inteligente com Redis (TTL 1h)
 - Paralelização com Promise.all
 - Fallbacks robustos
 
 **Escalabilidade:**
+
 - Batch processing para múltiplas análises
 - Rate limiting automático
 - Monitoramento de latência
 
 **Manutenibilidade:**
+
 - Código modular e testável
 - Types TypeScript completos
 - Documentação integrada
@@ -2472,12 +2700,14 @@ DeepSeek-V3 (Orquestrador) + FinBERT (Especialista) = Solução Completa
 #### 6. **Benefícios Funcionais**
 
 **Para Usuários:**
+
 - Análise de sentimento automática em notícias
 - Indicadores visuais de sentimento por ação
 - Alertas baseados em mudanças de sentimento
 - Histórico de análises para tracking
 
 **Para o Negócio:**
+
 - Diferencial competitivo único no mercado
 - Dados proprietários de sentimento
 - Insights para tomada de decisão
@@ -2486,16 +2716,19 @@ DeepSeek-V3 (Orquestrador) + FinBERT (Especialista) = Solução Completa
 ### Riscos Mitigados
 
 #### 1. **Dependência Externa (Hugging Face)**
+
 - **Solução:** Fallbacks e cache robusto
 - **Backup:** Múltiplos modelos disponíveis
 - **Monitoramento:** Health checks automáticos
 
 #### 2. **Latência Adicional**
+
 - **Solução:** Cache de 1 hora + paralelização
 - **Otimização:** Batch processing
 - **Fallback:** Resposta sem sentimento se timeout
 
 #### 3. **Custos de API**
+
 - **Solução:** Tier gratuito HF + cache inteligente
 - **Controle:** Rate limiting e batch limits
 - **Monitoramento:** Tracking de usage
@@ -2503,12 +2736,14 @@ DeepSeek-V3 (Orquestrador) + FinBERT (Especialista) = Solução Completa
 ### Métricas de Sucesso
 
 #### Técnicas
+
 - [ ] **Latência:** < 300ms para análise de sentimento
 - [ ] **Cache Hit Rate:** > 70%
 - [ ] **Uptime:** 99.9% para serviço de sentimento
 - [ ] **Accuracy:** > 90% vs. análise manual
 
 #### Funcionais
+
 - [ ] **Adoption:** 80% dos usuários usam análise de sentimento
 - [ ] **Engagement:** 25% aumento no tempo de sessão
 - [ ] **Retention:** 15% melhoria na retenção semanal
@@ -2517,16 +2752,19 @@ DeepSeek-V3 (Orquestrador) + FinBERT (Especialista) = Solução Completa
 ### Roadmap Futuro
 
 #### Curto Prazo (Pós-MVP)
+
 - [ ] Análise de sentimento em tempo real para watchlist
 - [ ] Alertas preditivos baseados em mudanças de sentimento
 - [ ] Dashboard de sentimento por setor/mercado
 
 #### Médio Prazo (3-6 meses)
+
 - [ ] Integração com mais modelos especializados
 - [ ] Análise de sentimento em redes sociais
 - [ ] ML para predição de movimentos baseado em sentimento
 
 #### Longo Prazo (6+ meses)
+
 - [ ] Modelos proprietários treinados em dados brasileiros
 - [ ] Análise multimodal (texto + imagem + vídeo)
 - [ ] Sistema de recomendação baseado em sentimento
@@ -2544,6 +2782,7 @@ A integração do sistema multi-modelo representa um **upgrade estratégico** do
 ### Funcionalidades Adicionais Integradas
 
 #### **Design System Profissional Completo**
+
 - **Sistema de ícones padronizado** com Lucide + Tabler Icons (outline style)
 - **Tipografia moderna** com Outfit (títulos) + Inter Light (textos)
 - **Botões 100% arredondados** com border radius consistente
@@ -2552,6 +2791,7 @@ A integração do sistema multi-modelo representa um **upgrade estratégico** do
 - **Documentação completa** de convenções e uso
 
 #### **Sistema de Tipografia Avançado (Google Fonts)**
+
 - **Outfit via Google Fonts** para todos os títulos e subtítulos (h1-h6)
 - **Inter Light (300) via Google Fonts** como peso principal para textos
 - **Implementação otimizada** com Next.js Font para ambas as fontes
@@ -2561,6 +2801,7 @@ A integração do sistema multi-modelo representa um **upgrade estratégico** do
 - **Performance optimization** com preload e display=swap
 
 #### **Interface Moderna com Bordas Arredondadas**
+
 - **Botões arredondados** em todos os tamanhos (8px a 16px)
 - **Cards e modais** com bordas suaves (16px-20px)
 - **Inputs e formulários** com cantos arredondados (12px)
@@ -2569,6 +2810,7 @@ A integração do sistema multi-modelo representa um **upgrade estratégico** do
 - **Acessibilidade mantida** com focus states otimizados
 
 #### **Internacionalização Completa**
+
 - **Suporte nativo** para Português (Brasil) e Inglês
 - **next-intl** para performance otimizada
 - **Traduções modulares** por namespace
@@ -2576,6 +2818,7 @@ A integração do sistema multi-modelo representa um **upgrade estratégico** do
 - **Formatação localizada** de números e datas
 
 #### **Integração Multi-Modelo Localizada**
+
 - **Análise de sentimento** em ambos idiomas
 - **FinBERT-PT-BR** para português
 - **FinBERT original** para inglês
@@ -2590,7 +2833,8 @@ Esta implementação posiciona o Penny Wise como a **plataforma de análise fina
 - **Arquitetura escalável** preparada para o futuro
 
 ---
-```
+
+````
 
 #### **Exemplo Prático de Implementação:**
 
@@ -2630,7 +2874,7 @@ export default function RootLayout({
     </html>
   );
 }
-```
+````
 
 ```css
 /* src/app/globals.css - Configuração CSS */
@@ -2642,12 +2886,12 @@ export default function RootLayout({
 /* Classes de tipografia com fontes Google Fonts */
 .heading-1 {
   font-family: var(--font-outfit);
-  @apply text-4xl font-medium leading-tight tracking-tight;
+  @apply text-4xl leading-tight font-medium tracking-tight;
 }
 
 .body-normal {
   font-family: var(--font-inter);
-  @apply text-base font-light leading-normal;
+  @apply text-base leading-normal font-light;
 }
 ```
 

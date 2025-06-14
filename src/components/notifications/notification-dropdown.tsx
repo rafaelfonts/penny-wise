@@ -1,38 +1,39 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Bell } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { useState, useEffect } from 'react';
+import { Bell } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover'
-import { NotificationCenter } from './notification-center'
-import { notificationService } from '@/lib/services/notifications-temp'
-import type { NotificationStats } from '@/lib/types/alerts'
+} from '@/components/ui/popover';
+import { NotificationCenter } from './notification-center';
+import { notificationService } from '@/lib/services/notifications-temp';
+import type { NotificationStats } from '@/lib/types/alerts';
 
 export function NotificationDropdown() {
-  const [stats, setStats] = useState<NotificationStats | null>(null)
-  const [open, setOpen] = useState(false)
+  const [stats, setStats] = useState<NotificationStats | null>(null);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    loadStats()
-    
+    loadStats();
+
     // Auto-refresh stats every 30 seconds
-    const interval = setInterval(loadStats, 30000)
-    return () => clearInterval(interval)
-  }, [])
+    const interval = setInterval(loadStats, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const loadStats = async () => {
     try {
-      const notificationStats = await notificationService.getNotificationStats()
-      setStats(notificationStats)
+      const notificationStats =
+        await notificationService.getNotificationStats();
+      setStats(notificationStats);
     } catch (err) {
-      console.error('Failed to load notification stats:', err)
+      console.error('Failed to load notification stats:', err);
     }
-  }
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -45,26 +46,23 @@ export function NotificationDropdown() {
         >
           <Bell className="h-4 w-4" />
           {stats && stats.unread > 0 && (
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs flex items-center justify-center"
+            <Badge
+              variant="destructive"
+              className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center p-0 text-xs"
             >
               {stats.unread > 99 ? '99+' : stats.unread}
             </Badge>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent 
-        className="w-96 p-0" 
-        align="end" 
-        side="bottom" 
+      <PopoverContent
+        className="w-96 p-0"
+        align="end"
+        side="bottom"
         sideOffset={8}
       >
-        <NotificationCenter 
-          variant="dropdown" 
-          maxHeight="500px"
-        />
+        <NotificationCenter variant="dropdown" maxHeight="500px" />
       </PopoverContent>
     </Popover>
-  )
-} 
+  );
+}

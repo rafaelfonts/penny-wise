@@ -38,6 +38,70 @@ interface UnifiedMarketDataConfig {
   batchDelay: number;
 }
 
+// Utility function to handle errors and convert responses
+async function withErrorHandling<T>(
+  promise: Promise<unknown>,
+  operation: string,
+  source: DataSource
+): Promise<StandardApiResponse<T>> {
+  try {
+    const result = await promise;
+
+    // Handle different response formats
+    if (result && typeof result === 'object') {
+      const resultObj = result as Record<string, unknown>;
+
+      if ('success' in resultObj && 'data' in resultObj) {
+        // Already in StandardApiResponse format
+        const standardResponse = resultObj as {
+          success: boolean;
+          data: T;
+          timestamp?: string;
+          cached?: boolean;
+          [key: string]: unknown;
+        };
+
+        return {
+          success: standardResponse.success,
+          data: standardResponse.data,
+          timestamp: standardResponse.timestamp || new Date().toISOString(),
+          source,
+          cached: standardResponse.cached || false,
+        };
+      } else if ('error' in resultObj && resultObj.error) {
+        // Legacy error format
+        return {
+          success: false,
+          error:
+            typeof resultObj.error === 'string' ? resultObj.error : 'API Error',
+          timestamp: new Date().toISOString(),
+          source,
+          cached: false,
+        };
+      } else {
+        // Raw data format
+        return {
+          success: true,
+          data: result as T,
+          timestamp: new Date().toISOString(),
+          source,
+          cached: false,
+        };
+      }
+    }
+
+    return {
+      success: false,
+      error: 'Invalid response format',
+      timestamp: new Date().toISOString(),
+      source,
+      cached: false,
+    };
+  } catch (error) {
+    return ErrorHandler.handleServiceError<T>(error, operation, source);
+  }
+}
+
 class MarketDataService {
   private config: UnifiedMarketDataConfig;
   private primarySource: DataSource;
@@ -66,29 +130,40 @@ class MarketDataService {
   ): Promise<StandardApiResponse<T>> {
     // Check cache first if enabled
     if (this.config.cacheEnabled && cacheKey) {
-      const cached = cacheService.get(
-        cacheKey,
-        async () => {
-          return this.executeWithoutCache(primaryCall, fallbackCall);
-        },
-        this.config.cacheDuration
-      );
-
-      return cached;
+      const cached = await cacheService.get(cacheKey);
+      if (cached) {
+        return {
+          success: true,
+          data: cached as T,
+          timestamp: new Date().toISOString(),
+          source: this.primarySource,
+          cached: true,
+        };
+      }
     }
 
-    return this.executeWithoutCache(primaryCall, fallbackCall);
+    return this.executeWithoutCache(primaryCall, fallbackCall, cacheKey);
   }
 
   private async executeWithoutCache<T>(
     primaryCall: () => Promise<StandardApiResponse<T>>,
-    fallbackCall?: () => Promise<StandardApiResponse<T>>
+    fallbackCall?: () => Promise<StandardApiResponse<T>>,
+    cacheKey?: string
   ): Promise<StandardApiResponse<T>> {
     try {
       // Try primary source
       const primaryResult = await primaryCall();
 
       if (primaryResult.success && primaryResult.data) {
+        // Cache the result if caching is enabled
+        if (this.config.cacheEnabled && cacheKey) {
+          cacheService.set(
+            cacheKey,
+            primaryResult.data,
+            this.config.cacheDuration
+          );
+        }
+
         return {
           ...primaryResult,
           source: this.primarySource,
@@ -100,6 +175,15 @@ class MarketDataService {
         const fallbackResult = await fallbackCall();
 
         if (fallbackResult.success && fallbackResult.data) {
+          // Cache the fallback result
+          if (this.config.cacheEnabled && cacheKey) {
+            cacheService.set(
+              cacheKey,
+              fallbackResult.data,
+              this.config.cacheDuration
+            );
+          }
+
           return {
             ...fallbackResult,
             source: this.fallbackSource,
@@ -130,21 +214,20 @@ class MarketDataService {
   async getQuote(symbol: string): Promise<StandardApiResponse<StockQuote>> {
     const cacheKey = generateCacheKey.quote(symbol);
 
-    if (this.config.cacheEnabled) {
-      return withCache(
-        cacheKey,
-        () =>
-          this.executeWithFallback(
-            () => alphaVantageService.getQuote(symbol),
-            () => yahooFinanceService.getQuoteWithFallback(symbol)
-          ),
-        this.config.cacheDuration
-      );
-    }
-
     return this.executeWithFallback(
-      () => alphaVantageService.getQuote(symbol),
-      () => yahooFinanceService.getQuoteWithFallback(symbol)
+      () =>
+        withErrorHandling<StockQuote>(
+          alphaVantageService.getQuote(symbol),
+          'alpha-vantage-quote',
+          'alpha_vantage'
+        ),
+      () =>
+        withErrorHandling<StockQuote>(
+          yahooFinanceService.getQuoteWithFallback(symbol),
+          'yahoo-finance-quote',
+          'yahoo_finance'
+        ),
+      cacheKey
     );
   }
 
@@ -242,13 +325,13 @@ class MarketDataService {
   ): Promise<StandardApiResponse<StockQuote>> {
     return this.executeWithoutCache(
       () =>
-        withErrorHandling(
+        withErrorHandling<StockQuote>(
           alphaVantageService.getQuote(symbol),
           'alpha-vantage-quote',
           'alpha_vantage'
         ),
       () =>
-        withErrorHandling(
+        withErrorHandling<StockQuote>(
           yahooFinanceService.getQuoteWithFallback(symbol),
           'yahoo-finance-quote',
           'yahoo_finance'
@@ -264,7 +347,7 @@ class MarketDataService {
 
     return this.executeWithFallback(
       () =>
-        withErrorHandling(
+        withErrorHandling<IntradayData>(
           alphaVantageService.getIntradayData(symbol, interval),
           'alpha-vantage-intraday',
           'alpha_vantage'
@@ -276,7 +359,7 @@ class MarketDataService {
           | '15m'
           | '30m'
           | '60m';
-        return withErrorHandling(
+        return withErrorHandling<IntradayData>(
           yahooFinanceService.getIntradayData(symbol, yahooInterval),
           'yahoo-finance-intraday',
           'yahoo_finance'
@@ -291,13 +374,13 @@ class MarketDataService {
 
     return this.executeWithFallback(
       () =>
-        withErrorHandling(
+        withErrorHandling<DailyData>(
           alphaVantageService.getDailyData(symbol),
           'alpha-vantage-daily',
           'alpha_vantage'
         ),
       () =>
-        withErrorHandling(
+        withErrorHandling<DailyData>(
           yahooFinanceService.getDailyData(symbol),
           'yahoo-finance-daily',
           'yahoo_finance'
@@ -319,7 +402,7 @@ class MarketDataService {
       return withCache(
         cacheKey,
         () =>
-          withErrorHandling(
+          withErrorHandling<CompanyOverview>(
             alphaVantageService.getCompanyOverview(symbol),
             'alpha-vantage-overview',
             'alpha_vantage'
@@ -328,7 +411,7 @@ class MarketDataService {
       );
     }
 
-    return withErrorHandling(
+    return withErrorHandling<CompanyOverview>(
       alphaVantageService.getCompanyOverview(symbol),
       'alpha-vantage-overview',
       'alpha_vantage'
@@ -346,7 +429,7 @@ class MarketDataService {
       return withCache(
         cacheKey,
         () =>
-          withErrorHandling(
+          withErrorHandling<NewsItem[]>(
             alphaVantageService.getNewsAndSentiment(tickers, topics, limit),
             'alpha-vantage-news',
             'alpha_vantage'
@@ -355,7 +438,7 @@ class MarketDataService {
       );
     }
 
-    return withErrorHandling(
+    return withErrorHandling<NewsItem[]>(
       alphaVantageService.getNewsAndSentiment(tickers, topics, limit),
       'alpha-vantage-news',
       'alpha_vantage'
@@ -369,7 +452,7 @@ class MarketDataService {
       return withCache(
         cacheKey,
         () =>
-          withErrorHandling(
+          withErrorHandling<TopGainersLosers>(
             alphaVantageService.getTopGainersLosers(),
             'alpha-vantage-gainers-losers',
             'alpha_vantage'
@@ -378,7 +461,7 @@ class MarketDataService {
       );
     }
 
-    return withErrorHandling(
+    return withErrorHandling<TopGainersLosers>(
       alphaVantageService.getTopGainersLosers(),
       'alpha-vantage-gainers-losers',
       'alpha_vantage'
@@ -392,7 +475,7 @@ class MarketDataService {
       return withCache(
         cacheKey,
         () =>
-          withErrorHandling(
+          withErrorHandling<MarketStatus>(
             alphaVantageService.getMarketStatus(),
             'alpha-vantage-market-status',
             'alpha_vantage'
@@ -401,7 +484,7 @@ class MarketDataService {
       );
     }
 
-    return withErrorHandling(
+    return withErrorHandling<MarketStatus>(
       alphaVantageService.getMarketStatus(),
       'alpha-vantage-market-status',
       'alpha_vantage'
@@ -417,7 +500,7 @@ class MarketDataService {
       return withCache(
         cacheKey,
         () =>
-          withErrorHandling(
+          withErrorHandling<SearchResult[]>(
             alphaVantageService.searchSymbol(keywords),
             'alpha-vantage-search',
             'alpha_vantage'
@@ -426,7 +509,7 @@ class MarketDataService {
       );
     }
 
-    return withErrorHandling(
+    return withErrorHandling<SearchResult[]>(
       alphaVantageService.searchSymbol(keywords),
       'alpha-vantage-search',
       'alpha_vantage'
@@ -445,13 +528,13 @@ class MarketDataService {
         cacheKey,
         () => {
           if (indicator === 'RSI') {
-            return withErrorHandling(
+            return withErrorHandling<TechnicalIndicator>(
               alphaVantageService.getRSI(symbol, interval),
               'alpha-vantage-rsi',
               'alpha_vantage'
             );
           } else {
-            return withErrorHandling(
+            return withErrorHandling<TechnicalIndicator>(
               alphaVantageService.getMACD(symbol, interval),
               'alpha-vantage-macd',
               'alpha_vantage'
@@ -463,13 +546,13 @@ class MarketDataService {
     }
 
     if (indicator === 'RSI') {
-      return withErrorHandling(
+      return withErrorHandling<TechnicalIndicator>(
         alphaVantageService.getRSI(symbol, interval),
         'alpha-vantage-rsi',
         'alpha_vantage'
       );
     } else {
-      return withErrorHandling(
+      return withErrorHandling<TechnicalIndicator>(
         alphaVantageService.getMACD(symbol, interval),
         'alpha-vantage-macd',
         'alpha_vantage'
@@ -486,7 +569,7 @@ class MarketDataService {
       const cacheKey = `validation:${symbol}`;
 
       if (this.config.cacheEnabled && cacheService.has(cacheKey)) {
-        const cached = await cacheService.get(cacheKey, async () => false);
+        const cached = await cacheService.get(cacheKey);
         return cached as boolean;
       }
 
@@ -602,24 +685,24 @@ class MarketDataService {
       const analysis = {
         quote:
           quoteResult.status === 'fulfilled' && quoteResult.value.success
-            ? quoteResult.value.data
+            ? quoteResult.value.data || null
             : null,
         overview:
           overviewResult.status === 'fulfilled' && overviewResult.value.success
-            ? overviewResult.value.data
+            ? overviewResult.value.data || null
             : null,
         news:
           newsResult.status === 'fulfilled' && newsResult.value.success
-            ? newsResult.value.data
+            ? newsResult.value.data || null
             : null,
         technicals: {
           rsi:
             rsiResult.status === 'fulfilled' && rsiResult.value.success
-              ? rsiResult.value.data
+              ? rsiResult.value.data || null
               : null,
           macd:
             macdResult.status === 'fulfilled' && macdResult.value.success
-              ? macdResult.value.data
+              ? macdResult.value.data || null
               : null,
         },
       };
@@ -656,12 +739,12 @@ class MarketDataService {
         data: {
           quotes:
             quotesResult.status === 'fulfilled' && quotesResult.value.success
-              ? quotesResult.value.data
+              ? quotesResult.value.data || []
               : [],
           marketData:
             marketDataResult.status === 'fulfilled' &&
             marketDataResult.value.success
-              ? marketDataResult.value.data
+              ? marketDataResult.value.data || null
               : null,
         },
         timestamp: new Date().toISOString(),

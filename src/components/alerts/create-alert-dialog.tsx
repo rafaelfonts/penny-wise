@@ -1,66 +1,75 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { useState } from 'react';
+import { Plus } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Card, CardContent } from '@/components/ui/card'
-import { alertService } from '@/lib/services/alerts-temp'
-import type { Alert, CreateAlert, AlertType, ConditionType } from '@/lib/types/alerts'
+} from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
+import { alertService } from '@/lib/services/alerts-temp';
+import type {
+  Alert,
+  CreateAlert,
+  AlertType,
+  ConditionType,
+} from '@/lib/types/alerts';
 
 interface CreateAlertDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onCreateAlert: (alert: Alert) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreateAlert: (alert: Alert) => void;
 }
 
-export function CreateAlertDialog({ open, onOpenChange, onCreateAlert }: CreateAlertDialogProps) {
+export function CreateAlertDialog({
+  open,
+  onOpenChange,
+  onCreateAlert,
+}: CreateAlertDialogProps) {
   const [formData, setFormData] = useState<CreateAlert>({
     symbol: '',
     alert_type: 'price',
     condition_type: 'above',
     target_value: 0,
-    cooldown_minutes: 60
-  })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+    cooldown_minutes: 60,
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+
     if (!formData.symbol || formData.target_value <= 0) {
-      setError('Please fill in all required fields')
-      return
+      setError('Please fill in all required fields');
+      return;
     }
 
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
-      const newAlert = await alertService.createAlert(formData)
-      onCreateAlert(newAlert)
-      resetForm()
+      const newAlert = await alertService.createAlert(formData);
+      onCreateAlert(newAlert);
+      resetForm();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create alert')
+      setError(err instanceof Error ? err.message : 'Failed to create alert');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const resetForm = () => {
     setFormData({
@@ -68,17 +77,17 @@ export function CreateAlertDialog({ open, onOpenChange, onCreateAlert }: CreateA
       alert_type: 'price',
       condition_type: 'above',
       target_value: 0,
-      cooldown_minutes: 60
-    })
-    setError(null)
-  }
+      cooldown_minutes: 60,
+    });
+    setError(null);
+  };
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
-      resetForm()
+      resetForm();
     }
-    onOpenChange(newOpen)
-  }
+    onOpenChange(newOpen);
+  };
 
   const getConditionOptions = () => {
     switch (formData.alert_type) {
@@ -86,48 +95,48 @@ export function CreateAlertDialog({ open, onOpenChange, onCreateAlert }: CreateA
       case 'volume':
         return [
           { value: 'above', label: 'Above' },
-          { value: 'below', label: 'Below' }
-        ]
+          { value: 'below', label: 'Below' },
+        ];
       case 'technical':
         return [
           { value: 'above', label: 'Above' },
           { value: 'below', label: 'Below' },
           { value: 'cross_above', label: 'Crosses Above' },
-          { value: 'cross_below', label: 'Crosses Below' }
-        ]
+          { value: 'cross_below', label: 'Crosses Below' },
+        ];
       default:
         return [
           { value: 'above', label: 'Above' },
-          { value: 'below', label: 'Below' }
-        ]
+          { value: 'below', label: 'Below' },
+        ];
     }
-  }
+  };
 
   const getValueLabel = () => {
     switch (formData.alert_type) {
       case 'price':
-        return 'Target Price ($)'
+        return 'Target Price ($)';
       case 'volume':
-        return 'Target Volume'
+        return 'Target Volume';
       case 'technical':
-        return 'Target Value'
+        return 'Target Value';
       default:
-        return 'Target Value'
+        return 'Target Value';
     }
-  }
+  };
 
   const getValuePlaceholder = () => {
     switch (formData.alert_type) {
       case 'price':
-        return '150.00'
+        return '150.00';
       case 'volume':
-        return '1000000'
+        return '1000000';
       case 'technical':
-        return '70'
+        return '70';
       default:
-        return '0'
+        return '0';
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -150,10 +159,12 @@ export function CreateAlertDialog({ open, onOpenChange, onCreateAlert }: CreateA
               id="symbol"
               placeholder="AAPL, GOOGL, MSFT..."
               value={formData.symbol}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                symbol: e.target.value.toUpperCase()
-              }))}
+              onChange={e =>
+                setFormData(prev => ({
+                  ...prev,
+                  symbol: e.target.value.toUpperCase(),
+                }))
+              }
               className="uppercase"
               required
             />
@@ -164,11 +175,11 @@ export function CreateAlertDialog({ open, onOpenChange, onCreateAlert }: CreateA
             <Label htmlFor="alert-type">Alert Type</Label>
             <Select
               value={formData.alert_type}
-              onValueChange={(value: AlertType) => 
+              onValueChange={(value: AlertType) =>
                 setFormData(prev => ({
                   ...prev,
                   alert_type: value,
-                  condition_type: 'above' // Reset condition when type changes
+                  condition_type: 'above', // Reset condition when type changes
                 }))
               }
             >
@@ -188,7 +199,7 @@ export function CreateAlertDialog({ open, onOpenChange, onCreateAlert }: CreateA
             <Label htmlFor="condition">Condition</Label>
             <Select
               value={formData.condition_type}
-              onValueChange={(value: ConditionType) => 
+              onValueChange={(value: ConditionType) =>
                 setFormData(prev => ({ ...prev, condition_type: value }))
               }
             >
@@ -215,10 +226,12 @@ export function CreateAlertDialog({ open, onOpenChange, onCreateAlert }: CreateA
               min="0"
               placeholder={getValuePlaceholder()}
               value={formData.target_value || ''}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                target_value: parseFloat(e.target.value) || 0
-              }))}
+              onChange={e =>
+                setFormData(prev => ({
+                  ...prev,
+                  target_value: parseFloat(e.target.value) || 0,
+                }))
+              }
               required
             />
           </div>
@@ -228,8 +241,11 @@ export function CreateAlertDialog({ open, onOpenChange, onCreateAlert }: CreateA
             <Label htmlFor="cooldown">Cooldown (minutes)</Label>
             <Select
               value={formData.cooldown_minutes?.toString() || '60'}
-              onValueChange={(value) => 
-                setFormData(prev => ({ ...prev, cooldown_minutes: parseInt(value) }))
+              onValueChange={value =>
+                setFormData(prev => ({
+                  ...prev,
+                  cooldown_minutes: parseInt(value),
+                }))
               }
             >
               <SelectTrigger>
@@ -250,22 +266,23 @@ export function CreateAlertDialog({ open, onOpenChange, onCreateAlert }: CreateA
 
           {/* Preview */}
           {formData.symbol && formData.target_value > 0 && (
-            <Card className="bg-blue-50 border-blue-200">
+            <Card className="border-blue-200 bg-blue-50">
               <CardContent className="pt-4">
                 <div className="text-sm">
                   <p className="font-medium text-blue-900">Alert Preview:</p>
-                  <p className="text-blue-700 mt-1">
-                    Notify me when <strong>{formData.symbol}</strong> {formData.alert_type} is{' '}
+                  <p className="mt-1 text-blue-700">
+                    Notify me when <strong>{formData.symbol}</strong>{' '}
+                    {formData.alert_type} is{' '}
                     <strong>{formData.condition_type}</strong>{' '}
                     <strong>
-                      {formData.alert_type === 'price' 
+                      {formData.alert_type === 'price'
                         ? `$${formData.target_value.toFixed(2)}`
-                        : formData.target_value.toLocaleString()
-                      }
+                        : formData.target_value.toLocaleString()}
                     </strong>
                   </p>
-                  <p className="text-blue-600 text-xs mt-2">
-                    Cooldown: {formData.cooldown_minutes} minutes between notifications
+                  <p className="mt-2 text-xs text-blue-600">
+                    Cooldown: {formData.cooldown_minutes} minutes between
+                    notifications
                   </p>
                 </div>
               </CardContent>
@@ -276,7 +293,7 @@ export function CreateAlertDialog({ open, onOpenChange, onCreateAlert }: CreateA
           {error && (
             <Card className="border-red-200 bg-red-50">
               <CardContent className="pt-4">
-                <p className="text-red-600 text-sm">{error}</p>
+                <p className="text-sm text-red-600">{error}</p>
               </CardContent>
             </Card>
           )}
@@ -293,7 +310,9 @@ export function CreateAlertDialog({ open, onOpenChange, onCreateAlert }: CreateA
             </Button>
             <Button
               type="submit"
-              disabled={loading || !formData.symbol || formData.target_value <= 0}
+              disabled={
+                loading || !formData.symbol || formData.target_value <= 0
+              }
             >
               {loading ? 'Creating...' : 'Create Alert'}
             </Button>
@@ -301,5 +320,5 @@ export function CreateAlertDialog({ open, onOpenChange, onCreateAlert }: CreateA
         </form>
       </DialogContent>
     </Dialog>
-  )
-} 
+  );
+}

@@ -14,7 +14,14 @@ export interface StandardApiResponse<T = unknown> {
 }
 
 export interface ApiError {
-  type: 'network' | 'server' | 'auth' | 'validation' | 'rate_limit' | 'timeout' | 'unknown';
+  type:
+    | 'network'
+    | 'server'
+    | 'auth'
+    | 'validation'
+    | 'rate_limit'
+    | 'timeout'
+    | 'unknown';
   message: string;
   code?: string | number;
   details?: string;
@@ -48,12 +55,13 @@ export interface BatchResponse<T> extends StandardApiResponse<T[]> {
   partialSuccess?: boolean;
 }
 
-export interface HealthCheckResponse extends StandardApiResponse<{
-  status: 'healthy' | 'degraded' | 'unhealthy';
-  services: Record<string, boolean>;
-  responseTime: number;
-  uptime: number;
-}> {
+export interface HealthCheckResponse
+  extends StandardApiResponse<{
+    status: 'healthy' | 'degraded' | 'unhealthy';
+    services: Record<string, boolean>;
+    responseTime: number;
+    uptime: number;
+  }> {
   environment: string;
   version: string;
 }
@@ -63,15 +71,23 @@ export type ApiPromise<T> = Promise<StandardApiResponse<T>>;
 export type BatchApiPromise<T> = Promise<BatchResponse<T>>;
 
 // Type guards
-export function isSuccessResponse<T>(response:StandardApiResponse<T>): response is StandardApiResponse<NonNullable<T>> {
-  return response.success && response.data !== undefined && response.data !== null;
+export function isSuccessResponse<T>(
+  response: StandardApiResponse<T>
+): response is StandardApiResponse<NonNullable<T>> {
+  return (
+    response.success && response.data !== undefined && response.data !== null
+  );
 }
 
-export function isErrorResponse<T>(response: StandardApiResponse<T>): response is StandardApiResponse<T> & { error: string } {
+export function isErrorResponse<T>(
+  response: StandardApiResponse<T>
+): response is StandardApiResponse<T> & { error: string } {
   return !response.success && !!response.error;
 }
 
-export function isCachedResponse<T>(response: StandardApiResponse<T>): response is StandardApiResponse<T> & { cached: true } {
+export function isCachedResponse<T>(
+  response: StandardApiResponse<T>
+): response is StandardApiResponse<T> & { cached: true } {
   return response.cached === true;
 }
 
@@ -87,7 +103,7 @@ export function createSuccessResponse<T>(
     timestamp: new Date().toISOString(),
     source,
     cached: false,
-    metadata
+    metadata,
   };
 }
 
@@ -102,7 +118,7 @@ export function createErrorResponse<T = never>(
     timestamp: new Date().toISOString(),
     source,
     cached: false,
-    metadata: code ? { errorCode: code } : undefined
+    metadata: code ? { errorCode: code } : undefined,
   };
 }
 
@@ -118,6 +134,6 @@ export function createCachedResponse<T>(
     source,
     cached: true,
     cacheKey,
-    ttl: 300000 // 5 minutes default
+    ttl: 300000, // 5 minutes default
   };
 }

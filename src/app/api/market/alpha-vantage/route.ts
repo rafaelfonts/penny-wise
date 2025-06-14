@@ -9,13 +9,13 @@ export async function GET(request: NextRequest) {
   try {
     // Verificar autenticação
     const supabase = await createClient();
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    const {
+      data: { session },
+      error: authError,
+    } = await supabase.auth.getSession();
 
     if (authError || !session) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Extrair parâmetros da query
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     // Construir URL da API do Alpha Vantage
     const alphaParams = new URLSearchParams({
       function: func,
-      apikey: process.env.ALPHA_VANTAGE_API_KEY || 'demo'
+      apikey: process.env.ALPHA_VANTAGE_API_KEY || 'demo',
     });
 
     // Adicionar parâmetros opcionais
@@ -52,13 +52,15 @@ export async function GET(request: NextRequest) {
       method: 'GET',
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; PennyWise/1.0)',
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
     });
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: `Alpha Vantage API error: ${response.status} ${response.statusText}` },
+        {
+          error: `Alpha Vantage API error: ${response.status} ${response.statusText}`,
+        },
         { status: response.status }
       );
     }
@@ -91,14 +93,15 @@ export async function GET(request: NextRequest) {
       success: true,
       data,
       source: 'alpha_vantage',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-
   } catch (error) {
     console.error('Alpha Vantage Proxy Error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      {
+        error: error instanceof Error ? error.message : 'Internal server error',
+      },
       { status: 500 }
     );
   }
-} 
+}

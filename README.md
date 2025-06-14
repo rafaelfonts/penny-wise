@@ -5,23 +5,27 @@ A modern, AI-powered personal finance assistant built with Next.js, featuring re
 ## Features
 
 ### 🤖 AI-Powered Chat Assistant
+
 - Interactive financial advice and analysis
 - Natural language portfolio queries
 - Real-time market insights
 - Portfolio performance analysis
 
 ### 📊 Market Analytics
+
 - Real-time stock quotes and analysis
 - Portfolio performance tracking
 - Market trends and insights
 - Alpha Vantage and Yahoo Finance integration
 
 ### 🔔 Smart Notifications
+
 - Price alerts and portfolio updates
 - Customizable notification preferences
 - Real-time market alerts
 
 ### 📈 Dashboard
+
 - Comprehensive portfolio overview
 - Interactive charts and visualizations
 - Performance metrics and analytics
@@ -41,35 +45,40 @@ A modern, AI-powered personal finance assistant built with Next.js, featuring re
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - Supabase account
 
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/rafaelfonts/penny-wise.git
 cd penny-wise
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Set up environment variables:
+
 ```bash
 cp .env.example .env.local
 ```
 
 Fill in your environment variables:
+
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `ALPHA_VANTAGE_API_KEY`
 
 4. Run the development server:
+
 ```bash
 npm run dev
 ```

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server';
 
 export async function GET() {
   const helpText = `
@@ -87,7 +87,7 @@ Fonte: Alpha Vantage | NASDAQ | Confiança: 95%
 4. Receba análises contextualizadas por mercado
 
 *Investimentos envolvem risco. Esta é uma análise educacional, não recomendação de investimento.*
-`
+`;
 
   return NextResponse.json({
     success: true,
@@ -96,24 +96,36 @@ Fonte: Alpha Vantage | NASDAQ | Confiança: 95%
       {
         command: '/analyze [SÍMBOLO]',
         description: 'Análise inteligente com detecção automática de mercado',
-        examples: ['/analyze AAPL', '/analyze PETR4', '/analyze TSLA', '/analyze VALE3']
+        examples: [
+          '/analyze AAPL',
+          '/analyze PETR4',
+          '/analyze TSLA',
+          '/analyze VALE3',
+        ],
       },
       {
         command: '/help',
-        description: 'Mostra esta ajuda'
-      }
+        description: 'Mostra esta ajuda',
+      },
     ],
     classification: {
       american_examples: ['AAPL', 'MSFT', 'TSLA', 'GOOGL', 'AMZN', 'NFLX'],
-      brazilian_examples: ['PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'ABEV3', 'B3SA3'],
+      brazilian_examples: [
+        'PETR4',
+        'VALE3',
+        'ITUB4',
+        'BBDC4',
+        'ABEV3',
+        'B3SA3',
+      ],
       api_mapping: {
-        'US': 'Alpha Vantage',
-        'BR': 'OpLab'
-      }
+        US: 'Alpha Vantage',
+        BR: 'OpLab',
+      },
     },
     status: {
       alpha_vantage: 'Configurado ✅',
-      oplab: 'Precisa configurar OPLAB_ACCESS_TOKEN'
-    }
-  })
-} 
+      oplab: 'Precisa configurar OPLAB_ACCESS_TOKEN',
+    },
+  });
+}

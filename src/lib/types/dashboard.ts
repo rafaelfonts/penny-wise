@@ -3,47 +3,47 @@
 // ==========================================
 
 export interface Widget {
-  id: string
-  type: WidgetType
-  title: string
-  position: WidgetPosition
-  size: WidgetSize
-  settings: WidgetSettings
-  isVisible: boolean
-  lastUpdated?: string
+  id: string;
+  type: WidgetType;
+  title: string;
+  position: WidgetPosition;
+  size: WidgetSize;
+  settings: WidgetSettings;
+  isVisible: boolean;
+  lastUpdated?: string;
 }
 
-export type WidgetType = 
+export type WidgetType =
   | 'portfolio-overview'
   | 'market-summary'
   | 'recent-alerts'
   | 'price-chart'
   | 'news-feed'
   | 'watchlist'
-  | 'quick-stats'
+  | 'quick-stats';
 
 export interface WidgetPosition {
-  x: number
-  y: number
-  row?: number
-  col?: number
+  x: number;
+  y: number;
+  row?: number;
+  col?: number;
 }
 
 export interface WidgetSize {
-  width: number
-  height: number
-  cols?: number
-  rows?: number
+  width: number;
+  height: number;
+  cols?: number;
+  rows?: number;
 }
 
 export interface DashboardLayout {
-  id: string
-  user_id: string
-  name: string
-  widgets: Widget[]
-  is_default: boolean
-  created_at: string
-  updated_at: string
+  id: string;
+  user_id: string;
+  name: string;
+  widgets: Widget[];
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 // ==========================================
@@ -51,36 +51,36 @@ export interface DashboardLayout {
 // ==========================================
 
 export interface PortfolioOverview {
-  totalValue: number
-  dailyChange: number
-  dailyChangePercent: number
-  assets: PortfolioAsset[]
-  allocation: AssetAllocation[]
-  performance: PerformanceData[]
+  totalValue: number;
+  dailyChange: number;
+  dailyChangePercent: number;
+  assets: PortfolioAsset[];
+  allocation: AssetAllocation[];
+  performance: PerformanceData[];
 }
 
 export interface PortfolioAsset {
-  symbol: string
-  name: string
-  quantity: number
-  currentPrice: number
-  totalValue: number
-  dailyChange: number
-  dailyChangePercent: number
-  allocation: number
+  symbol: string;
+  name: string;
+  quantity: number;
+  currentPrice: number;
+  totalValue: number;
+  dailyChange: number;
+  dailyChangePercent: number;
+  allocation: number;
 }
 
 export interface AssetAllocation {
-  category: string
-  value: number
-  percentage: number
-  color: string
+  category: string;
+  value: number;
+  percentage: number;
+  color: string;
 }
 
 export interface PerformanceData {
-  date: string
-  value: number
-  change: number
+  date: string;
+  value: number;
+  change: number;
 }
 
 // ==========================================
@@ -88,28 +88,28 @@ export interface PerformanceData {
 // ==========================================
 
 export interface MarketSummary {
-  indices: MarketIndex[]
-  topMovers: TopMover[]
-  marketStatus: 'open' | 'closed' | 'pre-market' | 'after-hours'
-  lastUpdated: string
+  indices: MarketIndex[];
+  topMovers: TopMover[];
+  marketStatus: 'open' | 'closed' | 'pre-market' | 'after-hours';
+  lastUpdated: string;
 }
 
 export interface MarketIndex {
-  symbol: string
-  name: string
-  value: number
-  change: number
-  changePercent: number
+  symbol: string;
+  name: string;
+  value: number;
+  change: number;
+  changePercent: number;
 }
 
 export interface TopMover {
-  symbol: string
-  name: string
-  price: number
-  change: number
-  changePercent: number
-  volume: number
-  type: 'gainer' | 'loser' | 'active'
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
+  type: 'gainer' | 'loser' | 'active';
 }
 
 // ==========================================
@@ -117,21 +117,21 @@ export interface TopMover {
 // ==========================================
 
 export interface NewsFeed {
-  articles: NewsArticle[]
-  categories: string[]
-  lastUpdated: string
+  articles: NewsArticle[];
+  categories: string[];
+  lastUpdated: string;
 }
 
 export interface NewsArticle {
-  id: string
-  title: string
-  summary: string
-  url: string
-  source: string
-  publishedAt: string
-  sentiment: 'positive' | 'negative' | 'neutral'
-  relevantSymbols: string[]
-  imageUrl?: string
+  id: string;
+  title: string;
+  summary: string;
+  url: string;
+  source: string;
+  publishedAt: string;
+  sentiment: 'positive' | 'negative' | 'neutral';
+  relevantSymbols: string[];
+  imageUrl?: string;
 }
 
 // ==========================================
@@ -139,20 +139,20 @@ export interface NewsArticle {
 // ==========================================
 
 export interface WatchlistWidget {
-  symbols: WatchlistItem[]
-  totalItems: number
-  lastUpdated: string
+  symbols: WatchlistItem[];
+  totalItems: number;
+  lastUpdated: string;
 }
 
 export interface WatchlistItem {
-  symbol: string
-  name: string
-  price: number
-  change: number
-  changePercent: number
-  volume: number
-  alertCount?: number
-  hasActiveAlert?: boolean
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
+  alertCount?: number;
+  hasActiveAlert?: boolean;
 }
 
 // ==========================================
@@ -160,28 +160,28 @@ export interface WatchlistItem {
 // ==========================================
 
 export interface ChartWidget {
-  symbol: string
-  timeframe: ChartTimeframe
-  data: ChartDataPoint[]
-  indicators: ChartIndicator[]
-  lastUpdated: string
+  symbol: string;
+  timeframe: ChartTimeframe;
+  data: ChartDataPoint[];
+  indicators: ChartIndicator[];
+  lastUpdated: string;
 }
 
-export type ChartTimeframe = '1D' | '5D' | '1M' | '3M' | '6M' | '1Y' | '5Y'
+export type ChartTimeframe = '1D' | '5D' | '1M' | '3M' | '6M' | '1Y' | '5Y';
 
 export interface ChartDataPoint {
-  timestamp: string
-  open: number
-  high: number
-  low: number
-  close: number
-  volume: number
+  timestamp: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
 }
 
 export interface ChartIndicator {
-  type: 'SMA' | 'EMA' | 'RSI' | 'MACD' | 'BB'
-  period: number
-  values: number[]
+  type: 'SMA' | 'EMA' | 'RSI' | 'MACD' | 'BB';
+  period: number;
+  values: number[];
 }
 
 // ==========================================
@@ -189,18 +189,18 @@ export interface ChartIndicator {
 // ==========================================
 
 export interface QuickStats {
-  stats: StatItem[]
-  lastUpdated: string
+  stats: StatItem[];
+  lastUpdated: string;
 }
 
 export interface StatItem {
-  label: string
-  value: string | number
-  change?: number
-  changePercent?: number
-  trend: 'up' | 'down' | 'neutral'
-  icon?: string
-  color?: string
+  label: string;
+  value: string | number;
+  change?: number;
+  changePercent?: number;
+  trend: 'up' | 'down' | 'neutral';
+  icon?: string;
+  color?: string;
 }
 
 // ==========================================
@@ -208,15 +208,15 @@ export interface StatItem {
 // ==========================================
 
 export interface WidgetSettings {
-  refreshInterval?: number
-  autoRefresh?: boolean
-  displayItems?: number
-  showChart?: boolean
-  chartType?: 'line' | 'candlestick' | 'bar'
-  timeframe?: ChartTimeframe
-  symbols?: string[]
-  categories?: string[]
-  theme?: 'light' | 'dark' | 'auto'
+  refreshInterval?: number;
+  autoRefresh?: boolean;
+  displayItems?: number;
+  showChart?: boolean;
+  chartType?: 'line' | 'candlestick' | 'bar';
+  timeframe?: ChartTimeframe;
+  symbols?: string[];
+  categories?: string[];
+  theme?: 'light' | 'dark' | 'auto';
 }
 
 // ==========================================
@@ -224,11 +224,11 @@ export interface WidgetSettings {
 // ==========================================
 
 export interface AlertReference {
-  id: string
-  title: string
-  type: string
-  status: string
-  created_at: string
+  id: string;
+  title: string;
+  type: string;
+  status: string;
+  created_at: string;
 }
 
 // ==========================================
@@ -236,26 +236,26 @@ export interface AlertReference {
 // ==========================================
 
 export interface DashboardData {
-  portfolio: PortfolioOverview
-  market: MarketSummary
-  news: NewsFeed
-  watchlist: WatchlistWidget
+  portfolio: PortfolioOverview;
+  market: MarketSummary;
+  news: NewsFeed;
+  watchlist: WatchlistWidget;
   alerts: {
-    recent: AlertReference[]
-    active: number
-    triggered: number
-  }
-  quickStats: QuickStats
+    recent: AlertReference[];
+    active: number;
+    triggered: number;
+  };
+  quickStats: QuickStats;
 }
 
 export interface WidgetUpdateResponse {
-  success: boolean
-  widget?: Widget
-  error?: string
+  success: boolean;
+  widget?: Widget;
+  error?: string;
 }
 
 export interface DashboardResponse {
-  layout: DashboardLayout
-  data: DashboardData
-  lastUpdated: string
-} 
+  layout: DashboardLayout;
+  data: DashboardData;
+  lastUpdated: string;
+}

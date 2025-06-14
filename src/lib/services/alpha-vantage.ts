@@ -13,7 +13,7 @@ import {
   MarketStatus,
   SearchResult,
   ApiResponse,
-  MarketDataConfig
+  MarketDataConfig,
 } from '@/lib/types/market';
 
 class AlphaVantageService {
@@ -31,7 +31,7 @@ class AlphaVantageService {
       cacheEnabled: true,
       cacheDuration: 5, // 5 minutos para dados em tempo real
       retryAttempts: 3,
-      retryDelay: 1000
+      retryDelay: 1000,
     };
   }
 
@@ -41,17 +41,18 @@ class AlphaVantageService {
   ): Promise<ApiResponse<T>> {
     const params = new URLSearchParams({
       function: func,
-      ...additionalParams
+      ...additionalParams,
     });
 
     // Use nossa rota API proxy ao invés de fazer requisição direta
     // Check if we're on the server side or client side
     const isServer = typeof window === 'undefined';
     let url: string;
-    
+
     if (isServer) {
       // On server side, use the full URL
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+      const baseUrl =
+        process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
       url = `${baseUrl}/api/market/alpha-vantage?${params.toString()}`;
     } else {
       // On client side, use relative URL
@@ -64,20 +65,27 @@ class AlphaVantageService {
         headers: {
           'Content-Type': 'application/json',
         },
-        next: { 
-          revalidate: this.config.cacheEnabled ? this.config.cacheDuration * 60 : 0 
-        }
+        next: {
+          revalidate: this.config.cacheEnabled
+            ? this.config.cacheDuration * 60
+            : 0,
+        },
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Alpha Vantage API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          errorData.error ||
+            `Alpha Vantage API error: ${response.status} ${response.statusText}`
+        );
       }
 
       const result = await response.json();
 
       if (!result.success || !result.data) {
-        throw new Error(result.error || 'No data returned from Alpha Vantage API');
+        throw new Error(
+          result.error || 'No data returned from Alpha Vantage API'
+        );
       }
 
       return {
@@ -86,9 +94,8 @@ class AlphaVantageService {
         success: true,
         source: 'alpha_vantage',
         timestamp: result.timestamp,
-        cached: this.config.cacheEnabled
+        cached: this.config.cacheEnabled,
       };
-
     } catch (error) {
       console.error('Alpha Vantage API Error:', error);
       return {
@@ -97,7 +104,7 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
   }
@@ -107,7 +114,10 @@ class AlphaVantageService {
   // ==========================================
 
   async getQuote(symbol: string): Promise<ApiResponse<StockQuote>> {
-    const response = await this.makeRequest<Record<string, unknown>>('GLOBAL_QUOTE', { symbol });
+    const response = await this.makeRequest<Record<string, unknown>>(
+      'GLOBAL_QUOTE',
+      { symbol }
+    );
 
     if (!response.success || !response.data) {
       return {
@@ -116,7 +126,7 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
 
@@ -128,19 +138,21 @@ class AlphaVantageService {
         name: symbol, // Alpha Vantage não retorna nome completo no quote
         price: parseFloat(quoteData['05. price']),
         change: parseFloat(quoteData['09. change']),
-        changePercent: parseFloat(quoteData['10. change percent'].replace('%', '')),
+        changePercent: parseFloat(
+          quoteData['10. change percent'].replace('%', '')
+        ),
         volume: parseInt(quoteData['06. volume']),
         high: parseFloat(quoteData['03. high']),
         low: parseFloat(quoteData['04. low']),
         open: parseFloat(quoteData['02. open']),
         previousClose: parseFloat(quoteData['08. previous close']),
         timestamp: quoteData['07. latest trading day'],
-        source: 'alpha_vantage'
+        source: 'alpha_vantage',
       };
 
       return {
         ...response,
-        data: quote
+        data: quote,
       };
     } catch (error) {
       return {
@@ -149,7 +161,7 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
   }
@@ -159,11 +171,14 @@ class AlphaVantageService {
     interval: '1min' | '5min' | '15min' | '30min' | '60min' = '5min',
     outputsize: 'compact' | 'full' = 'compact'
   ): Promise<ApiResponse<IntradayData>> {
-    const response = await this.makeRequest<Record<string, unknown>>('TIME_SERIES_INTRADAY', {
-      symbol,
-      interval,
-      outputsize
-    });
+    const response = await this.makeRequest<Record<string, unknown>>(
+      'TIME_SERIES_INTRADAY',
+      {
+        symbol,
+        interval,
+        outputsize,
+      }
+    );
 
     if (!response.success || !response.data) {
       return {
@@ -172,13 +187,16 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
 
     try {
       const metadata = response.data['Meta Data'] as Record<string, string>;
-      const timeSeries = response.data[`Time Series (${interval})`] as Record<string, Record<string, string>>;
+      const timeSeries = response.data[`Time Series (${interval})`] as Record<
+        string,
+        Record<string, string>
+      >;
 
       const data: IntradayData = {
         symbol: metadata['2. Symbol'],
@@ -189,15 +207,15 @@ class AlphaVantageService {
           high: parseFloat(values['2. high']),
           low: parseFloat(values['3. low']),
           close: parseFloat(values['4. close']),
-          volume: parseInt(values['5. volume'])
+          volume: parseInt(values['5. volume']),
         })),
         lastRefreshed: metadata['3. Last Refreshed'],
-        source: 'alpha_vantage'
+        source: 'alpha_vantage',
       };
 
       return {
         ...response,
-        data
+        data,
       };
     } catch (error) {
       return {
@@ -206,7 +224,7 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
   }
@@ -219,7 +237,7 @@ class AlphaVantageService {
     const func = adjusted ? 'TIME_SERIES_DAILY_ADJUSTED' : 'TIME_SERIES_DAILY';
     const response = await this.makeRequest<Record<string, unknown>>(func, {
       symbol,
-      outputsize
+      outputsize,
     });
 
     if (!response.success || !response.data) {
@@ -229,13 +247,16 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
 
     try {
       const metadata = response.data['Meta Data'] as Record<string, string>;
-      const timeSeries = response.data['Time Series (Daily)'] as Record<string, Record<string, string>>;
+      const timeSeries = response.data['Time Series (Daily)'] as Record<
+        string,
+        Record<string, string>
+      >;
 
       const data: DailyData = {
         symbol: metadata['2. Symbol'],
@@ -245,16 +266,18 @@ class AlphaVantageService {
           high: parseFloat(values['2. high']),
           low: parseFloat(values['3. low']),
           close: parseFloat(values['4. close']),
-          adjustedClose: adjusted ? parseFloat(values['5. adjusted close']) : parseFloat(values['4. close']),
-          volume: parseInt(values[adjusted ? '6. volume' : '5. volume'])
+          adjustedClose: adjusted
+            ? parseFloat(values['5. adjusted close'])
+            : parseFloat(values['4. close']),
+          volume: parseInt(values[adjusted ? '6. volume' : '5. volume']),
         })),
         lastRefreshed: metadata['3. Last Refreshed'],
-        source: 'alpha_vantage'
+        source: 'alpha_vantage',
       };
 
       return {
         ...response,
-        data
+        data,
       };
     } catch (error) {
       return {
@@ -263,7 +286,7 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
   }
@@ -272,8 +295,13 @@ class AlphaVantageService {
   // COMPANY OVERVIEW
   // ==========================================
 
-  async getCompanyOverview(symbol: string): Promise<ApiResponse<CompanyOverview>> {
-    const response = await this.makeRequest<Record<string, string>>('OVERVIEW', { symbol });
+  async getCompanyOverview(
+    symbol: string
+  ): Promise<ApiResponse<CompanyOverview>> {
+    const response = await this.makeRequest<Record<string, string>>(
+      'OVERVIEW',
+      { symbol }
+    );
 
     if (!response.success || !response.data) {
       return {
@@ -282,7 +310,7 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
 
@@ -310,8 +338,10 @@ class AlphaVantageService {
         revenueTTM: parseFloat(data.RevenueTTM) || 0,
         grossProfitTTM: parseFloat(data.GrossProfitTTM) || 0,
         dilutedEPSTTM: parseFloat(data.DilutedEPSTTM) || 0,
-        quarterlyEarningsGrowthYOY: parseFloat(data.QuarterlyEarningsGrowthYOY) || 0,
-        quarterlyRevenueGrowthYOY: parseFloat(data.QuarterlyRevenueGrowthYOY) || 0,
+        quarterlyEarningsGrowthYOY:
+          parseFloat(data.QuarterlyEarningsGrowthYOY) || 0,
+        quarterlyRevenueGrowthYOY:
+          parseFloat(data.QuarterlyRevenueGrowthYOY) || 0,
         analystTargetPrice: parseFloat(data.AnalystTargetPrice) || 0,
         trailingPE: parseFloat(data.TrailingPE) || 0,
         forwardPE: parseFloat(data.ForwardPE) || 0,
@@ -333,19 +363,21 @@ class AlphaVantageService {
         shortPercentFloat: parseFloat(data.ShortPercentFloat) || 0,
         percentInsiders: parseFloat(data.PercentInsiders) || 0,
         percentInstitutions: parseFloat(data.PercentInstitutions) || 0,
-        forwardAnnualDividendRate: parseFloat(data.ForwardAnnualDividendRate) || 0,
-        forwardAnnualDividendYield: parseFloat(data.ForwardAnnualDividendYield) || 0,
+        forwardAnnualDividendRate:
+          parseFloat(data.ForwardAnnualDividendRate) || 0,
+        forwardAnnualDividendYield:
+          parseFloat(data.ForwardAnnualDividendYield) || 0,
         payoutRatio: parseFloat(data.PayoutRatio) || 0,
         dividendDate: data.DividendDate || '',
         exDividendDate: data.ExDividendDate || '',
         lastSplitFactor: data.LastSplitFactor || '',
         lastSplitDate: data.LastSplitDate || '',
-        source: 'alpha_vantage'
+        source: 'alpha_vantage',
       };
 
       return {
         ...response,
-        data: overview
+        data: overview,
       };
     } catch (error) {
       return {
@@ -354,7 +386,7 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
   }
@@ -371,7 +403,7 @@ class AlphaVantageService {
   ): Promise<ApiResponse<NewsItem[]>> {
     const params: Record<string, string> = {
       limit: limit.toString(),
-      sort
+      sort,
     };
 
     if (tickers && tickers.length > 0) {
@@ -382,7 +414,10 @@ class AlphaVantageService {
       params.topics = topics.join(',');
     }
 
-    const response = await this.makeRequest<Record<string, unknown>>('NEWS_SENTIMENT', params);
+    const response = await this.makeRequest<Record<string, unknown>>(
+      'NEWS_SENTIMENT',
+      params
+    );
 
     if (!response.success || !response.data) {
       return {
@@ -391,7 +426,7 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
 
@@ -410,21 +445,36 @@ class AlphaVantageService {
           source: newsItem.source as string,
           categoryWithinSource: newsItem.category_within_source as string,
           sourceDomain: newsItem.source_domain as string,
-          topics: newsItem.topics as { topic: string; relevanceScore: number }[],
-          overallSentimentScore: parseFloat(newsItem.overall_sentiment_score as string),
-          overallSentimentLabel: newsItem.overall_sentiment_label as 'Bearish' | 'Somewhat-Bearish' | 'Neutral' | 'Somewhat-Bullish' | 'Bullish',
+          topics: newsItem.topics as {
+            topic: string;
+            relevanceScore: number;
+          }[],
+          overallSentimentScore: parseFloat(
+            newsItem.overall_sentiment_score as string
+          ),
+          overallSentimentLabel: newsItem.overall_sentiment_label as
+            | 'Bearish'
+            | 'Somewhat-Bearish'
+            | 'Neutral'
+            | 'Somewhat-Bullish'
+            | 'Bullish',
           tickerSentiment: newsItem.ticker_sentiment as {
             ticker: string;
             relevanceScore: number;
             tickerSentimentScore: number;
-            tickerSentimentLabel: 'Bearish' | 'Somewhat-Bearish' | 'Neutral' | 'Somewhat-Bullish' | 'Bullish';
-          }[]
+            tickerSentimentLabel:
+              | 'Bearish'
+              | 'Somewhat-Bearish'
+              | 'Neutral'
+              | 'Somewhat-Bullish'
+              | 'Bullish';
+          }[],
         };
       });
 
       return {
         ...response,
-        data: newsItems
+        data: newsItems,
       };
     } catch (error) {
       return {
@@ -433,13 +483,14 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
   }
 
   async getTopGainersLosers(): Promise<ApiResponse<TopGainersLosers>> {
-    const response = await this.makeRequest<Record<string, unknown>>('TOP_GAINERS_LOSERS');
+    const response =
+      await this.makeRequest<Record<string, unknown>>('TOP_GAINERS_LOSERS');
 
     if (!response.success || !response.data) {
       return {
@@ -448,7 +499,7 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
 
@@ -456,34 +507,40 @@ class AlphaVantageService {
       const data = response.data;
 
       const result: TopGainersLosers = {
-        mostActivelyTraded: (data.most_actively_traded as Record<string, string>[]).map(item => ({
+        mostActivelyTraded: (
+          data.most_actively_traded as Record<string, string>[]
+        ).map(item => ({
           ticker: item.ticker,
           price: parseFloat(item.price),
           changeAmount: parseFloat(item.change_amount),
           changePercentage: parseFloat(item.change_percentage.replace('%', '')),
-          volume: parseInt(item.volume)
+          volume: parseInt(item.volume),
         })),
-        topGainers: (data.top_gainers as Record<string, string>[]).map(item => ({
-          ticker: item.ticker,
-          price: parseFloat(item.price),
-          changeAmount: parseFloat(item.change_amount),
-          changePercentage: parseFloat(item.change_percentage.replace('%', '')),
-          volume: parseInt(item.volume)
-        })),
+        topGainers: (data.top_gainers as Record<string, string>[]).map(
+          item => ({
+            ticker: item.ticker,
+            price: parseFloat(item.price),
+            changeAmount: parseFloat(item.change_amount),
+            changePercentage: parseFloat(
+              item.change_percentage.replace('%', '')
+            ),
+            volume: parseInt(item.volume),
+          })
+        ),
         topLosers: (data.top_losers as Record<string, string>[]).map(item => ({
           ticker: item.ticker,
           price: parseFloat(item.price),
           changeAmount: parseFloat(item.change_amount),
           changePercentage: parseFloat(item.change_percentage.replace('%', '')),
-          volume: parseInt(item.volume)
+          volume: parseInt(item.volume),
         })),
         lastUpdated: data.last_updated as string,
-        source: 'alpha_vantage'
+        source: 'alpha_vantage',
       };
 
       return {
         ...response,
-        data: result
+        data: result,
       };
     } catch (error) {
       return {
@@ -492,7 +549,7 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
   }
@@ -502,9 +559,12 @@ class AlphaVantageService {
   // ==========================================
 
   async searchSymbol(keywords: string): Promise<ApiResponse<SearchResult[]>> {
-    const response = await this.makeRequest<Record<string, unknown>>('SYMBOL_SEARCH', {
-      keywords
-    });
+    const response = await this.makeRequest<Record<string, unknown>>(
+      'SYMBOL_SEARCH',
+      {
+        keywords,
+      }
+    );
 
     if (!response.success || !response.data) {
       return {
@@ -513,7 +573,7 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
 
@@ -530,12 +590,12 @@ class AlphaVantageService {
         timezone: match['7. timezone'],
         currency: match['8. currency'],
         matchScore: parseFloat(match['9. matchScore']),
-        source: 'alpha_vantage'
+        source: 'alpha_vantage',
       }));
 
       return {
         ...response,
-        data: results
+        data: results,
       };
     } catch (error) {
       return {
@@ -544,13 +604,14 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
   }
 
   async getMarketStatus(): Promise<ApiResponse<MarketStatus>> {
-    const response = await this.makeRequest<Record<string, unknown>>('MARKET_STATUS');
+    const response =
+      await this.makeRequest<Record<string, unknown>>('MARKET_STATUS');
 
     if (!response.success || !response.data) {
       return {
@@ -559,7 +620,7 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
 
@@ -567,22 +628,24 @@ class AlphaVantageService {
       const data = response.data;
 
       const status: MarketStatus = {
-        primaryExchanges: (data.markets as Record<string, string>[]).map(market => ({
-          market_type: market.market_type,
-          region: market.region,
-          primary_exchanges: market.primary_exchanges,
-          local_open: market.local_open,
-          local_close: market.local_close,
-          current_status: market.current_status as 'open' | 'closed',
-          notes: market.notes
-        })),
+        primaryExchanges: (data.markets as Record<string, string>[]).map(
+          market => ({
+            market_type: market.market_type,
+            region: market.region,
+            primary_exchanges: market.primary_exchanges,
+            local_open: market.local_open,
+            local_close: market.local_close,
+            current_status: market.current_status as 'open' | 'closed',
+            notes: market.notes,
+          })
+        ),
         lastUpdated: new Date().toISOString(),
-        source: 'alpha_vantage'
+        source: 'alpha_vantage',
       };
 
       return {
         ...response,
-        data: status
+        data: status,
       };
     } catch (error) {
       return {
@@ -591,7 +654,7 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
   }
@@ -610,7 +673,7 @@ class AlphaVantageService {
       symbol,
       interval,
       time_period: timePeriod.toString(),
-      series_type: seriesType
+      series_type: seriesType,
     });
 
     if (!response.success || !response.data) {
@@ -620,32 +683,34 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
 
     try {
       const metadata = response.data['Meta Data'] as Record<string, string>;
-      const technicalAnalysis = response.data['Technical Analysis: RSI'] as Record<string, Record<string, string>>;
+      const technicalAnalysis = response.data[
+        'Technical Analysis: RSI'
+      ] as Record<string, Record<string, string>>;
 
       const indicator: TechnicalIndicator = {
         symbol: metadata['1: Symbol'],
         indicator: 'RSI',
         data: Object.entries(technicalAnalysis).map(([date, values]) => ({
           date,
-          value: parseFloat(values.RSI)
+          value: parseFloat(values.RSI),
         })),
         parameters: {
           interval,
           timePeriod,
-          seriesType
+          seriesType,
         },
-        source: 'alpha_vantage'
+        source: 'alpha_vantage',
       };
 
       return {
         ...response,
-        data: indicator
+        data: indicator,
       };
     } catch (error) {
       return {
@@ -654,7 +719,7 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
   }
@@ -673,7 +738,7 @@ class AlphaVantageService {
       series_type: seriesType,
       fastperiod: fastPeriod.toString(),
       slowperiod: slowPeriod.toString(),
-      signalperiod: signalPeriod.toString()
+      signalperiod: signalPeriod.toString(),
     });
 
     if (!response.success || !response.data) {
@@ -683,34 +748,36 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
 
     try {
       const metadata = response.data['Meta Data'] as Record<string, string>;
-      const technicalAnalysis = response.data['Technical Analysis: MACD'] as Record<string, Record<string, string>>;
+      const technicalAnalysis = response.data[
+        'Technical Analysis: MACD'
+      ] as Record<string, Record<string, string>>;
 
       const indicator: TechnicalIndicator = {
         symbol: metadata['1: Symbol'],
         indicator: 'MACD',
         data: Object.entries(technicalAnalysis).map(([date, values]) => ({
           date,
-          value: parseFloat(values.MACD)
+          value: parseFloat(values.MACD),
         })),
         parameters: {
           interval,
           seriesType,
           fastPeriod,
           slowPeriod,
-          signalPeriod
+          signalPeriod,
         },
-        source: 'alpha_vantage'
+        source: 'alpha_vantage',
       };
 
       return {
         ...response,
-        data: indicator
+        data: indicator,
       };
     } catch (error) {
       return {
@@ -719,7 +786,7 @@ class AlphaVantageService {
         success: false,
         source: 'alpha_vantage',
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
   }
@@ -727,4 +794,4 @@ class AlphaVantageService {
 
 // Singleton instance
 export const alphaVantageService = new AlphaVantageService();
-export default alphaVantageService; 
+export default alphaVantageService;

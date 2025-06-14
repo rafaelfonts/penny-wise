@@ -1,27 +1,27 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { AlertCard } from './alert-card'
-import { CreateAlertDialog } from './create-alert-dialog'
-import { AlertStats } from './alert-stats'
-import { 
-  Bell, 
-  Plus, 
-  Search, 
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertCard } from './alert-card';
+import { CreateAlertDialog } from './create-alert-dialog';
+import { AlertStats } from './alert-stats';
+import {
+  Bell,
+  Plus,
+  Search,
   Filter,
   AlertTriangle,
   TrendingUp,
-  RefreshCw
-} from 'lucide-react'
-import { useAlerts } from '@/hooks/use-alerts'
-import type { Alert, CreateAlert } from '@/lib/types/alerts'
+  RefreshCw,
+} from 'lucide-react';
+import { useAlerts } from '@/hooks/use-alerts';
+import type { Alert, CreateAlert } from '@/lib/types/alerts';
 
 interface AlertsPanelProps {
-  className?: string
+  className?: string;
 }
 
 export function AlertsPanel({ className }: AlertsPanelProps) {
@@ -34,80 +34,82 @@ export function AlertsPanel({ className }: AlertsPanelProps) {
     toggleAlert,
     refreshAlerts,
     getActiveAlerts,
-    getTriggeredAlerts
-  } = useAlerts()
+    getTriggeredAlerts,
+  } = useAlerts();
 
-  const [searchTerm, setSearchTerm] = useState('')
-  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'triggered'>('all')
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
-  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'triggered'>(
+    'all'
+  );
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
-    setIsRefreshing(true)
+    setIsRefreshing(true);
     try {
-      await refreshAlerts()
+      await refreshAlerts();
     } finally {
-      setIsRefreshing(false)
+      setIsRefreshing(false);
     }
-  }
+  };
 
   const handleCreateAlert = async (alertData: CreateAlert) => {
     try {
-      const result = await createAlert(alertData)
+      const result = await createAlert(alertData);
       if (result) {
-        setShowCreateDialog(false)
-        return true
+        setShowCreateDialog(false);
+        return true;
       }
-      return false
+      return false;
     } catch (error) {
-      console.error('Error creating alert:', error)
-      return false
+      console.error('Error creating alert:', error);
+      return false;
     }
-  }
+  };
 
   const handleDeleteAlert = async (alertId: string) => {
     try {
-      await deleteAlert(alertId)
+      await deleteAlert(alertId);
     } catch (error) {
-      console.error('Error deleting alert:', error)
+      console.error('Error deleting alert:', error);
     }
-  }
+  };
 
   const handleToggleAlert = async (alertId: string) => {
     try {
-      await toggleAlert(alertId)
+      await toggleAlert(alertId);
     } catch (error) {
-      console.error('Error toggling alert:', error)
+      console.error('Error toggling alert:', error);
     }
-  }
+  };
 
   // Filter alerts based on search and active tab
   const getFilteredAlerts = () => {
-    let filteredAlerts: Alert[] = []
-    
+    let filteredAlerts: Alert[] = [];
+
     switch (activeTab) {
       case 'active':
-        filteredAlerts = getActiveAlerts()
-        break
+        filteredAlerts = getActiveAlerts();
+        break;
       case 'triggered':
-        filteredAlerts = getTriggeredAlerts()
-        break
+        filteredAlerts = getTriggeredAlerts();
+        break;
       default:
-        filteredAlerts = alerts
+        filteredAlerts = alerts;
     }
 
     if (searchTerm) {
       filteredAlerts = filteredAlerts.filter(alert =>
         alert.symbol.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      );
     }
 
-    return filteredAlerts
-  }
+    return filteredAlerts;
+  };
 
-  const filteredAlerts = getFilteredAlerts()
-  const activeAlertsCount = getActiveAlerts().length
-  const triggeredAlertsCount = getTriggeredAlerts().length
+  const filteredAlerts = getFilteredAlerts();
+  const activeAlertsCount = getActiveAlerts().length;
+  const triggeredAlertsCount = getTriggeredAlerts().length;
 
   if (loading) {
     return (
@@ -121,12 +123,12 @@ export function AlertsPanel({ className }: AlertsPanelProps) {
         <CardContent>
           <div className="animate-pulse space-y-3">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-20 bg-gray-200 rounded"></div>
+              <div key={i} className="h-20 rounded bg-gray-200"></div>
             ))}
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -140,46 +142,48 @@ export function AlertsPanel({ className }: AlertsPanelProps) {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={handleRefresh}
             disabled={isRefreshing}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
+            />
             Atualizar
           </Button>
           <Button onClick={() => setShowCreateDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             Novo Alerta
           </Button>
         </div>
       </div>
 
       {/* Stats */}
-      <AlertStats 
+      <AlertStats
         stats={{
           total: alerts.length,
           active: activeAlertsCount,
           triggered_today: triggeredAlertsCount,
           triggered_this_week: triggeredAlertsCount,
           by_type: { price: 0, volume: 0, technical: 0, news: 0 },
-          by_symbol: {}
+          by_symbol: {},
         }}
       />
 
       {/* Controls */}
-      <div className="flex gap-4 items-center">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="flex items-center gap-4">
+        <div className="relative max-w-md flex-1">
+          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />
           <Input
             placeholder="Buscar por símbolo..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
             className="pl-9"
           />
         </div>
         <Button variant="outline" size="sm">
-          <Filter className="h-4 w-4 mr-2" />
+          <Filter className="mr-2 h-4 w-4" />
           Filtros
         </Button>
       </div>
@@ -197,7 +201,12 @@ export function AlertsPanel({ className }: AlertsPanelProps) {
       )}
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'all' | 'active' | 'triggered')}>
+      <Tabs
+        value={activeTab}
+        onValueChange={value =>
+          setActiveTab(value as 'all' | 'active' | 'triggered')
+        }
+      >
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="all" className="flex items-center gap-2">
             <Bell className="h-4 w-4" />
@@ -217,17 +226,18 @@ export function AlertsPanel({ className }: AlertsPanelProps) {
           {filteredAlerts.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">Nenhum alerta encontrado</h3>
+                <Bell className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+                <h3 className="mb-2 text-lg font-medium">
+                  Nenhum alerta encontrado
+                </h3>
                 <p className="text-muted-foreground mb-4">
-                  {searchTerm 
+                  {searchTerm
                     ? 'Tente ajustar os termos de busca'
-                    : 'Crie seu primeiro alerta para monitorar o mercado'
-                  }
+                    : 'Crie seu primeiro alerta para monitorar o mercado'}
                 </p>
                 {!searchTerm && (
                   <Button onClick={() => setShowCreateDialog(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="mr-2 h-4 w-4" />
                     Criar Primeiro Alerta
                   </Button>
                 )}
@@ -235,7 +245,7 @@ export function AlertsPanel({ className }: AlertsPanelProps) {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {filteredAlerts.map((alert) => (
+              {filteredAlerts.map(alert => (
                 <AlertCard
                   key={alert.id}
                   alert={alert}
@@ -251,20 +261,22 @@ export function AlertsPanel({ className }: AlertsPanelProps) {
           {filteredAlerts.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <TrendingUp className="h-12 w-12 mx-auto text-green-500 mb-4" />
-                <h3 className="text-lg font-medium mb-2">Nenhum alerta ativo</h3>
+                <TrendingUp className="mx-auto mb-4 h-12 w-12 text-green-500" />
+                <h3 className="mb-2 text-lg font-medium">
+                  Nenhum alerta ativo
+                </h3>
                 <p className="text-muted-foreground mb-4">
                   Crie alertas para monitorar preços e volumes em tempo real
                 </p>
                 <Button onClick={() => setShowCreateDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   Criar Alerta
                 </Button>
               </CardContent>
             </Card>
           ) : (
             <div className="grid gap-4">
-              {filteredAlerts.map((alert) => (
+              {filteredAlerts.map(alert => (
                 <AlertCard
                   key={alert.id}
                   alert={alert}
@@ -280,16 +292,19 @@ export function AlertsPanel({ className }: AlertsPanelProps) {
           {filteredAlerts.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <AlertTriangle className="h-12 w-12 mx-auto text-orange-500 mb-4" />
-                <h3 className="text-lg font-medium mb-2">Nenhum alerta disparado</h3>
+                <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-orange-500" />
+                <h3 className="mb-2 text-lg font-medium">
+                  Nenhum alerta disparado
+                </h3>
                 <p className="text-muted-foreground">
-                  Os alertas disparados aparecerão aqui quando as condições forem atendidas
+                  Os alertas disparados aparecerão aqui quando as condições
+                  forem atendidas
                 </p>
               </CardContent>
             </Card>
           ) : (
             <div className="grid gap-4">
-              {filteredAlerts.map((alert) => (
+              {filteredAlerts.map(alert => (
                 <AlertCard
                   key={alert.id}
                   alert={alert}
@@ -309,5 +324,5 @@ export function AlertsPanel({ className }: AlertsPanelProps) {
         onCreateAlert={handleCreateAlert}
       />
     </div>
-  )
-} 
+  );
+}

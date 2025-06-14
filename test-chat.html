@@ -1,50 +1,70 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>Test Chat - Penny Wise</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .test-result { padding: 10px; margin: 10px 0; border-radius: 5px; }
-        .success { background-color: #d4edda; color: #155724; }
-        .error { background-color: #f8d7da; color: #721c24; }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .test-result {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+      }
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Penny Wise Chat Test</h1>
     <div id="results"></div>
-    
+
     <script>
-        async function testChat() {
-            const results = document.getElementById('results');
-            
-            // Test 1: Server is running
-            try {
-                const response = await fetch('http://localhost:3000/');
-                if (response.ok) {
-                    results.innerHTML += '<div class="test-result success">✅ Server is running</div>';
-                } else {
-                    results.innerHTML += '<div class="test-result error">❌ Server responded with error</div>';
-                }
-            } catch (error) {
-                results.innerHTML += '<div class="test-result error">❌ Server is not running</div>';
-            }
-            
-            // Test 2: Chat page loads
-            try {
-                const response = await fetch('http://localhost:3000/chat');
-                if (response.status === 307) {
-                    results.innerHTML += '<div class="test-result success">✅ Chat page redirects correctly (auth required)</div>';
-                } else {
-                    results.innerHTML += '<div class="test-result error">❌ Chat page unexpected response</div>';
-                }
-            } catch (error) {
-                results.innerHTML += '<div class="test-result error">❌ Chat page failed to load</div>';
-            }
-            
-            results.innerHTML += '<div class="test-result success">🎉 Basic tests completed. Check browser console for JavaScript errors.</div>';
+      async function testChat() {
+        const results = document.getElementById('results');
+
+        // Test 1: Server is running
+        try {
+          const response = await fetch('http://localhost:3000/');
+          if (response.ok) {
+            results.innerHTML +=
+              '<div class="test-result success">✅ Server is running</div>';
+          } else {
+            results.innerHTML +=
+              '<div class="test-result error">❌ Server responded with error</div>';
+          }
+        } catch (error) {
+          results.innerHTML +=
+            '<div class="test-result error">❌ Server is not running</div>';
         }
-        
-        testChat();
+
+        // Test 2: Chat page loads
+        try {
+          const response = await fetch('http://localhost:3000/chat');
+          if (response.status === 307) {
+            results.innerHTML +=
+              '<div class="test-result success">✅ Chat page redirects correctly (auth required)</div>';
+          } else {
+            results.innerHTML +=
+              '<div class="test-result error">❌ Chat page unexpected response</div>';
+          }
+        } catch (error) {
+          results.innerHTML +=
+            '<div class="test-result error">❌ Chat page failed to load</div>';
+        }
+
+        results.innerHTML +=
+          '<div class="test-result success">🎉 Basic tests completed. Check browser console for JavaScript errors.</div>';
+      }
+
+      testChat();
     </script>
-</body>
-</html> 
+  </body>
+</html>

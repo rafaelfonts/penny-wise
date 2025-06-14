@@ -35,7 +35,7 @@ export class CacheService {
   private cache = new Map<string, CacheItem>();
   private stats = {
     hits: 0,
-    misses: 0
+    misses: 0,
   };
   private cleanupTimer?: NodeJS.Timeout;
   private config: CacheConfig;
@@ -46,9 +46,9 @@ export class CacheService {
       defaultTTL: 5 * 60 * 1000, // 5 minutes
       cleanupInterval: 60 * 1000, // 1 minute
       enableStats: true,
-      ...config
+      ...config,
     };
-    
+
     this.startCleanupTimer();
   }
 
@@ -56,7 +56,7 @@ export class CacheService {
     if (this.cleanupTimer) {
       clearInterval(this.cleanupTimer);
     }
-    
+
     this.cleanupTimer = setInterval(() => {
       this.cleanup();
     }, this.config.cleanupInterval);
@@ -65,28 +65,32 @@ export class CacheService {
   private cleanup(): void {
     const now = Date.now();
     const keysToDelete: string[] = [];
-    
+
     for (const [key, item] of this.cache.entries()) {
       if (now > item.expiry) {
         keysToDelete.push(key);
       }
     }
-    
+
     keysToDelete.forEach(key => this.cache.delete(key));
-    
+
     // LRU eviction if cache is too large
     if (this.cache.size > this.config.maxSize) {
-      const sortedEntries = Array.from(this.cache.entries())
-        .sort(([, a], [, b]) => a.lastAccessed - b.lastAccessed);
-        
-      const toEvict = sortedEntries.slice(0, this.cache.size - this.config.maxSize);
+      const sortedEntries = Array.from(this.cache.entries()).sort(
+        ([, a], [, b]) => a.lastAccessed - b.lastAccessed
+      );
+
+      const toEvict = sortedEntries.slice(
+        0,
+        this.cache.size - this.config.maxSize
+      );
       toEvict.forEach(([key]) => this.cache.delete(key));
     }
   }
 
   private updateStats(hit: boolean): void {
     if (!this.config.enableStats) return;
-    
+
     if (hit) {
       this.stats.hits++;
     } else {
@@ -108,18 +112,18 @@ export class CacheService {
   set<T>(key: string, data: T, ttl?: number): void {
     const now = Date.now();
     const actualTTL = ttl || this.config.defaultTTL;
-    
+
     const item: CacheItem<T> = {
       data,
       timestamp: now,
       expiry: now + actualTTL,
       ttl: actualTTL,
       hitCount: 0,
-      lastAccessed: now
+      lastAccessed: now,
     };
-    
+
     this.cache.set(key, item);
-    
+
     // Trigger cleanup if cache is getting too large
     if (this.cache.size > this.config.maxSize * 1.1) {
       this.cleanup();
@@ -128,24 +132,24 @@ export class CacheService {
 
   get<T>(key: string): T | null {
     const item = this.cache.get(key) as CacheItem<T> | undefined;
-    
+
     if (!item) {
       this.updateStats(false);
       return null;
     }
-    
+
     const now = Date.now();
-    
+
     if (now > item.expiry) {
       this.cache.delete(key);
       this.updateStats(false);
       return null;
     }
-    
+
     // Update access statistics
     item.hitCount++;
     item.lastAccessed = now;
-    
+
     this.updateStats(true);
     return item.data;
   }
@@ -156,11 +160,11 @@ export class CacheService {
     ttl?: number
   ): Promise<T> {
     const cached = this.get<T>(key);
-    
+
     if (cached !== null) {
       return cached;
     }
-    
+
     const data = await fetcher();
     this.set(key, data, ttl);
     return data;
@@ -168,16 +172,16 @@ export class CacheService {
 
   has(key: string): boolean {
     const item = this.cache.get(key);
-    
+
     if (!item) {
       return false;
     }
-    
+
     if (Date.now() > item.expiry) {
       this.cache.delete(key);
       return false;
     }
-    
+
     return true;
   }
 
@@ -198,7 +202,7 @@ export class CacheService {
   ): Promise<Record<string, T>> {
     const result: Record<string, T> = {};
     const missingKeys: string[] = [];
-    
+
     // Check cache for existing items
     for (const key of keys) {
       const cached = this.get<T>(key);
@@ -208,38 +212,38 @@ export class CacheService {
         missingKeys.push(key);
       }
     }
-    
+
     // Fetch missing items
     if (missingKeys.length > 0) {
-       try {
-         const fetchedData = await fetcher(missingKeys);
-         
-         // Cache the fetched data
-         for (const [key, value] of Object.entries(fetchedData)) {
-           this.set(key, value, ttl);
-           result[key] = value;
-         }
-       } catch {
-         // If fetch fails, try to return expired cached data for missing keys
-         for (const key of missingKeys) {
-           const cached = this.cache.get(key);
-           if (cached) {
-             result[key] = cached.data as T;
-           }
-         }
-       }
+      try {
+        const fetchedData = await fetcher(missingKeys);
+
+        // Cache the fetched data
+        for (const [key, value] of Object.entries(fetchedData)) {
+          this.set(key, value, ttl);
+          result[key] = value;
+        }
+      } catch {
+        // If fetch fails, try to return expired cached data for missing keys
+        for (const key of missingKeys) {
+          const cached = this.cache.get(key);
+          if (cached) {
+            result[key] = cached.data as T;
+          }
+        }
+      }
     }
-    
+
     return result;
   }
 
   getStats(): CacheStats {
     const totalRequests = this.stats.hits + this.stats.misses;
     const hitRate = totalRequests > 0 ? this.stats.hits / totalRequests : 0;
-    
+
     let oldestEntry = Date.now();
     let newestEntry = 0;
-    
+
     for (const item of this.cache.values()) {
       if (item.timestamp < oldestEntry) {
         oldestEntry = item.timestamp;
@@ -248,7 +252,7 @@ export class CacheService {
         newestEntry = item.timestamp;
       }
     }
-    
+
     return {
       size: this.cache.size,
       hits: this.stats.hits,
@@ -256,30 +260,30 @@ export class CacheService {
       hitRate,
       totalMemory: this.getMemoryUsage(),
       oldestEntry: this.cache.size > 0 ? oldestEntry : Date.now(),
-      newestEntry: this.cache.size > 0 ? newestEntry : Date.now()
+      newestEntry: this.cache.size > 0 ? newestEntry : Date.now(),
     };
   }
 
   getExpiredItems(): string[] {
     const now = Date.now();
     const expired: string[] = [];
-    
+
     for (const [key, item] of this.cache.entries()) {
       if (now > item.expiry) {
         expired.push(key);
       }
     }
-    
+
     return expired;
   }
 
   extendTTL(key: string, additionalTTL: number): boolean {
     const item = this.cache.get(key);
-    
+
     if (!item) {
       return false;
     }
-    
+
     item.expiry += additionalTTL;
     return true;
   }
@@ -298,15 +302,16 @@ export const cacheService = new CacheService();
 // Utility functions
 export const generateCacheKey = {
   quote: (symbol: string) => `quote:${symbol}`,
-  intraday: (symbol: string, interval: string) => `intraday:${symbol}:${interval}`,
+  intraday: (symbol: string, interval: string) =>
+    `intraday:${symbol}:${interval}`,
   daily: (symbol: string) => `daily:${symbol}`,
-  news: (symbols: string[], topics: string[], limit: number) => 
+  news: (symbols: string[], topics: string[], limit: number) =>
     `news:${symbols.join(',')}:${topics.join(',')}:${limit}`,
   search: (query: string) => `search:${query.toLowerCase()}`,
-  technical: (symbol: string, indicator: string, interval: string) => 
+  technical: (symbol: string, indicator: string, interval: string) =>
     `technical:${symbol}:${indicator}:${interval}`,
   overview: (symbol: string) => `overview:${symbol}`,
-  validation: (symbol: string) => `validation:${symbol}`
+  validation: (symbol: string) => `validation:${symbol}`,
 };
 
 // Wrapper function for StandardApiResponse caching

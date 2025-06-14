@@ -1,145 +1,152 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { 
-  AlertTriangle, 
-  RefreshCw, 
-  Wifi, 
-  Server, 
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertTriangle,
+  RefreshCw,
+  Wifi,
+  Server,
   MessageCircle,
-  XCircle 
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
+  XCircle,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export interface ChatError {
-  type: 'network' | 'server' | 'auth' | 'streaming' | 'unknown'
-  message: string
-  details?: string
-  retryable?: boolean
-  timestamp: string
+  type: 'network' | 'server' | 'auth' | 'streaming' | 'unknown';
+  message: string;
+  details?: string;
+  retryable?: boolean;
+  timestamp: string;
 }
 
 interface ErrorHandlerProps {
-  error: ChatError | string
-  onRetry?: () => void
-  onDismiss?: () => void
-  className?: string
+  error: ChatError | string;
+  onRetry?: () => void;
+  onDismiss?: () => void;
+  className?: string;
 }
 
-export function ChatErrorHandler({ error, onRetry, onDismiss, className }: ErrorHandlerProps) {
-  const [isRetrying, setIsRetrying] = useState(false)
-  
+export function ChatErrorHandler({
+  error,
+  onRetry,
+  onDismiss,
+  className,
+}: ErrorHandlerProps) {
+  const [isRetrying, setIsRetrying] = useState(false);
+
   // Normalize error to ChatError object
-  const chatError: ChatError = typeof error === 'string' 
-    ? {
-        type: 'unknown',
-        message: error,
-        retryable: true,
-        timestamp: new Date().toISOString()
-      }
-    : error
+  const chatError: ChatError =
+    typeof error === 'string'
+      ? {
+          type: 'unknown',
+          message: error,
+          retryable: true,
+          timestamp: new Date().toISOString(),
+        }
+      : error;
 
   const getErrorIcon = () => {
     switch (chatError.type) {
       case 'network':
-        return <Wifi className="h-5 w-5 text-orange-500" />
+        return <Wifi className="h-5 w-5 text-orange-500" />;
       case 'server':
-        return <Server className="h-5 w-5 text-red-500" />
+        return <Server className="h-5 w-5 text-red-500" />;
       case 'auth':
-        return <XCircle className="h-5 w-5 text-red-500" />
+        return <XCircle className="h-5 w-5 text-red-500" />;
       case 'streaming':
-        return <MessageCircle className="h-5 w-5 text-blue-500" />
+        return <MessageCircle className="h-5 w-5 text-blue-500" />;
       default:
-        return <AlertTriangle className="h-5 w-5 text-yellow-500" />
+        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
     }
-  }
+  };
 
   const getErrorTitle = () => {
     switch (chatError.type) {
       case 'network':
-        return 'Problema de Conexão'
+        return 'Problema de Conexão';
       case 'server':
-        return 'Erro do Servidor'
+        return 'Erro do Servidor';
       case 'auth':
-        return 'Erro de Autenticação'
+        return 'Erro de Autenticação';
       case 'streaming':
-        return 'Erro de Streaming'
+        return 'Erro de Streaming';
       default:
-        return 'Erro Inesperado'
+        return 'Erro Inesperado';
     }
-  }
+  };
 
   const getErrorDescription = () => {
     switch (chatError.type) {
       case 'network':
-        return 'Verifique sua conexão com a internet e tente novamente.'
+        return 'Verifique sua conexão com a internet e tente novamente.';
       case 'server':
-        return 'Nossos servidores estão temporariamente indisponíveis.'
+        return 'Nossos servidores estão temporariamente indisponíveis.';
       case 'auth':
-        return 'Sua sessão pode ter expirado. Clique em "Fazer Login" para continuar.'
+        return 'Sua sessão pode ter expirado. Clique em "Fazer Login" para continuar.';
       case 'streaming':
-        return 'Houve um problema ao receber a resposta em tempo real.'
+        return 'Houve um problema ao receber a resposta em tempo real.';
       default:
-        return 'Algo deu errado. Nossa equipe foi notificada.'
+        return 'Algo deu errado. Nossa equipe foi notificada.';
     }
-  }
+  };
 
   const handleAuthError = () => {
     // Redirect to login page
-    window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.pathname)
-  }
+    window.location.href =
+      '/auth/login?redirect=' + encodeURIComponent(window.location.pathname);
+  };
 
   const handleRetry = async () => {
-    if (!onRetry) return
-    
-    setIsRetrying(true)
+    if (!onRetry) return;
+
+    setIsRetrying(true);
     try {
-      await onRetry()
+      await onRetry();
     } catch (error) {
-      console.error('Retry failed:', error)
+      console.error('Retry failed:', error);
     } finally {
-      setIsRetrying(false)
+      setIsRetrying(false);
     }
-  }
+  };
 
   return (
-    <Card className={cn('p-4 border-destructive/20 bg-destructive/5', className)}>
+    <Card
+      className={cn('border-destructive/20 bg-destructive/5 p-4', className)}
+    >
       <div className="flex items-start gap-3">
         {getErrorIcon()}
-        
+
         <div className="flex-1 space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-sm">{getErrorTitle()}</h4>
-            <span className="text-xs text-muted-foreground">
+            <h4 className="text-sm font-medium">{getErrorTitle()}</h4>
+            <span className="text-muted-foreground text-xs">
               {new Date(chatError.timestamp).toLocaleTimeString('pt-BR', {
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
               })}
             </span>
           </div>
-          
-          <p className="text-sm text-muted-foreground">
-            {chatError.message}
-          </p>
-          
-          <p className="text-xs text-muted-foreground">
+
+          <p className="text-muted-foreground text-sm">{chatError.message}</p>
+
+          <p className="text-muted-foreground text-xs">
             {getErrorDescription()}
           </p>
-          
+
           {chatError.details && (
             <details className="text-xs">
-              <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+              <summary className="text-muted-foreground hover:text-foreground cursor-pointer">
                 Detalhes técnicos
               </summary>
-              <pre className="mt-2 p-2 bg-muted rounded text-xs overflow-x-auto">
+              <pre className="bg-muted mt-2 overflow-x-auto rounded p-2 text-xs">
                 {chatError.details}
               </pre>
             </details>
           )}
-          
+
           <div className="flex gap-2 pt-2">
             {chatError.type === 'auth' ? (
               <Button
@@ -151,7 +158,8 @@ export function ChatErrorHandler({ error, onRetry, onDismiss, className }: Error
                 Fazer Login
               </Button>
             ) : (
-              chatError.retryable && onRetry && (
+              chatError.retryable &&
+              onRetry && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -161,19 +169,19 @@ export function ChatErrorHandler({ error, onRetry, onDismiss, className }: Error
                 >
                   {isRetrying ? (
                     <>
-                      <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                      <RefreshCw className="mr-1 h-3 w-3 animate-spin" />
                       Tentando...
                     </>
                   ) : (
                     <>
-                      <RefreshCw className="h-3 w-3 mr-1" />
+                      <RefreshCw className="mr-1 h-3 w-3" />
                       Tentar Novamente
                     </>
                   )}
                 </Button>
               )
             )}
-            
+
             {onDismiss && (
               <Button
                 variant="ghost"
@@ -188,39 +196,44 @@ export function ChatErrorHandler({ error, onRetry, onDismiss, className }: Error
         </div>
       </div>
     </Card>
-  )
+  );
 }
 
 interface NetworkStatusProps {
-  className?: string
+  className?: string;
 }
 
 export function NetworkStatus({ className }: NetworkStatusProps) {
-  const [isOnline, setIsOnline] = useState(navigator.onLine)
-  
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true)
-    const handleOffline = () => setIsOnline(false)
-    
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-    
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
-  })
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  if (isOnline) return null
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  });
+
+  if (isOnline) return null;
 
   return (
-    <Alert className={cn('border-orange-200 bg-orange-50 dark:bg-orange-950/20', className)}>
+    <Alert
+      className={cn(
+        'border-orange-200 bg-orange-50 dark:bg-orange-950/20',
+        className
+      )}
+    >
       <Wifi className="h-4 w-4 text-orange-500" />
       <AlertDescription className="text-orange-700 dark:text-orange-300">
         Você está offline. Algumas funcionalidades podem não estar disponíveis.
       </AlertDescription>
     </Alert>
-  )
+  );
 }
 
 export function createChatError(
@@ -234,6 +247,6 @@ export function createChatError(
     message,
     details,
     retryable,
-    timestamp: new Date().toISOString()
-  }
-} 
+    timestamp: new Date().toISOString(),
+  };
+}

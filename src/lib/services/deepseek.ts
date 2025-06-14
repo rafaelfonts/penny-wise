@@ -2,45 +2,45 @@
 // DEEPSEEK API SERVICE - Day 6 Implementation
 // ==========================================
 
-import OpenAI from 'openai'
+import OpenAI from 'openai';
 
 export interface DeepSeekMessage {
-  role: 'system' | 'user' | 'assistant'
-  content: string
+  role: 'system' | 'user' | 'assistant';
+  content: string;
 }
 
 export interface DeepSeekResponse {
-  response: string
+  response: string;
   metadata: {
-    model: string
-    tokens: number
-    processing_time: number
-    finish_reason: string
-  }
+    model: string;
+    tokens: number;
+    processing_time: number;
+    finish_reason: string;
+  };
 }
 
 export interface DeepSeekStreamResponse {
-  content: string
-  done: boolean
+  content: string;
+  done: boolean;
   metadata?: {
-    model: string
-    tokens: number
-    processing_time: number
-    finish_reason: string
-  }
+    model: string;
+    tokens: number;
+    processing_time: number;
+    finish_reason: string;
+  };
 }
 
 class DeepSeekService {
-  private client: OpenAI
-  private readonly model = 'deepseek-chat'
-  private readonly maxTokens = 4000
-  private readonly temperature = 0.7
+  private client: OpenAI;
+  private readonly model = 'deepseek-chat';
+  private readonly maxTokens = 4000;
+  private readonly temperature = 0.7;
 
   constructor() {
     this.client = new OpenAI({
       apiKey: process.env.DEEPSEEK_API_KEY,
-      baseURL: process.env.NEXT_PUBLIC_DEEPSEEK_BASE_URL + '/v1'
-    })
+      baseURL: process.env.NEXT_PUBLIC_DEEPSEEK_BASE_URL + '/v1',
+    });
   }
 
   /**
@@ -49,12 +49,12 @@ class DeepSeekService {
   async generateResponse(
     messages: DeepSeekMessage[],
     options?: {
-      temperature?: number
-      maxTokens?: number
-      stream?: false
+      temperature?: number;
+      maxTokens?: number;
+      stream?: false;
     }
   ): Promise<DeepSeekResponse> {
-    const startTime = Date.now()
+    const startTime = Date.now();
 
     try {
       const completion = await this.client.chat.completions.create({
@@ -62,11 +62,11 @@ class DeepSeekService {
         messages: messages,
         temperature: options?.temperature ?? this.temperature,
         max_tokens: options?.maxTokens ?? this.maxTokens,
-        stream: false
-      })
+        stream: false,
+      });
 
-      const response = completion.choices[0]?.message?.content || ''
-      const processingTime = Date.now() - startTime
+      const response = completion.choices[0]?.message?.content || '';
+      const processingTime = Date.now() - startTime;
 
       return {
         response,
@@ -74,12 +74,14 @@ class DeepSeekService {
           model: this.model,
           tokens: completion.usage?.total_tokens || 0,
           processing_time: processingTime,
-          finish_reason: completion.choices[0]?.finish_reason || 'unknown'
-        }
-      }
+          finish_reason: completion.choices[0]?.finish_reason || 'unknown',
+        },
+      };
     } catch (error) {
-      console.error('DeepSeek API error:', error)
-      throw new Error(`DeepSeek API error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      console.error('DeepSeek API error:', error);
+      throw new Error(
+        `DeepSeek API error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -89,11 +91,11 @@ class DeepSeekService {
   async *generateStreamingResponse(
     messages: DeepSeekMessage[],
     options?: {
-      temperature?: number
-      maxTokens?: number
+      temperature?: number;
+      maxTokens?: number;
     }
   ): AsyncGenerator<DeepSeekStreamResponse, void, unknown> {
-    const startTime = Date.now()
+    const startTime = Date.now();
 
     try {
       const stream = await this.client.chat.completions.create({
@@ -101,23 +103,23 @@ class DeepSeekService {
         messages: messages,
         temperature: options?.temperature ?? this.temperature,
         max_tokens: options?.maxTokens ?? this.maxTokens,
-        stream: true
-      })
+        stream: true,
+      });
 
       for await (const chunk of stream) {
-        const delta = chunk.choices[0]?.delta?.content || ''
-        
+        const delta = chunk.choices[0]?.delta?.content || '';
+
         if (delta) {
           yield {
             content: delta,
-            done: false
-          }
+            done: false,
+          };
         }
 
         // Handle finish
         if (chunk.choices[0]?.finish_reason) {
-          const processingTime = Date.now() - startTime
-          
+          const processingTime = Date.now() - startTime;
+
           yield {
             content: '',
             done: true,
@@ -125,14 +127,16 @@ class DeepSeekService {
               model: this.model,
               tokens: 0, // Note: Streaming doesn't provide token count
               processing_time: processingTime,
-              finish_reason: chunk.choices[0].finish_reason
-            }
-          }
+              finish_reason: chunk.choices[0].finish_reason,
+            },
+          };
         }
       }
     } catch (error) {
-      console.error('DeepSeek streaming error:', error)
-      throw new Error(`DeepSeek streaming error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      console.error('DeepSeek streaming error:', error);
+      throw new Error(
+        `DeepSeek streaming error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -147,38 +151,42 @@ class DeepSeekService {
   ): Promise<DeepSeekResponse> {
     // Check for analyze commands and process them with intelligent market service
     if (userMessage.toLowerCase().includes('/analyze ')) {
-      const symbolMatch = userMessage.match(/\/analyze\s+([A-Z0-9.]+)/i)
+      const symbolMatch = userMessage.match(/\/analyze\s+([A-Z0-9.]+)/i);
       if (symbolMatch) {
-        const symbol = symbolMatch[1]
+        const symbol = symbolMatch[1];
         try {
-          const intelligentMarket = await import('./intelligent-market')
-          const analysis = await intelligentMarket.intelligentMarket.analyzeSymbol(symbol)
-          
+          const intelligentMarket = await import('./intelligent-market');
+          const analysis =
+            await intelligentMarket.intelligentMarket.analyzeSymbol(symbol);
+
           return {
             response: analysis,
             metadata: {
               model: 'intelligent-market-analysis',
               tokens: 0,
               processing_time: 150,
-              finish_reason: 'stop'
-            }
-          }
+              finish_reason: 'stop',
+            },
+          };
         } catch (error) {
-          console.error('Error in intelligent market analysis:', error)
+          console.error('Error in intelligent market analysis:', error);
           // Fall through to regular processing
         }
       }
     }
 
-    const systemPrompt = this.buildFinancialSystemPrompt(marketContext, commandsContext)
-    
+    const systemPrompt = this.buildFinancialSystemPrompt(
+      marketContext,
+      commandsContext
+    );
+
     const messages: DeepSeekMessage[] = [
       { role: 'system', content: systemPrompt },
       ...conversationHistory.slice(-10), // Keep last 10 messages for context
-      { role: 'user', content: userMessage }
-    ]
+      { role: 'user', content: userMessage },
+    ];
 
-    return this.generateResponse(messages)
+    return this.generateResponse(messages);
   }
 
   /**
@@ -190,21 +198,27 @@ class DeepSeekService {
     marketContext?: string,
     commandsContext?: string
   ): AsyncGenerator<DeepSeekStreamResponse, void, unknown> {
-    const systemPrompt = this.buildFinancialSystemPrompt(marketContext, commandsContext)
-    
+    const systemPrompt = this.buildFinancialSystemPrompt(
+      marketContext,
+      commandsContext
+    );
+
     const messages: DeepSeekMessage[] = [
       { role: 'system', content: systemPrompt },
       ...conversationHistory.slice(-10), // Keep last 10 messages for context
-      { role: 'user', content: userMessage }
-    ]
+      { role: 'user', content: userMessage },
+    ];
 
-    yield* this.generateStreamingResponse(messages)
+    yield* this.generateStreamingResponse(messages);
   }
 
   /**
    * Build specialized system prompt for financial chat
    */
-  private buildFinancialSystemPrompt(marketContext?: string, commandsContext?: string): string {
+  private buildFinancialSystemPrompt(
+    marketContext?: string,
+    commandsContext?: string
+  ): string {
     let prompt = `Você é o Penny Wise, um assistente financeiro inteligente especializado no mercado brasileiro.
 
 CARACTERÍSTICAS:
@@ -237,53 +251,59 @@ FORMATO DE RESPOSTA:
 - Resposta direta e objetiva
 - Dados organizados em tópicos/bullets
 - Conclusões claras e actionables
-- Próximos passos sugeridos`
+- Próximos passos sugeridos`;
 
     if (marketContext) {
-      prompt += `\n\nCONTEXTO DE MERCADO ATUAL:\n${marketContext}`
+      prompt += `\n\nCONTEXTO DE MERCADO ATUAL:\n${marketContext}`;
     }
 
     if (commandsContext) {
-      prompt += `\n\nCOMANDOS EXECUTADOS:\n${commandsContext}`
+      prompt += `\n\nCOMANDOS EXECUTADOS:\n${commandsContext}`;
     }
 
-    prompt += `\n\nLembre-se: Investimentos envolvem risco. Esta é uma análise educacional, não uma recomendação de investimento.`
+    prompt += `\n\nLembre-se: Investimentos envolvem risco. Esta é uma análise educacional, não uma recomendação de investimento.`;
 
-    return prompt
+    return prompt;
   }
 
   /**
    * Convert conversation messages to DeepSeek format
    */
-  convertToDeepSeekMessages(messages: Array<{ role: string; content: string }>): DeepSeekMessage[] {
+  convertToDeepSeekMessages(
+    messages: Array<{ role: string; content: string }>
+  ): DeepSeekMessage[] {
     return messages
       .filter(msg => ['user', 'assistant'].includes(msg.role))
       .map(msg => ({
         role: msg.role as 'user' | 'assistant',
-        content: msg.content
-      }))
+        content: msg.content,
+      }));
   }
 
   /**
    * Summarize long conversation for context management
    */
   async summarizeConversation(messages: DeepSeekMessage[]): Promise<string> {
-    if (messages.length <= 4) return ''
+    if (messages.length <= 4) return '';
 
     const summaryMessages: DeepSeekMessage[] = [
       {
         role: 'system',
-        content: 'Resuma esta conversa de chat financeiro em 2-3 frases, mantendo os pontos-chave sobre investimentos, análises e decisões discutidas.'
+        content:
+          'Resuma esta conversa de chat financeiro em 2-3 frases, mantendo os pontos-chave sobre investimentos, análises e decisões discutidas.',
       },
       ...messages.slice(0, -2), // All except last 2 messages
       {
         role: 'user',
-        content: 'Resuma nossa conversa anterior mantendo o contexto financeiro relevante.'
-      }
-    ]
+        content:
+          'Resuma nossa conversa anterior mantendo o contexto financeiro relevante.',
+      },
+    ];
 
-    const response = await this.generateResponse(summaryMessages, { maxTokens: 200 })
-    return response.response
+    const response = await this.generateResponse(summaryMessages, {
+      maxTokens: 200,
+    });
+    return response.response;
   }
 
   /**
@@ -291,18 +311,19 @@ FORMATO DE RESPOSTA:
    */
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await this.generateResponse([
-        { role: 'user', content: 'Hello' }
-      ], { maxTokens: 10 })
-      
-      return !!response.response
+      const response = await this.generateResponse(
+        [{ role: 'user', content: 'Hello' }],
+        { maxTokens: 10 }
+      );
+
+      return !!response.response;
     } catch (error) {
-      console.error('DeepSeek health check failed:', error)
-      return false
+      console.error('DeepSeek health check failed:', error);
+      return false;
     }
   }
 }
 
 // Export singleton instance
-export const deepSeekService = new DeepSeekService()
-export default deepSeekService 
+export const deepSeekService = new DeepSeekService();
+export default deepSeekService;

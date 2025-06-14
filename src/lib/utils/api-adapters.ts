@@ -27,7 +27,7 @@ export function adaptLegacyResponse<T>(
     error: legacyResponse.error,
     timestamp: legacyResponse.timestamp,
     source: legacyResponse.source,
-    cached: legacyResponse.cached
+    cached: legacyResponse.cached,
   };
 }
 
@@ -45,7 +45,7 @@ export async function adaptLegacyPromise<T>(
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString(),
-      cached: false
+      cached: false,
     };
   }
 }
@@ -88,7 +88,7 @@ export function adaptLegacyBatch<T>(
 ): StandardApiResponse<T[]> {
   const successfulData: T[] = [];
   const errors: string[] = [];
-  
+
   legacyResponses.forEach((response, index) => {
     if (response.success && response.data) {
       successfulData.push(response.data);
@@ -96,7 +96,7 @@ export function adaptLegacyBatch<T>(
       errors.push(`Item ${index}: ${response.error}`);
     }
   });
-  
+
   return {
     success: successfulData.length > 0,
     data: successfulData.length > 0 ? successfulData : undefined,
@@ -106,8 +106,8 @@ export function adaptLegacyBatch<T>(
     metadata: {
       totalProcessed: legacyResponses.length,
       successCount: successfulData.length,
-      errorCount: errors.length
-    }
+      errorCount: errors.length,
+    },
   };
 }
 
@@ -126,7 +126,7 @@ export function toStandardResponse<T>(
     error: !success ? error || 'Operation failed' : undefined,
     timestamp: new Date().toISOString(),
     source,
-    cached: false
+    cached: false,
   };
 }
 
@@ -157,8 +157,8 @@ export function wrapWithStandardResponse<TArgs extends unknown[], TReturn>(
  */
 export function adaptExternalApiResponse<T>(
   externalData: unknown,
-  successCheck: (data: unknown) => boolean = (data) => !!data,
-  dataExtractor: (data: unknown) => T = (data) => data as T,
+  successCheck: (data: unknown) => boolean = data => !!data,
+  dataExtractor: (data: unknown) => T = data => data as T,
   errorExtractor: (data: unknown) => string = () => 'External API error'
 ): StandardApiResponse<T> {
   try {
@@ -167,22 +167,25 @@ export function adaptExternalApiResponse<T>(
         success: true,
         data: dataExtractor(externalData),
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     } else {
       return {
         success: false,
         error: errorExtractor(externalData),
         timestamp: new Date().toISOString(),
-        cached: false
+        cached: false,
       };
     }
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to process external API response',
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to process external API response',
       timestamp: new Date().toISOString(),
-      cached: false
+      cached: false,
     };
   }
 }
