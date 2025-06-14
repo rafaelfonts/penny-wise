@@ -62,7 +62,8 @@ export function NotificationItem({ notification, onMarkAsRead, onDelete }: Notif
     }
   }
 
-  const formatTime = (dateString: string) => {
+  const formatTime = (dateString?: string | null) => {
+    if (!dateString) return 'Unknown'
     const date = new Date(dateString)
     const now = new Date()
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))

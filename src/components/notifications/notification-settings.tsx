@@ -80,15 +80,15 @@ export function NotificationSettings({ open, onOpenChange }: NotificationSetting
       setError(null)
 
       const updates: UpdateNotificationPreferences = {
-        push_enabled: preferences.push_enabled,
-        email_enabled: preferences.email_enabled,
-        alert_notifications: preferences.alert_notifications,
-        market_notifications: preferences.market_notifications,
-        news_notifications: preferences.news_notifications,
-        system_notifications: preferences.system_notifications,
-        quiet_hours_start: preferences.quiet_hours_start,
-        quiet_hours_end: preferences.quiet_hours_end,
-        timezone: preferences.timezone
+        push_enabled: preferences.push_enabled ?? undefined,
+        email_enabled: preferences.email_enabled ?? undefined,
+        alert_notifications: preferences.alert_notifications ?? undefined,
+        market_notifications: preferences.market_notifications ?? undefined,
+        news_notifications: preferences.news_notifications ?? undefined,
+        system_notifications: preferences.system_notifications ?? undefined,
+        quiet_hours_start: preferences.quiet_hours_start ?? undefined,
+        quiet_hours_end: preferences.quiet_hours_end ?? undefined,
+        timezone: preferences.timezone ?? undefined
       }
 
       await notificationService.updateNotificationPreferences(updates)
@@ -174,7 +174,7 @@ export function NotificationSettings({ open, onOpenChange }: NotificationSetting
                     </p>
                   </div>
                   <Switch
-                    checked={preferences.push_enabled}
+                    checked={preferences.push_enabled ?? false}
                     onCheckedChange={(checked: boolean) => updatePreference('push_enabled', checked)}
                   />
                 </div>
@@ -187,7 +187,7 @@ export function NotificationSettings({ open, onOpenChange }: NotificationSetting
                     </p>
                   </div>
                   <Switch
-                    checked={preferences.email_enabled}
+                    checked={preferences.email_enabled ?? false}
                     onCheckedChange={(checked: boolean) => updatePreference('email_enabled', checked)}
                   />
                 </div>
@@ -221,7 +221,7 @@ export function NotificationSettings({ open, onOpenChange }: NotificationSetting
                     </p>
                   </div>
                   <Switch
-                    checked={preferences.alert_notifications}
+                    checked={preferences.alert_notifications ?? false}
                     onCheckedChange={(checked: boolean) => updatePreference('alert_notifications', checked)}
                   />
                 </div>
@@ -234,7 +234,7 @@ export function NotificationSettings({ open, onOpenChange }: NotificationSetting
                     </p>
                   </div>
                   <Switch
-                    checked={preferences.market_notifications}
+                    checked={preferences.market_notifications ?? false}
                     onCheckedChange={(checked: boolean) => updatePreference('market_notifications', checked)}
                   />
                 </div>
@@ -247,7 +247,7 @@ export function NotificationSettings({ open, onOpenChange }: NotificationSetting
                     </p>
                   </div>
                   <Switch
-                    checked={preferences.news_notifications}
+                    checked={preferences.news_notifications ?? false}
                     onCheckedChange={(checked: boolean) => updatePreference('news_notifications', checked)}
                   />
                 </div>
@@ -260,7 +260,7 @@ export function NotificationSettings({ open, onOpenChange }: NotificationSetting
                     </p>
                   </div>
                   <Switch
-                    checked={preferences.system_notifications}
+                    checked={preferences.system_notifications ?? false}
                     onCheckedChange={(checked: boolean) => updatePreference('system_notifications', checked)}
                   />
                 </div>
@@ -304,7 +304,7 @@ export function NotificationSettings({ open, onOpenChange }: NotificationSetting
                 <div className="space-y-2">
                   <Label htmlFor="timezone">Timezone</Label>
                   <Select
-                    value={preferences.timezone}
+                    value={preferences.timezone ?? undefined}
                     onValueChange={(value) => updatePreference('timezone', value)}
                   >
                     <SelectTrigger>

@@ -216,7 +216,7 @@ export class AlertService {
         }
 
       case 'technical':
-        if (!technicals) return false
+        if (!technicals || !alert.metadata) return false
         // Would need to specify which technical indicator in metadata
         const indicator = alert.metadata.indicator as string
         const value = technicals[indicator]

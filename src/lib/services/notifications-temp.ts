@@ -229,7 +229,7 @@ export class NotificationService {
     await this.sendPushNotification(notification.user_id, {
       title: notification.title,
       body: notification.message,
-      data: notification.data
+      data: notification.data ?? undefined
     })
   }
 
@@ -239,13 +239,13 @@ export class NotificationService {
   ): boolean {
     switch (type) {
       case 'alert':
-        return preferences.alert_notifications
+        return preferences.alert_notifications ?? true
       case 'market':
-        return preferences.market_notifications
+        return preferences.market_notifications ?? true
       case 'news':
-        return preferences.news_notifications
+        return preferences.news_notifications ?? true
       case 'system':
-        return preferences.system_notifications
+        return preferences.system_notifications ?? true
       default:
         return true
     }
@@ -290,7 +290,8 @@ export class NotificationService {
 
     // Group by priority
     const by_priority = notifications.reduce((acc, notification) => {
-      acc[notification.priority] = (acc[notification.priority] || 0) + 1
+      const priority = notification.priority ?? 'medium'
+      acc[priority] = (acc[priority] || 0) + 1
       return acc
     }, {} as Record<string, number>)
 
@@ -312,7 +313,7 @@ export class NotificationService {
     const initialLength = this.mockNotifications.length
     
     this.mockNotifications.filter(n => 
-      new Date(n.created_at) > thirtyDaysAgo
+      n.created_at && new Date(n.created_at) > thirtyDaysAgo
     )
     
     return initialLength - this.mockNotifications.length

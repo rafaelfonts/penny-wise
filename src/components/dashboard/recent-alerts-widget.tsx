@@ -32,7 +32,9 @@ export function RecentAlertsWidget({ className, maxItems = 5 }: RecentAlertsWidg
           // Sort by triggered alerts first, then by date
           if (a.triggered_at && !b.triggered_at) return -1
           if (b.triggered_at && !a.triggered_at) return 1
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          const bDate = b.created_at ? new Date(b.created_at).getTime() : 0
+          const aDate = a.created_at ? new Date(a.created_at).getTime() : 0
+          return bDate - aDate
         })
         .slice(0, maxItems)
       
@@ -228,7 +230,7 @@ export function RecentAlertsWidget({ className, maxItems = 5 }: RecentAlertsWidg
                   <div className="flex items-center gap-1 mt-2">
                     <Clock className="h-3 w-3 text-gray-400" />
                     <span className="text-xs text-gray-500">
-                      {formatTime(alert.triggered_at || alert.created_at)}
+                      {formatTime(alert.triggered_at || alert.created_at || new Date().toISOString())}
                     </span>
                   </div>
                 </div>

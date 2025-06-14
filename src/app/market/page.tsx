@@ -51,25 +51,7 @@ export default function MarketPage() {
     source: 'alpha_vantage'
   }]
 
-  const handleAddSymbol = async (symbol: string): Promise<StockQuote | null> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    return {
-      symbol: symbol.toUpperCase(),
-      name: `${symbol} Corporation`,
-      price: 100 + Math.random() * 50,
-      change: (Math.random() - 0.5) * 10,
-      changePercent: (Math.random() - 0.5) * 5,
-      volume: Math.floor(1000000 + Math.random() * 10000000),
-      high: 105 + Math.random() * 45,
-      low: 95 + Math.random() * 45,
-      open: 98 + Math.random() * 52,
-      previousClose: 100,
-      timestamp: new Date().toISOString(),
-      source: 'alpha_vantage'
-    }
-  }
+
 
   const demos = [
     {
@@ -258,14 +240,7 @@ export default function MarketPage() {
           <div className="space-y-6">
             <h2 className="text-2xl font-bold">Watchlist Dashboard - Dashboard de Mercado</h2>
             <WatchlistDashboard
-              onAddSymbol={handleAddSymbol}
-              onRemoveSymbol={(symbol) => console.log('Remove:', symbol)}
-              onRefreshQuote={async (symbol) => {
-                console.log('Refresh:', symbol)
-                return mockQuote
-              }}
               onAnalyzeSymbol={(symbol) => console.log('Analyze:', symbol)}
-              initialWatchlist={[]}
             />
           </div>
         )}

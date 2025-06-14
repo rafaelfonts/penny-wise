@@ -3,6 +3,8 @@
 // ==========================================
 
 import marketDataService from './market-data';
+import { intelligentMarket } from './intelligent-market';
+import { classifySymbol } from './market-classifier';
 import {
   StockQuote,
   CompanyOverview,
@@ -169,6 +171,27 @@ Por favor, forneça um símbolo para análise. Exemplos:
     const startTime = Date.now();
 
     try {
+      // Classificar o símbolo para determinar qual serviço usar
+      const classification = classifySymbol(symbol);
+      
+      // Para símbolos brasileiros, usar intelligent-market service
+      if (classification.region === 'BR') {
+        const analysis = await intelligentMarket.analyzeSymbol(symbol);
+        
+        // Retornar análise direta do intelligent-market para símbolos brasileiros
+        return {
+          response: analysis,
+          metadata: {
+            command: 'analyze',
+            symbols: [symbol],
+            model: 'intelligent-market',
+            tokens: 200,
+            processing_time: Date.now() - startTime
+          }
+        };
+      }
+      
+      // Para outros símbolos, usar o market-data service tradicional
       const analysis = await marketDataService.analyzeSymbol(symbol);
       
       if (!analysis.quote) {

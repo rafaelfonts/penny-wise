@@ -13,15 +13,15 @@ export interface Alert {
   alert_type: AlertType
   condition_type: ConditionType
   target_value: number
-  current_value?: number
-  is_active: boolean
-  triggered_at?: string
-  trigger_count: number
-  cooldown_minutes: number
-  last_triggered?: string
-  metadata: Record<string, string | number | boolean>
-  created_at: string
-  updated_at: string
+  current_value?: number | null
+  is_active?: boolean | null
+  triggered_at?: string | null
+  trigger_count?: number | null
+  cooldown_minutes?: number | null
+  last_triggered?: string | null
+  metadata?: Record<string, string | number | boolean> | null
+  created_at?: string | null
+  updated_at?: string | null
 }
 
 export interface CreateAlert {
@@ -29,15 +29,15 @@ export interface CreateAlert {
   alert_type: AlertType
   condition_type: ConditionType
   target_value: number
-  cooldown_minutes?: number
-  metadata?: Record<string, string | number | boolean>
+  cooldown_minutes?: number | null
+  metadata?: Record<string, string | number | boolean> | null
 }
 
 export interface UpdateAlert {
   target_value?: number
-  is_active?: boolean
-  cooldown_minutes?: number
-  metadata?: Record<string, string | number | boolean>
+  is_active?: boolean | null
+  cooldown_minutes?: number | null
+  metadata?: Record<string, string | number | boolean> | null
 }
 
 // Notification Types
@@ -50,11 +50,11 @@ export interface Notification {
   title: string
   message: string
   type: NotificationType
-  priority: NotificationPriority
-  read: boolean
-  data: Record<string, string | number | boolean>
-  expires_at?: string
-  created_at: string
+  priority?: string | null
+  read?: boolean | null
+  data?: Record<string, string | number | boolean> | null
+  expires_at?: string | null
+  created_at?: string | null
 }
 
 export interface CreateNotification {
@@ -168,17 +168,17 @@ export interface ExportOptions {
 export interface NotificationPreferences {
   id: string
   user_id: string
-  push_enabled: boolean
-  email_enabled: boolean
-  alert_notifications: boolean
-  market_notifications: boolean
-  news_notifications: boolean
-  system_notifications: boolean
-  quiet_hours_start?: string
-  quiet_hours_end?: string
-  timezone: string
-  created_at: string
-  updated_at: string
+  push_enabled?: boolean | null
+  email_enabled?: boolean | null
+  alert_notifications?: boolean | null
+  market_notifications?: boolean | null
+  news_notifications?: boolean | null
+  system_notifications?: boolean | null
+  quiet_hours_start?: string | null
+  quiet_hours_end?: string | null
+  timezone?: string | null
+  created_at?: string | null
+  updated_at?: string | null
 }
 
 export interface UpdateNotificationPreferences {

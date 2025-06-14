@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
+import { generateUUID } from '@/lib/utils/uuid'
 
 interface MarketContext {
   symbols: string[];
@@ -45,7 +46,7 @@ export default function TestDay6Page() {
         },
         body: JSON.stringify({
           message: testMessage,
-          conversationId: crypto.randomUUID(),
+          conversationId: generateUUID(),
           includeMarketData: true,
           executeCommands: true
         })

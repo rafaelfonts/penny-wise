@@ -18,7 +18,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { useAlerts } from '@/hooks/use-alerts'
-import type { Alert } from '@/lib/types/alerts'
+import type { Alert, CreateAlert } from '@/lib/types/alerts'
 
 interface AlertsPanelProps {
   className?: string
@@ -51,7 +51,7 @@ export function AlertsPanel({ className }: AlertsPanelProps) {
     }
   }
 
-  const handleCreateAlert = async (alertData: any) => {
+  const handleCreateAlert = async (alertData: CreateAlert) => {
     try {
       const result = await createAlert(alertData)
       if (result) {
@@ -197,7 +197,7 @@ export function AlertsPanel({ className }: AlertsPanelProps) {
       )}
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'all' | 'active' | 'triggered')}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="all" className="flex items-center gap-2">
             <Bell className="h-4 w-4" />

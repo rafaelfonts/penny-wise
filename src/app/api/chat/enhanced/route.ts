@@ -5,8 +5,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import marketContextService from '@/lib/services/market-context';
-import chatCommandsService from '@/lib/services/chat-commands';
-import portfolioAnalysisService from '@/lib/services/portfolio-analysis';
+import { executeCommand, isCommand } from '@/lib/services/chat-commands';
+
+import { generateUUID } from '@/lib/utils/uuid';
 
 export interface EnhancedChatRequest {
   message: string;
@@ -72,78 +73,20 @@ export async function POST(request: NextRequest) {
       marketPromptContext = marketContextService.formatContextForPrompt(context);
     }
 
-    // Process commands
+    // Process commands (simplified for now)
     let executedCommands;
     let commandsResponse = '';
     
-    if (executeCommands) {
-      const commands = chatCommandsService.parseAllCommands(message);
-      
-      if (commands.hasCommands) {
-        // Execute alert commands (integrate with existing alert system)
-        if (commands.alerts.length > 0) {
-          for (const alertCommand of commands.alerts) {
-            try {
-                             // Integration with existing alert creation API
-               const { data, error } = await supabase
-                 .from('user_alerts')
-                 .insert({
-                  user_id: user.id,
-                  symbol: alertCommand.symbol,
-                  alert_type: 'price',
-                  condition_type: alertCommand.condition,
-                  target_value: alertCommand.threshold,
-                  is_active: true,
-                  metadata: {
-                    created_via: 'chat_command',
-                    original_message: message
-                  }
-                })
-                .select()
-                .single();
-
-              if (error) {
-                console.error('Error creating alert:', error);
-              } else {
-                console.log('Alert created successfully:', data);
-              }
-            } catch (error) {
-              console.error('Error creating alert:', error);
-            }
-          }
+    if (executeCommands && isCommand(message)) {
+      try {
+        const result = await executeCommand(message, user.id);
+        if (result) {
+          commandsResponse = result.content;
+          executedCommands = { result };
         }
-
-        // Execute portfolio commands
-        if (commands.portfolio.length > 0) {
-          for (const portfolioCommand of commands.portfolio) {
-            try {
-              // Get user's portfolio data (mock for now, would come from database)
-              const mockPortfolio = [
-                { symbol: 'AAPL', quantity: 10, averageCost: 150 },
-                { symbol: 'GOOGL', quantity: 5, averageCost: 2500 },
-                { symbol: 'MSFT', quantity: 15, averageCost: 300 },
-                { symbol: 'TSLA', quantity: 8, averageCost: 250 }
-              ];
-
-              const analysis = await portfolioAnalysisService.analyzePortfolio({
-                holdings: mockPortfolio,
-                timeframe: portfolioCommand.timeframe || '1m',
-                analysisType: portfolioCommand.action === 'analyze' ? 'complete' : portfolioCommand.action,
-                includeRecommendations: portfolioCommand.includeRecommendations
-              });
-
-              const portfolioSummary = portfolioAnalysisService.generateAnalysisSummary(analysis);
-              commandsResponse += '\n\n' + portfolioSummary;
-
-            } catch (error) {
-              console.error('Error analyzing portfolio:', error);
-              commandsResponse += '\n\n❌ Erro ao analisar portfólio. Tente novamente.';
-            }
-          }
-        }
-
-        commandsResponse = chatCommandsService.generateCommandResponse(commands);
-        executedCommands = commands;
+      } catch (error) {
+        console.error('Error executing command:', error);
+        commandsResponse = 'Erro ao executar comando.';
       }
     }
 
@@ -159,33 +102,26 @@ ${commandsResponse ? `\nComandos executados:\n${commandsResponse}` : ''}
 CONTEXTO: Você é um assistente financeiro especializado. Use os dados de mercado acima (se disponíveis) para contextualizar sua resposta. Se comandos foram executados, confirme-os na sua resposta.
     `.trim();
 
-    // Call AI service (using existing chat endpoint logic)
-    const aiResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/chat/send`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': request.headers.get('Authorization') || '',
-      },
-      body: JSON.stringify({
-        message: enhancedPrompt,
-        conversationId: conversationId
-      })
-    });
-
-    if (!aiResponse.ok) {
-      throw new Error('Failed to get AI response');
-    }
-
-    const aiData = await aiResponse.json();
+    // Import and use DeepSeek service directly
+    const deepSeekService = (await import('@/lib/services/deepseek')).default
+    
+    // Process with DeepSeek
+    const aiData = await deepSeekService.processChatMessage(
+      enhancedPrompt,
+      [], // No conversation history for enhanced mode for now
+      marketPromptContext,
+      commandsResponse
+    );
     const processingTime = Date.now() - startTime;
 
     // Build enhanced response
     const response: EnhancedChatResponse = {
       response: aiData.response || '',
-      conversationId: aiData.conversationId || conversationId || '',
+              conversationId: conversationId || generateUUID(),
       metadata: {
         processingTime,
-        dataSource: marketContext?.source
+        dataSource: marketContext?.source,
+        tokensUsed: aiData.metadata.tokens
       }
     };
 
@@ -201,11 +137,11 @@ CONTEXTO: Você é um assistente financeiro especializado. Use os dados de merca
     }
 
     // Add executed commands if any
-    if (executedCommands?.hasCommands) {
+    if (executedCommands) {
       response.executedCommands = {
-        alerts: executedCommands.alerts,
-        analysis: executedCommands.analysis,
-        portfolio: executedCommands.portfolio
+        alerts: [],
+        analysis: [],
+        portfolio: []
       };
     }
 
@@ -233,7 +169,7 @@ export async function GET() {
     const symbols = await marketContextService.getSymbolSuggestions('PETR', 1);
     
     // Test commands service
-    const hasCommands = chatCommandsService.hasCommands('test message');
+    const hasCommands = isCommand('/test');
     
     return NextResponse.json({
       status: 'healthy',

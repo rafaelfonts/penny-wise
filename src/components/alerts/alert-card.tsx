@@ -70,7 +70,7 @@ export function AlertCard({ alert, onToggle, onDelete }: AlertCardProps) {
     }
   }
 
-  const formatDate = (dateString?: string) => {
+  const formatDate = (dateString?: string | null) => {
     if (!dateString) return 'Never'
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -119,9 +119,9 @@ export function AlertCard({ alert, onToggle, onDelete }: AlertCardProps) {
                     Triggered {formatDate(alert.triggered_at)}
                   </div>
                 )}
-                {alert.trigger_count > 0 && (
+                {(alert.trigger_count ?? 0) > 0 && (
                   <Badge variant="outline" className="text-xs">
-                    {alert.trigger_count} triggers
+                    {alert.trigger_count ?? 0} triggers
                   </Badge>
                 )}
               </div>
@@ -131,7 +131,7 @@ export function AlertCard({ alert, onToggle, onDelete }: AlertCardProps) {
           <div className="flex items-center space-x-2">
             <div className="flex items-center space-x-2">
               <Switch
-                checked={alert.is_active}
+                checked={alert.is_active ?? false}
                 onCheckedChange={() => onToggle(alert.id)}
                 className="data-[state=checked]:bg-blue-600"
               />
@@ -205,7 +205,7 @@ export function AlertCard({ alert, onToggle, onDelete }: AlertCardProps) {
         )}
 
         {/* Cooldown Information */}
-        {alert.cooldown_minutes > 0 && (
+        {(alert.cooldown_minutes ?? 0) > 0 && (
           <div className="mt-2 text-xs text-gray-500">
             <span>Cooldown: {alert.cooldown_minutes} minutes between triggers</span>
           </div>

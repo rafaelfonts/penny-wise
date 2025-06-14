@@ -9,6 +9,9 @@ import { Copy, User, Bot } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/auth/context'
 import { MarketContextCard } from './market-context-card'
+import { StreamingText } from './streaming-indicator'
+import { useChatStoreClient } from '@/hooks/use-chat-store'
+import { CommandResultComponent } from './command-result'
 
 interface MessageProps {
   message: Message
@@ -17,7 +20,9 @@ interface MessageProps {
 
 export const ChatMessage = memo(function ChatMessage({ message, isLast }: MessageProps) {
   const { user } = useAuth()
+  const { streamingMessageId } = useChatStoreClient()
   const isUser = message.role === 'user'
+  const isStreaming = !isUser && streamingMessageId === message.id
 
   const copyToClipboard = async () => {
     try {
@@ -92,47 +97,63 @@ export const ChatMessage = memo(function ChatMessage({ message, isLast }: Messag
             </p>
           ) : (
             <div className="text-gray-900 dark:text-gray-100">
-              <ReactMarkdown
-                components={{
-                  // Custom components for better styling
-                  code: ({ className, children, ...props }) => {
-                    const match = /language-(\w+)/.exec(className || '')
-                    return match ? (
-                      <pre className="bg-gray-100 dark:bg-gray-800 rounded p-2 overflow-x-auto">
-                        <code className={className} {...props}>
+              {/* Show command result if this is a command response */}
+              {message.metadata?.isCommand ? (
+                <CommandResultComponent
+                  result={{
+                    type: message.metadata.commandType || 'info',
+                    content: message.content,
+                    data: message.metadata.commandData
+                  }}
+                />
+              ) : isStreaming ? (
+                <StreamingText 
+                  content={message.content}
+                  isComplete={false}
+                />
+              ) : (
+                <ReactMarkdown
+                  components={{
+                    // Custom components for better styling
+                    code: ({ className, children, ...props }) => {
+                      const match = /language-(\w+)/.exec(className || '')
+                      return match ? (
+                        <pre className="bg-gray-100 dark:bg-gray-800 rounded p-2 overflow-x-auto">
+                          <code className={className} {...props}>
+                            {children}
+                          </code>
+                        </pre>
+                      ) : (
+                        <code 
+                          className="bg-gray-100 dark:bg-gray-800 rounded px-1 text-sm" 
+                          {...props}
+                        >
                           {children}
                         </code>
-                      </pre>
-                    ) : (
-                      <code 
-                        className="bg-gray-100 dark:bg-gray-800 rounded px-1 text-sm" 
-                        {...props}
-                      >
+                      )
+                    },
+                    p: ({ children }) => (
+                      <p className="mb-2 last:mb-0">{children}</p>
+                    ),
+                    ul: ({ children }) => (
+                      <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>
+                    ),
+                    ol: ({ children }) => (
+                      <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>
+                    ),
+                    h3: ({ children }) => (
+                      <h3 className="font-semibold text-lg mb-2 mt-4 first:mt-0">{children}</h3>
+                    ),
+                    blockquote: ({ children }) => (
+                      <blockquote className="border-l-4 border-blue-500 pl-4 italic my-2">
                         {children}
-                      </code>
+                      </blockquote>
                     )
-                  },
-                  p: ({ children }) => (
-                    <p className="mb-2 last:mb-0">{children}</p>
-                  ),
-                  ul: ({ children }) => (
-                    <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>
-                  ),
-                  ol: ({ children }) => (
-                    <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>
-                  ),
-                  h3: ({ children }) => (
-                    <h3 className="font-semibold text-lg mb-2 mt-4 first:mt-0">{children}</h3>
-                  ),
-                  blockquote: ({ children }) => (
-                    <blockquote className="border-l-4 border-blue-500 pl-4 italic my-2">
-                      {children}
-                    </blockquote>
-                  )
-                }}
-              >
-                {message.content}
-              </ReactMarkdown>
+                  }}
+                >
+                  {message.content}
+                </ReactMarkdown>
+              )}
             </div>
           )}
         </div>

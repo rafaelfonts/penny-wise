@@ -1,133 +1,81 @@
-import {
-  H1,
-  H2,
-  H3,
-  BodyText,
-  Label,
-  Caption,
-} from '@/components/ui/typography';
-import { Icon } from '@/components/ui/icon';
-import { CONTEXT_ICONS } from '@/lib/icons/context-icons';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { MessageSquare, TestTube, User, Bot } from 'lucide-react'
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <main className="bg-background min-h-screen p-8">
-      <div className="mx-auto max-w-4xl space-y-8">
-        {/* Header */}
-        <div className="space-y-4 text-center">
-          <H1 className="text-primary">Penny Wise</H1>
-          <BodyText size="large" className="text-muted-foreground">
-            Plataforma de análise financeira com IA
-          </BodyText>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="container mx-auto px-4 py-16">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            💰 Penny Wise
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
+            Análise Financeira com IA
+          </p>
         </div>
 
-        {/* Typography Demo */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <H2>Sistema de Tipografia</H2>
-            </CardTitle>
-            <CardDescription>
-              Demonstração das fontes Outfit e Inter Light
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <H1>Heading 1 - Outfit Medium</H1>
-              <H2>Heading 2 - Outfit Medium</H2>
-              <H3>Heading 3 - Outfit Regular</H3>
-            </div>
-            <div>
-              <BodyText size="large">Body Large - Inter Light</BodyText>
-              <BodyText>Body Normal - Inter Light</BodyText>
-              <BodyText size="small">Body Small - Inter Light</BodyText>
-              <Label>Label - Inter Medium</Label>
-              <Caption>Caption - Inter Regular</Caption>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          {/* Chat Principal */}
+          <Card className="p-8 text-center hover:shadow-lg transition-shadow">
+            <MessageSquare className="h-16 w-16 mx-auto mb-4 text-blue-600" />
+            <h2 className="text-2xl font-semibold mb-4">Chat Principal</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Chat completo com autenticação, histórico e integração com dados de mercado
+            </p>
+            <Link href="/chat">
+              <Button size="lg" className="w-full">
+                <User className="h-5 w-5 mr-2" />
+                Acessar Chat (Requer Login)
+              </Button>
+            </Link>
+          </Card>
 
-        {/* Icons Demo */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <H2>Sistema de Ícones</H2>
-            </CardTitle>
-            <CardDescription>
-              Ícones Lucide + Tabler com contexto financeiro
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              <div className="flex items-center gap-2">
-                <Icon
-                  icon={CONTEXT_ICONS.market.bullish}
-                  className="text-green-600"
-                />
-                <Label>Alta</Label>
+          {/* Teste do Chat */}
+          <Card className="p-8 text-center hover:shadow-lg transition-shadow">
+            <TestTube className="h-16 w-16 mx-auto mb-4 text-green-600" />
+            <h2 className="text-2xl font-semibold mb-4">Teste da IA</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Teste direto da integração com DeepSeek AI sem necessidade de login
+            </p>
+            <Link href="/test-chat">
+              <Button size="lg" variant="outline" className="w-full">
+                <Bot className="h-5 w-5 mr-2" />
+                Testar IA (Sem Login)
+              </Button>
+            </Link>
+          </Card>
+        </div>
+
+        <div className="mt-12 text-center">
+          <Card className="p-6 max-w-2xl mx-auto">
+            <h3 className="text-lg font-semibold mb-3">🚀 Status da Implementação</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span>✅ Interface do Chat</span>
+                <span className="text-green-600">Completo</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Icon
-                  icon={CONTEXT_ICONS.market.bearish}
-                  className="text-red-600"
-                />
-                <Label>Baixa</Label>
+              <div className="flex items-center justify-between">
+                <span>✅ Integração DeepSeek AI</span>
+                <span className="text-green-600">Funcionando</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Icon
-                  icon={CONTEXT_ICONS.sentiment.positive}
-                  className="text-green-600"
-                />
-                <Label>Positivo</Label>
+              <div className="flex items-center justify-between">
+                <span>✅ APIs de Chat</span>
+                <span className="text-green-600">Implementadas</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Icon
-                  icon={CONTEXT_ICONS.navigation.chat}
-                  className="text-blue-600"
-                />
-                <Label>Chat</Label>
+              <div className="flex items-center justify-between">
+                <span>✅ Persistência (Supabase)</span>
+                <span className="text-green-600">Configurada</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>✅ Streaming de Respostas</span>
+                <span className="text-green-600">Disponível</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Buttons Demo */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <H2>Botões Arredondados</H2>
-            </CardTitle>
-            <CardDescription>
-              Todos os botões seguem o padrão arredondado
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4">
-              <Button size="sm">Pequeno</Button>
-              <Button>Padrão</Button>
-              <Button size="lg">Grande</Button>
-              <Button variant="outline">Outline</Button>
-              <Button variant="secondary">Secundário</Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Status */}
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-2 text-green-600">
-            <Icon icon={CONTEXT_ICONS.status.success} />
-            <BodyText>Design System configurado com sucesso!</BodyText>
-          </div>
+          </Card>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

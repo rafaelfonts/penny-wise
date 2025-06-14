@@ -39,7 +39,18 @@ class YahooFinanceService {
     });
 
     // Use nossa rota API proxy ao invés de fazer requisição direta
-    const url = `/api/market/yahoo?${params.toString()}`;
+    // Check if we're on the server side or client side
+    const isServer = typeof window === 'undefined';
+    let url: string;
+    
+    if (isServer) {
+      // On server side, use the full URL
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+      url = `${baseUrl}/api/market/yahoo?${params.toString()}`;
+    } else {
+      // On client side, use relative URL
+      url = `/api/market/yahoo?${params.toString()}`;
+    }
 
     try {
       const response = await fetch(url, {

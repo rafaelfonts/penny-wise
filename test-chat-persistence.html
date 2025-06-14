@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Persistência Chat - Penny Wise</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .test-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .test-error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        .test-pending {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .test-log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste de Persistência do Chat - Penny Wise</h1>
+        <p><strong>Objetivo:</strong> Verificar se as conversas e mensagens são salvas corretamente no banco de dados após análises de ações.</p>
+
+        <div class="test-section test-pending" id="testStatus">
+            <h3>🔄 Status do Teste</h3>
+            <p id="statusText">Aguardando início do teste...</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🚀 Executar Testes</h3>
+            <button onclick="runFullTest()">🔄 Executar Teste Completo</button>
+            <button onclick="testAnalyzeCommand()">📊 Testar /analyze</button>
+            <button onclick="testPersistence()">💾 Verificar Persistência</button>
+            <button onclick="clearTestData()">🗑️ Limpar Dados de Teste</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Passos do Teste</h3>
+            <div class="step">
+                <strong>1.</strong> Criar uma nova conversa
+            </div>
+            <div class="step">
+                <strong>2.</strong> Executar comando de análise (ex: /analyze PETR4)
+            </div>
+            <div class="step">
+                <strong>3.</strong> Verificar se a conversa aparece na sidebar
+            </div>
+            <div class="step">
+                <strong>4.</strong> Recarregar a página
+            </div>
+            <div class="step">
+                <strong>5.</strong> Verificar se a conversa ainda está lá
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Chat de Teste</h3>
+            <iframe id="chatFrame" src="http://localhost:3000/chat" style="width: 100%; height: 500px; border: 1px solid #ddd; border-radius: 4px;"></iframe>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 Log do Teste</h3>
+            <div id="testLog" class="test-log"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>💡 Instruções Manuais</h3>
+            <ol>
+                <li>Use o chat acima ou abra <a href="http://localhost:3000/chat" target="_blank">http://localhost:3000/chat</a></li>
+                <li>Clique no botão "+" para criar uma nova conversa</li>
+                <li>Digite um comando de análise: <code>/analyze PETR4</code></li>
+                <li>Aguarde a resposta da análise</li>
+                <li>Verifique se a conversa aparece na sidebar com o título correto</li>
+                <li>Recarregue a página (F5) ou abra uma nova aba</li>
+                <li>Verifique se a conversa ainda está na sidebar</li>
+                <li>Clique na conversa para ver se as mensagens foram preservadas</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Resultados Esperados</h3>
+            <ul>
+                <li>✅ Conversa criada deve aparecer na sidebar</li>
+                <li>✅ Título da conversa deve ser baseado na primeira mensagem</li>
+                <li>✅ Após recarregar, conversa deve continuar visível</li>
+                <li>✅ Mensagens da análise devem estar preservadas</li>
+                <li>✅ Dados de análise (preços, indicadores) devem estar corretos</li>
+                <li>❌ Conversa não deve desaparecer após reload</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let testLog = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = `[${timestamp}] ${message}`;
+            testLog.push(entry);
+            updateTestLog();
+            console.log(`[TEST] ${message}`);
+        }
+        
+        function updateTestLog() {
+            const logDiv = document.getElementById('testLog');
+            logDiv.innerHTML = testLog.map(entry => `<div>${entry}</div>`).join('');
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function updateStatus(message, type) {
+            const statusDiv = document.getElementById('testStatus');
+            const statusText = document.getElementById('statusText');
+            statusText.textContent = message;
+            statusDiv.className = `test-section test-${type}`;
+        }
+        
+        async function runFullTest() {
+            log('🚀 Iniciando teste completo de persistência...');
+            updateStatus('Executando teste completo...', 'pending');
+            
+            try {
+                // Test 1: Check if server is running
+                log('1️⃣ Verificando se o servidor está rodando...');
+                const healthCheck = await fetch('http://localhost:3000/chat');
+                if (!healthCheck.ok) {
+                    throw new Error('Servidor não está respondendo');
+                }
+                log('✅ Servidor está rodando');
+                
+                // Test 2: Check if we can access chat
+                log('2️⃣ Verificando acesso ao chat...');
+                const chatFrame = document.getElementById('chatFrame');
+                chatFrame.onload = () => {
+                    log('✅ Chat carregado no iframe');
+                };
+                
+                // Wait for iframe to load
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                log('3️⃣ Agora execute manualmente:');
+                log('   - Crie uma nova conversa (+)');
+                log('   - Digite: /analyze PETR4');
+                log('   - Aguarde a resposta');
+                log('   - Recarregue a página');
+                log('   - Verifique se a conversa persistiu');
+                
+                updateStatus('Teste manual necessário - siga as instruções no log', 'pending');
+                
+            } catch (error) {
+                log(`❌ Erro no teste: ${error.message}`);
+                updateStatus(`Erro: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testAnalyzeCommand() {
+            log('📊 Testando comando /analyze...');
+            
+            // This would require integration with the chat interface
+            log('💡 Para testar o comando /analyze:');
+            log('   1. Use o chat acima');
+            log('   2. Digite: /analyze PETR4');
+            log('   3. Observe se a resposta inclui dados de mercado');
+            log('   4. Verifique se a conversa aparece na sidebar');
+        }
+        
+        async function testPersistence() {
+            log('💾 Testando persistência...');
+            
+            try {
+                // Try to fetch conversations (would need auth)
+                log('🔍 Para verificar persistência:');
+                log('   1. Abra as DevTools (F12)');
+                log('   2. Vá para Application > Local Storage');
+                log('   3. Procure por dados do Zustand');
+                log('   4. Recarregue a página');
+                log('   5. Verifique se as conversas retornam');
+                
+            } catch (error) {
+                log(`❌ Erro na verificação: ${error.message}`);
+            }
+        }
+        
+        async function clearTestData() {
+            log('🗑️ Limpando dados de teste...');
+            
+            // Clear localStorage
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            log('✅ LocalStorage e SessionStorage limpos');
+            log('💡 Para limpar dados do servidor, use as ferramentas do Supabase');
+            
+            // Reload iframe
+            const chatFrame = document.getElementById('chatFrame');
+            chatFrame.src = chatFrame.src;
+            log('🔄 Chat recarregado');
+        }
+        
+        // Auto-start logging
+        log('🎬 Sistema de teste inicializado');
+        log('💡 Clique em "Executar Teste Completo" para começar');
+        
+        // Monitor iframe for changes
+        const chatFrame = document.getElementById('chatFrame');
+        chatFrame.onload = () => {
+            log('🔄 Chat iframe carregado/recarregado');
+        };
+        
+        chatFrame.onerror = () => {
+            log('❌ Erro ao carregar chat iframe');
+            updateStatus('Erro ao carregar chat', 'error');
+        };
+    </script>
+</body>
+</html> 

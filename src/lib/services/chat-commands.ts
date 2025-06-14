@@ -1,352 +1,730 @@
-// ==========================================
-// CHAT COMMANDS SERVICE - Day 6 Enhancement
-// ==========================================
+/**
+ * Chat Commands Service
+ * Handles special commands like /quote, /analyze, /portfolio, /oplab
+ */
 
-import marketContextService from './market-context';
-import { AlertType, ConditionType } from '@/lib/types/alerts';
-
-export interface CommandMatch {
-  command: string;
-  confidence: number;
-  params: Record<string, unknown>;
-  rawMatch: string;
+export interface CommandResult {
+  type: 'success' | 'error' | 'info'
+  content: string
+  data?: unknown
+  requiresFollowup?: boolean
 }
 
-export interface AlertCommand {
-  symbol: string;
-  type: AlertType;
-  condition: ConditionType;
-  threshold: number;
-  message?: string;
+export interface ChatCommand {
+  name: string
+  description: string
+  usage: string
+  examples: string[]
+  handler: (args: string[], userId?: string) => Promise<CommandResult>
 }
 
-export interface AnalysisCommand {
-  symbol: string;
-  analysisType: 'overview' | 'technical' | 'fundamental' | 'news';
-  timeframe?: string;
-}
+// Command handlers
+class CommandHandlers {
+  // ==========================================
+  // MARKET DATA & QUOTES
+  // ==========================================
 
-export interface PortfolioCommand {
-  action: 'analyze' | 'performance' | 'risk' | 'diversification';
-  timeframe?: '1d' | '1w' | '1m' | '3m' | '1y';
-  includeRecommendations?: boolean;
-}
-
-class ChatCommandsService {
-  // Alert creation patterns
-  private readonly ALERT_PATTERNS = [
-    {
-      name: 'create_alert_when_above',
-      pattern: /(?:criar?|gerar|fazer|set(?:ar)?)\s+(?:um\s+)?(?:alerta|alert)\s+(?:para\s+|of\s+|on\s+)?([A-Z]{2,6}[0-9]*)\s+(?:quando|when|if)\s+(?:preço|price|valor)\s+(?:for\s+|ir\s+|ficar\s+|goes?\s+|is\s+)?(?:acima\s+(?:de\s+)?|above\s+|>\s*)([0-9]+(?:\.[0-9]+)?)/gi,
-      type: 'price' as AlertType,
-             condition: 'above' as ConditionType,
-      confidence: 0.9
-    },
-    {
-      name: 'create_alert_when_below',
-      pattern: /(?:criar?|gerar|fazer|set(?:ar)?)\s+(?:um\s+)?(?:alerta|alert)\s+(?:para\s+|of\s+|on\s+)?([A-Z]{2,6}[0-9]*)\s+(?:quando|when|if)\s+(?:preço|price|valor)\s+(?:for\s+|ir\s+|ficar\s+|goes?\s+|is\s+)?(?:abaixo\s+(?:de\s+)?|below\s+|<\s*)([0-9]+(?:\.[0-9]+)?)/gi,
-      type: 'price' as AlertType,
-      condition: 'below' as ConditionType,
-      confidence: 0.9
-    },
-    {
-      name: 'alert_me_when',
-      pattern: /(?:me\s+)?(?:avise|avisa|alert|notify)\s+(?:quando|when)\s+([A-Z]{2,6}[0-9]*)\s+(?:chegar?\s+(?:em\s+|a\s+)?|atingir|reach(?:es)?\s+|hits?\s+)([0-9]+(?:\.[0-9]+)?)/gi,
-      type: 'price' as AlertType,
-      condition: 'cross_above' as ConditionType,
-      confidence: 0.8
-    },
-    {
-      name: 'simple_alert_syntax',
-      pattern: /alert\s+([A-Z]{2,6}[0-9]*)\s+([><])\s*([0-9]+(?:\.[0-9]+)?)/gi,
-      type: 'price' as AlertType,
-      condition: null, // Will be determined by operator
-      confidence: 0.9
+  // Get stock quote
+  static async handleQuote(args: string[]): Promise<CommandResult> {
+    if (args.length === 0) {
+      return {
+        type: 'error',
+        content: 'Uso: /quote SYMBOL1 [SYMBOL2 ...]\nExemplo: /quote AAPL MSFT GOOGL'
+      }
     }
-  ];
 
-  // Analysis command patterns
-  private readonly ANALYSIS_PATTERNS = [
-    {
-      name: 'analyze_stock',
-      pattern: /(?:analise|analiza|analyze|analysis|estud[eo])\s+(?:a\s+ação\s+|o\s+papel\s+|stock\s+)?([A-Z]{2,6}[0-9]*)/gi,
-      analysisType: 'overview',
-      confidence: 0.9
-    },
-    {
-      name: 'technical_analysis',
-      pattern: /(?:análise\s+técnica|technical\s+analysis)\s+(?:da\s+|do\s+|of\s+)?([A-Z]{2,6}[0-9]*)/gi,
-      analysisType: 'technical',
-      confidence: 0.95
-    },
-    {
-      name: 'slash_analyze',
-      pattern: /\/analyze\s+([A-Z]{2,6}[0-9]*)/gi,
-      analysisType: 'overview',
-      confidence: 1.0
-    },
-    {
-      name: 'company_overview',
-      pattern: /(?:visão\s+geral|overview|perfil)\s+(?:da\s+empresa\s+|da\s+|do\s+|of\s+)?([A-Z]{2,6}[0-9]*)/gi,
-      analysisType: 'fundamental',
-      confidence: 0.85
-    }
-  ];
-
-  // Portfolio command patterns
-  private readonly PORTFOLIO_PATTERNS = [
-    {
-      name: 'analyze_portfolio',
-      pattern: /(?:analise|analyze)\s+(?:meu\s+|my\s+)?(?:portfólio|portfolio)/gi,
-      action: 'analyze',
-      confidence: 0.9
-    },
-    {
-      name: 'portfolio_performance',
-      pattern: /(?:performance|desempenho|rendimento)\s+(?:do\s+|da\s+|of\s+)?(?:portfólio|portfolio)/gi,
-      action: 'performance',
-      confidence: 0.9
-    },
-    {
-      name: 'portfolio_risk',
-      pattern: /(?:risco|risk|análise\s+de\s+risco)\s+(?:do\s+|da\s+|of\s+)?(?:portfólio|portfolio)/gi,
-      action: 'risk',
-      confidence: 0.9
-    },
-    {
-      name: 'diversification_analysis',
-      pattern: /(?:diversificação|diversification)\s+(?:do\s+|da\s+|of\s+)?(?:portfólio|portfolio)/gi,
-      action: 'diversification',
-      confidence: 0.9
-    }
-  ];
-
-  /**
-   * Parse a message for alert creation commands
-   */
-  public parseAlertCommands(message: string): AlertCommand[] {
-    const commands: AlertCommand[] = [];
-
-    this.ALERT_PATTERNS.forEach(pattern => {
-      let match;
-      const regex = new RegExp(pattern.pattern);
+    try {
+      const symbols = args.map(s => s.toUpperCase())
+      const quotes: Record<string, unknown> = {}
       
-      while ((match = regex.exec(message)) !== null) {
-        try {
-          const symbol = match[1].toUpperCase();
-          let condition = pattern.condition;
-          
-          // Handle simple syntax with operators
-          if (pattern.name === 'simple_alert_syntax') {
-            const operator = match[2];
-            condition = operator === '>' ? 'above' : 'below';
-          }
-          
-          const threshold = parseFloat(match[pattern.name === 'simple_alert_syntax' ? 3 : 2]);
-          
-          if (!isNaN(threshold) && marketContextService.validateSymbol(symbol)) {
-            commands.push({
-              symbol,
-              type: pattern.type,
-              condition: condition!,
-              threshold,
-              message: `Alert created via chat: ${symbol} ${condition} ${threshold}`
-            });
-          }
-        } catch (error) {
-          console.warn('Error parsing alert command:', error);
+      // Fetch quotes for all symbols
+      for (const symbol of symbols) {
+        const response = await fetch(`/api/market/quote?symbol=${symbol}`)
+        if (response.ok) {
+          const data = await response.json()
+          quotes[symbol] = data
         }
       }
-    });
 
-    return commands;
-  }
-
-  /**
-   * Parse a message for analysis commands
-   */
-  public parseAnalysisCommands(message: string): AnalysisCommand[] {
-    const commands: AnalysisCommand[] = [];
-
-    this.ANALYSIS_PATTERNS.forEach(pattern => {
-      let match;
-      const regex = new RegExp(pattern.pattern);
-      
-      while ((match = regex.exec(message)) !== null) {
-        try {
-          const symbol = match[1].toUpperCase();
-          
-          if (marketContextService.validateSymbol(symbol)) {
-                         commands.push({
-               symbol,
-               analysisType: pattern.analysisType as 'overview' | 'technical' | 'fundamental' | 'news',
-               timeframe: this.extractTimeframe(message)
-             });
-          }
-        } catch (error) {
-          console.warn('Error parsing analysis command:', error);
+      if (Object.keys(quotes).length === 0) {
+        return {
+          type: 'error',
+          content: 'Não foi possível obter cotações para os símbolos fornecidos.'
         }
       }
-    });
 
-    return commands;
-  }
-
-  /**
-   * Parse a message for portfolio commands
-   */
-  public parsePortfolioCommands(message: string): PortfolioCommand[] {
-    const commands: PortfolioCommand[] = [];
-
-    this.PORTFOLIO_PATTERNS.forEach(pattern => {
-      const regex = new RegExp(pattern.pattern);
-      
-      if (regex.test(message)) {
-                 commands.push({
-           action: pattern.action as 'analyze' | 'performance' | 'risk' | 'diversification',
-           timeframe: this.extractTimeframe(message) as '1d' | '1w' | '1m' | '3m' | '1y' | undefined,
-           includeRecommendations: message.toLowerCase().includes('recomendaç') || message.toLowerCase().includes('recommend')
-         });
+      // Format results
+      let content = '📈 **Cotações Atuais**\n\n'
+      for (const [symbol, data] of Object.entries(quotes)) {
+        if (data && typeof data === 'object' && data !== null) {
+          const quote = data as { price?: number; change?: number; changePercent?: number }
+          if (quote.price) {
+            const change = quote.change || 0
+            const changePercent = quote.changePercent || 0
+            const emoji = change >= 0 ? '🟢' : '🔴'
+            
+            content += `${emoji} **${symbol}**: $${quote.price}\n`
+            content += `   Variação: ${change >= 0 ? '+' : ''}${change.toFixed(2)} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%)\n\n`
+          }
+        }
       }
-    });
 
-    return commands;
+      return {
+        type: 'success',
+        content,
+        data: { quotes, symbols }
+      }
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao obter cotações. Tente novamente.'
+      }
+    }
   }
 
-  /**
-   * Extract timeframe from message
-   */
-  private extractTimeframe(message: string): string | undefined {
-    const timeframePatterns = [
-      { pattern: /(?:nos?\s+)?(?:últimos?\s+)?(?:1\s+dia|today|hoje)/gi, value: '1d' },
-      { pattern: /(?:nos?\s+)?(?:últimos?\s+)?(?:1\s+semana|this\s+week|semana)/gi, value: '1w' },
-      { pattern: /(?:nos?\s+)?(?:últimos?\s+)?(?:1\s+mês|this\s+month|mês)/gi, value: '1m' },
-      { pattern: /(?:nos?\s+)?(?:últimos?\s+)?(?:3\s+meses|quarter|trimestre)/gi, value: '3m' },
-      { pattern: /(?:nos?\s+)?(?:últimos?\s+)?(?:1\s+ano|this\s+year|ano)/gi, value: '1y' }
-    ];
-
-    for (const timeframe of timeframePatterns) {
-      if (timeframe.pattern.test(message)) {
-        return timeframe.value;
+  // Analyze stock or market
+  static async handleAnalyze(args: string[]): Promise<CommandResult> {
+    if (args.length === 0) {
+      return {
+        type: 'error',
+        content: 'Uso: /analyze SYMBOL [period]\nExemplo: /analyze AAPL 1y'
       }
     }
 
-    return undefined;
+    try {
+      const symbol = args[0].toUpperCase()
+      const period = args[1] || '6mo'
+      
+      const response = await fetch(`/api/market/analyze?symbol=${symbol}&period=${period}`)
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Análise não disponível no momento. Tente novamente mais tarde.'
+        }
+      }
+
+      const data = await response.json()
+      
+      let content = `📊 **Análise Técnica: ${symbol}**\n\n`
+      
+      if (data.summary) {
+        content += `**Resumo**: ${data.summary}\n\n`
+      }
+      
+      if (data.indicators) {
+        content += '**Indicadores Técnicos:**\n'
+        Object.entries(data.indicators).forEach(([key, value]) => {
+          content += `• ${key}: ${value}\n`
+        })
+        content += '\n'
+      }
+      
+      if (data.recommendation) {
+        const emoji = data.recommendation === 'BUY' ? '🟢' : 
+                     data.recommendation === 'SELL' ? '🔴' : '🟡'
+        content += `${emoji} **Recomendação**: ${data.recommendation}\n\n`
+      }
+
+      return {
+        type: 'success',
+        content,
+        data: { analysis: data, symbol, period },
+        requiresFollowup: true
+      }
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao analisar o ativo. Verifique o símbolo e tente novamente.'
+      }
+    }
   }
 
-  /**
-   * Check if message contains any commands
-   */
-  public hasCommands(message: string): boolean {
-    const alertCommands = this.parseAlertCommands(message);
-    const analysisCommands = this.parseAnalysisCommands(message);
-    const portfolioCommands = this.parsePortfolioCommands(message);
+  // ==========================================
+  // OPLAB SPECIFIC COMMANDS
+  // ==========================================
 
-    return alertCommands.length > 0 || analysisCommands.length > 0 || portfolioCommands.length > 0;
+  // OpLab market status
+  static async handleMarketStatus(): Promise<CommandResult> {
+    try {
+      const response = await fetch('/api/market/oplab?action=market-status')
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Não foi possível verificar o status do mercado.'
+        }
+      }
+
+      const result = await response.json()
+      if (!result.success) {
+        return {
+          type: 'error',
+          content: result.error || 'Erro ao consultar status do mercado.'
+        }
+      }
+
+      const status = result.data as { open: boolean; session: string; next_session: string; time: string }
+      const emoji = status.open ? '🟢' : '🔴'
+      
+      let content = `${emoji} **Status do Mercado**\n\n`
+      content += `• **Situação**: ${status.open ? 'Aberto' : 'Fechado'}\n`
+      content += `• **Sessão Atual**: ${status.session}\n`
+      content += `• **Próxima Sessão**: ${status.next_session}\n`
+      content += `• **Horário**: ${status.time}\n\n`
+
+      return {
+        type: 'success',
+        content,
+        data: { status }
+      }
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao consultar status do mercado.'
+      }
+    }
   }
 
-  /**
-   * Parse all types of commands from a message
-   */
-  public parseAllCommands(message: string): {
-    alerts: AlertCommand[];
-    analysis: AnalysisCommand[];
-    portfolio: PortfolioCommand[];
-    hasCommands: boolean;
-  } {
-    const alerts = this.parseAlertCommands(message);
-    const analysis = this.parseAnalysisCommands(message);
-    const portfolio = this.parsePortfolioCommands(message);
+  // OpLab top options by volume
+  static async handleTopOptions(args: string[]): Promise<CommandResult> {
+    const rankingType = args[0] || 'volume'
+    const validTypes = ['volume', 'profit', 'variation', 'trending']
+    
+    if (!validTypes.includes(rankingType)) {
+      return {
+        type: 'error',
+        content: `Uso: /top-options [${validTypes.join('|')}]\nExemplo: /top-options volume`
+      }
+    }
 
+    try {
+      let endpoint = ''
+      let title = ''
+      
+      switch (rankingType) {
+        case 'volume':
+          endpoint = 'top-volume-options'
+          title = 'Maiores Volumes'
+          break
+        case 'profit':
+          endpoint = 'highest-profit-options'
+          title = 'Maiores Lucros'
+          break
+        case 'variation':
+          endpoint = 'biggest-variation-options'
+          title = 'Maiores Variações'
+          break
+        case 'trending':
+          endpoint = 'trending-options'
+          title = 'Tendências'
+          break
+      }
+
+      const response = await fetch(`/api/market/oplab?action=${endpoint}`)
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Não foi possível obter ranking de opções.'
+        }
+      }
+
+      const result = await response.json()
+      if (!result.success) {
+        return {
+          type: 'error',
+          content: result.error || 'Erro ao consultar ranking de opções.'
+        }
+      }
+
+      let content = `🏆 **Ranking de Opções - ${title}**\n\n`
+      
+      if (result.data && Array.isArray(result.data)) {
+        result.data.slice(0, 10).forEach((option: Record<string, unknown>, index: number) => {
+          content += `${index + 1}. **${option.symbol || option.ticker}**\n`
+          if (option.price) content += `   Preço: R$ ${(option.price as number).toFixed(2)}\n`
+          if (option.volume) content += `   Volume: ${(option.volume as number).toLocaleString()}\n`
+          if (option.variation) content += `   Variação: ${(option.variation as number) >= 0 ? '+' : ''}${(option.variation as number).toFixed(2)}%\n`
+          content += '\n'
+        })
+      } else {
+        content += 'Dados não disponíveis no momento.'
+      }
+
+      return {
+        type: 'success',
+        content,
+        data: { ranking: result.data, type: rankingType }
+      }
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao consultar ranking de opções.'
+      }
+    }
+  }
+
+  // Black-Scholes calculation for options
+  static async handleBlackScholes(args: string[]): Promise<CommandResult> {
+    if (args.length === 0) {
+      return {
+        type: 'error',
+        content: 'Uso: /black-scholes OPTION_SYMBOL\nExemplo: /black-scholes PETR4C45'
+      }
+    }
+
+    try {
+      const optionSymbol = args[0].toUpperCase()
+      
+      const response = await fetch(`/api/market/oplab?action=option-black-scholes&symbol=${optionSymbol}`)
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Não foi possível calcular Black-Scholes.'
+        }
+      }
+
+      const result = await response.json()
+      if (!result.success) {
+        return {
+          type: 'error',
+          content: result.error || 'Erro ao calcular Black-Scholes.'
+        }
+      }
+
+      const bs = result.data as Record<string, unknown>
+      
+      let content = `⚡ **Black-Scholes: ${optionSymbol}**\n\n`
+      content += `📊 **Parâmetros Calculados:**\n`
+      content += `• **Preço Teórico**: R$ ${bs.theoretical_price ? (bs.theoretical_price as number).toFixed(2) : 'N/A'}\n`
+      content += `• **Delta**: ${bs.delta ? (bs.delta as number).toFixed(4) : 'N/A'}\n`
+      content += `• **Gamma**: ${bs.gamma ? (bs.gamma as number).toFixed(4) : 'N/A'}\n`
+      content += `• **Theta**: ${bs.theta ? (bs.theta as number).toFixed(4) : 'N/A'}\n`
+      content += `• **Vega**: ${bs.vega ? (bs.vega as number).toFixed(4) : 'N/A'}\n`
+      content += `• **Rho**: ${bs.rho ? (bs.rho as number).toFixed(4) : 'N/A'}\n`
+      content += `• **Volatilidade Implícita**: ${bs.implied_volatility ? ((bs.implied_volatility as number) * 100).toFixed(2) + '%' : 'N/A'}\n\n`
+
+      return {
+        type: 'success',
+        content,
+        data: { blackScholes: bs, symbol: optionSymbol }
+      }
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao calcular Black-Scholes.'
+      }
+    }
+  }
+
+  // Options chain for underlying
+  static async handleOptionsChain(args: string[]): Promise<CommandResult> {
+    if (args.length === 0) {
+      return {
+        type: 'error',
+        content: 'Uso: /options UNDERLYING_SYMBOL\nExemplo: /options PETR4'
+      }
+    }
+
+    try {
+      const underlyingSymbol = args[0].toUpperCase()
+      
+      const response = await fetch(`/api/market/oplab?action=options&symbol=${underlyingSymbol}`)
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Não foi possível obter cadeia de opções.'
+        }
+      }
+
+      const result = await response.json()
+      if (!result.success) {
+        return {
+          type: 'error',
+          content: result.error || 'Erro ao consultar opções.'
+        }
+      }
+
+      let content = `🔗 **Cadeia de Opções: ${underlyingSymbol}**\n\n`
+      
+      if (result.data && Array.isArray(result.data)) {
+        // Group by expiration date
+        const optionsByExpiration: Record<string, Record<string, unknown>[]> = {}
+        
+        result.data.forEach((option: Record<string, unknown>) => {
+          const optionInfo = option.info as Record<string, unknown>
+          const expiration = optionInfo?.due_date as string || 'Sem vencimento'
+          if (!optionsByExpiration[expiration]) {
+            optionsByExpiration[expiration] = []
+          }
+          optionsByExpiration[expiration].push(option)
+        })
+
+        // Show first 2 expirations
+        Object.entries(optionsByExpiration).slice(0, 2).forEach(([expiration, options]) => {
+          content += `📅 **Vencimento: ${expiration}**\n\n`
+          
+          // Show first 5 options
+          options.slice(0, 5).forEach((option: Record<string, unknown>) => {
+            const optionInfo = option.info as Record<string, unknown>
+            const optionMarket = option.market as Record<string, unknown>
+            const type = optionInfo?.category === 'CALL' ? '📈 CALL' : '📉 PUT'
+            const strike = optionInfo?.strike as number || 0
+            const price = optionMarket?.close as number || 0
+            
+            content += `${type} **${option.symbol}**\n`
+            content += `   Strike: R$ ${strike.toFixed(2)}\n`
+            content += `   Preço: R$ ${price.toFixed(2)}\n`
+            content += `   Volume: ${optionMarket?.vol || 0}\n\n`
+          })
+        })
+      } else {
+        content += 'Nenhuma opção encontrada para este ativo.'
+      }
+
+      return {
+        type: 'success',
+        content,
+        data: { options: result.data, underlying: underlyingSymbol }
+      }
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao consultar cadeia de opções.'
+      }
+    }
+  }
+
+  // Fundamentalist companies ranking
+  static async handleFundamentals(args: string[]): Promise<CommandResult> {
+    const attribute = args[0] || 'pl'
+    const validAttributes = ['pl', 'roe', 'roce', 'dividend_yield', 'debt_ratio', 'current_ratio']
+    
+    if (!validAttributes.includes(attribute.toLowerCase())) {
+      return {
+        type: 'error',
+        content: `Uso: /fundamentals [${validAttributes.join('|')}]\nExemplo: /fundamentals pl`
+      }
+    }
+
+    try {
+      const response = await fetch(`/api/market/oplab?action=fundamentalist-companies&attribute=${attribute}`)
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Não foi possível obter ranking fundamentalista.'
+        }
+      }
+
+      const result = await response.json()
+      if (!result.success) {
+        return {
+          type: 'error',
+          content: result.error || 'Erro ao consultar ranking fundamentalista.'
+        }
+      }
+
+      let content = `💼 **Ranking Fundamentalista - ${attribute.toUpperCase()}**\n\n`
+      
+      if (result.data && Array.isArray(result.data)) {
+        result.data.slice(0, 10).forEach((company: Record<string, unknown>, index: number) => {
+          content += `${index + 1}. **${company.symbol || company.ticker}**\n`
+          content += `   Empresa: ${company.name || 'N/A'}\n`
+          content += `   ${attribute.toUpperCase()}: ${company[attribute] || 'N/A'}\n\n`
+        })
+      } else {
+        content += 'Dados não disponíveis no momento.'
+      }
+
+      return {
+        type: 'success',
+        content,
+        data: { ranking: result.data, attribute }
+      }
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao consultar ranking fundamentalista.'
+      }
+    }
+  }
+
+  // OpLab Score ranking
+  static async handleOplabScore(): Promise<CommandResult> {
+    try {
+      const response = await fetch('/api/market/oplab?action=oplab-score-stocks')
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Não foi possível obter ranking OpLab Score.'
+        }
+      }
+
+      const result = await response.json()
+      if (!result.success) {
+        return {
+          type: 'error',
+          content: result.error || 'Erro ao consultar OpLab Score.'
+        }
+      }
+
+      let content = `⭐ **Ranking OpLab Score**\n\n`
+      
+      if (result.data && Array.isArray(result.data)) {
+        result.data.slice(0, 10).forEach((stock: Record<string, unknown>, index: number) => {
+          content += `${index + 1}. **${stock.symbol || stock.ticker}**\n`
+          content += `   Score: ${stock.score || 'N/A'}\n`
+          content += `   Preço: R$ ${stock.price ? (stock.price as number).toFixed(2) : 'N/A'}\n\n`
+        })
+      } else {
+        content += 'Dados não disponíveis no momento.'
+      }
+
+      return {
+        type: 'success',
+        content,
+        data: { ranking: result.data }
+      }
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao consultar OpLab Score.'
+      }
+    }
+  }
+
+  // Search instruments
+  static async handleSearch(args: string[]): Promise<CommandResult> {
+    if (args.length === 0) {
+      return {
+        type: 'error',
+        content: 'Uso: /search TERMO\nExemplo: /search PETR'
+      }
+    }
+
+    try {
+      const searchTerm = args.join(' ')
+      
+      const response = await fetch(`/api/market/oplab?action=search-instruments&expr=${encodeURIComponent(searchTerm)}`)
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Não foi possível realizar a busca.'
+        }
+      }
+
+      const result = await response.json()
+      if (!result.success) {
+        return {
+          type: 'error',
+          content: result.error || 'Erro na busca de instrumentos.'
+        }
+      }
+
+      let content = `🔍 **Resultados para: "${searchTerm}"**\n\n`
+      
+      if (result.data && Array.isArray(result.data)) {
+        result.data.slice(0, 10).forEach((instrument: Record<string, unknown>) => {
+          content += `• **${instrument.symbol}** - ${instrument.description}\n`
+          content += `  Tipo: ${instrument.type} | Bolsa: ${instrument.exchange}\n\n`
+        })
+        
+        if (result.data.length === 0) {
+          content += 'Nenhum instrumento encontrado.'
+        }
+      } else {
+        content += 'Nenhum resultado encontrado.'
+      }
+
+      return {
+        type: 'success',
+        content,
+        data: { results: result.data, searchTerm }
+      }
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao buscar instrumentos.'
+      }
+    }
+  }
+
+  // ==========================================
+  // UTILITY COMMANDS
+  // ==========================================
+
+  // Show help
+  static async handleHelp(): Promise<CommandResult> {
     return {
-      alerts,
-      analysis,
-      portfolio,
-      hasCommands: alerts.length > 0 || analysis.length > 0 || portfolio.length > 0
-    };
+      type: 'info',
+      content: `🤖 **Comandos Disponíveis**
+
+**Cotações & Análise:**
+• \`/quote SYMBOL\` - Obter cotação atual
+• \`/analyze SYMBOL\` - Análise técnica
+• \`/search TERMO\` - Buscar instrumentos
+
+**OpLab Market:**
+• \`/market-status\` - Status do mercado
+• \`/top-options [volume|profit|variation|trending]\` - Rankings de opções
+• \`/options SYMBOL\` - Cadeia de opções
+• \`/black-scholes OPTION\` - Cálculo Black-Scholes
+• \`/fundamentals [pl|roe|roce|dividend_yield]\` - Ranking fundamentalista
+• \`/oplab-score\` - Ranking OpLab Score
+
+**Outros:**
+• \`/help\` - Mostrar esta ajuda
+• \`/clear\` - Limpar conversa
+
+Digite qualquer comando para ver mais detalhes de uso.`
+    }
   }
-
-  /**
-   * Generate natural language response for executed commands
-   */
-  public generateCommandResponse(commands: {
-    alerts: AlertCommand[];
-    analysis: AnalysisCommand[];
-    portfolio: PortfolioCommand[];
-  }): string {
-    const responses: string[] = [];
-
-    // Alert responses
-    if (commands.alerts.length > 0) {
-      commands.alerts.forEach(alert => {
-        const conditionText = alert.condition === 'above' ? 'acima de' : 
-                             alert.condition === 'below' ? 'abaixo de' : 
-                             'atingir';
-        responses.push(`✅ Alerta criado para ${alert.symbol} quando preço ${conditionText} $${alert.threshold}`);
-      });
+ 
+  // Clear conversation
+  static async handleClear(): Promise<CommandResult> {
+    return {
+      type: 'info',
+      content: '🗑️ Para limpar a conversa, use o botão "Nova Conversa" na sidebar.',
+      data: { action: 'clear_conversation' }
     }
-
-    // Analysis responses
-    if (commands.analysis.length > 0) {
-      commands.analysis.forEach(analysis => {
-        const typeText = {
-          overview: 'Visão geral',
-          technical: 'Análise técnica',
-          fundamental: 'Análise fundamentalista',
-          news: 'Análise de notícias'
-        }[analysis.analysisType] || 'Análise';
-        
-        responses.push(`📊 Iniciando ${typeText.toLowerCase()} de ${analysis.symbol}...`);
-      });
-    }
-
-    // Portfolio responses
-    if (commands.portfolio.length > 0) {
-      commands.portfolio.forEach(portfolio => {
-        const actionText = {
-          analyze: 'Análise do portfólio',
-          performance: 'Análise de performance',
-          risk: 'Análise de risco',
-          diversification: 'Análise de diversificação'
-        }[portfolio.action] || 'Análise';
-        
-        responses.push(`📈 Iniciando ${actionText.toLowerCase()}...`);
-      });
-    }
-
-    return responses.join('\n');
-  }
-
-  /**
-   * Get command help text
-   */
-  public getHelpText(): string {
-    return `
-🤖 **Comandos Disponíveis:**
-
-**Criação de Alertas:**
-• \`criar alerta PETR4 quando preço acima 25.50\`
-• \`alert VALE3 > 60.00\`
-• \`me avise quando ITUB4 chegar em 30.00\`
-
-**Análise de Ações:**
-• \`analise PETR4\`
-• \`/analyze VALE3\`
-• \`análise técnica ITUB4\`
-
-**Análise de Portfólio:**
-• \`analise meu portfólio\`
-• \`performance do portfólio no último mês\`
-• \`risco do portfólio\`
-
-**Dicas:**
-• Use símbolos em maiúsculas (PETR4, AAPL)
-• Inclua períodos de tempo (1 dia, 1 semana, 1 mês)
-• Seja específico com valores ($25.50, R$ 30.00)
-    `.trim();
   }
 }
 
-// Export singleton instance
-const chatCommandsService = new ChatCommandsService();
-export default chatCommandsService; 
+// Available commands registry
+export const chatCommands: Record<string, ChatCommand> = {
+  quote: {
+    name: 'quote',
+    description: 'Obter cotações atuais de ações',
+    usage: '/quote SYMBOL1 [SYMBOL2 ...]',
+    examples: ['/quote AAPL', '/quote AAPL MSFT GOOGL'],
+    handler: CommandHandlers.handleQuote
+  },
+  
+  analyze: {
+    name: 'analyze',
+    description: 'Análise técnica detalhada de um ativo',
+    usage: '/analyze SYMBOL [period]',
+    examples: ['/analyze AAPL', '/analyze MSFT 1y'],
+    handler: CommandHandlers.handleAnalyze
+  },
+
+  search: {
+    name: 'search',
+    description: 'Buscar instrumentos financeiros',
+    usage: '/search TERMO',
+    examples: ['/search PETR', '/search Petrobras'],
+    handler: CommandHandlers.handleSearch
+  },
+
+  'market-status': {
+    name: 'market-status',
+    description: 'Verificar status do mercado',
+    usage: '/market-status',
+    examples: ['/market-status'],
+    handler: CommandHandlers.handleMarketStatus
+  },
+
+  'top-options': {
+    name: 'top-options',
+    description: 'Rankings de opções por volume, lucro ou variação',
+    usage: '/top-options [volume|profit|variation|trending]',
+    examples: ['/top-options volume', '/top-options profit'],
+    handler: CommandHandlers.handleTopOptions
+  },
+
+  options: {
+    name: 'options',
+    description: 'Cadeia de opções de um ativo',
+    usage: '/options UNDERLYING_SYMBOL',
+    examples: ['/options PETR4', '/options VALE3'],
+    handler: CommandHandlers.handleOptionsChain
+  },
+
+  'black-scholes': {
+    name: 'black-scholes',
+    description: 'Cálculo Black-Scholes para opções',
+    usage: '/black-scholes OPTION_SYMBOL',
+    examples: ['/black-scholes PETR4C45', '/black-scholes VALE3P30'],
+    handler: CommandHandlers.handleBlackScholes
+  },
+
+  fundamentals: {
+    name: 'fundamentals',
+    description: 'Ranking fundamentalista de empresas',
+    usage: '/fundamentals [pl|roe|roce|dividend_yield|debt_ratio|current_ratio]',
+    examples: ['/fundamentals pl', '/fundamentals roe'],
+    handler: CommandHandlers.handleFundamentals
+  },
+
+  'oplab-score': {
+    name: 'oplab-score',
+    description: 'Ranking OpLab Score de ações',
+    usage: '/oplab-score',
+    examples: ['/oplab-score'],
+    handler: CommandHandlers.handleOplabScore
+  },
+  
+  help: {
+    name: 'help',
+    description: 'Mostrar comandos disponíveis',
+    usage: '/help',
+    examples: ['/help'],
+    handler: CommandHandlers.handleHelp
+  },
+
+  clear: {
+    name: 'clear',
+    description: 'Limpar conversa atual',
+    usage: '/clear', 
+    examples: ['/clear'],
+    handler: CommandHandlers.handleClear
+  }
+}
+
+// Execute a command
+export async function executeCommand(
+  message: string, 
+  userId?: string
+): Promise<CommandResult | null> {
+  const trimmedMessage = message.trim()
+  
+  if (!isCommand(trimmedMessage)) {
+    return null
+  }
+
+  // Parse command and arguments
+  const parts = trimmedMessage.slice(1).split(/\s+/)
+  const commandName = parts[0].toLowerCase()
+  const args = parts.slice(1)
+
+  // Find and execute command
+  const command = chatCommands[commandName]
+  if (!command) {
+    return {
+      type: 'error',
+      content: `Comando desconhecido: /${commandName}\nDigite /help para ver comandos disponíveis.`
+    }
+  }
+
+  try {
+    return await command.handler(args, userId)
+  } catch (error) {
+    console.error(`Error executing command ${commandName}:`, error)
+    return {
+      type: 'error',
+      content: `Erro ao executar comando /${commandName}. Tente novamente.`
+    }
+  }
+}
+
+// Check if message is a command
+export function isCommand(message: string): boolean {
+  return message.trim().startsWith('/')
+}
+
+// Get command suggestions for autocomplete
+export function getCommandSuggestions(partial: string): ChatCommand[] {
+  const searchTerm = partial.toLowerCase().replace('/', '')
+  return Object.values(chatCommands).filter(cmd => 
+    cmd.name.toLowerCase().includes(searchTerm) ||
+    cmd.description.toLowerCase().includes(searchTerm)
+  )
+} 

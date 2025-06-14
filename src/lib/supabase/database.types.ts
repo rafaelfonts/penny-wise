@@ -34,6 +34,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      alerts: {
+        Row: {
+          alert_type: string
+          condition_type: string
+          cooldown_minutes: number | null
+          created_at: string | null
+          current_value: number | null
+          id: string
+          is_active: boolean | null
+          last_triggered: string | null
+          metadata: Json | null
+          symbol: string
+          target_value: number
+          trigger_count: number | null
+          triggered_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          condition_type: string
+          cooldown_minutes?: number | null
+          created_at?: string | null
+          current_value?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered?: string | null
+          metadata?: Json | null
+          symbol: string
+          target_value: number
+          trigger_count?: number | null
+          triggered_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          condition_type?: string
+          cooldown_minutes?: number | null
+          created_at?: string | null
+          current_value?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered?: string | null
+          metadata?: Json | null
+          symbol?: string
+          target_value?: number
+          trigger_count?: number | null
+          triggered_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           created_at: string | null
@@ -64,6 +118,84 @@ export type Database = {
           title?: string | null
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      dashboard_layouts: {
+        Row: {
+          created_at: string | null
+          grid_config: Json | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          layout_name: string
+          updated_at: string | null
+          user_id: string
+          widgets: Json
+        }
+        Insert: {
+          created_at?: string | null
+          grid_config?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          layout_name: string
+          updated_at?: string | null
+          user_id: string
+          widgets: Json
+        }
+        Update: {
+          created_at?: string | null
+          grid_config?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          layout_name?: string
+          updated_at?: string | null
+          user_id?: string
+          widgets?: Json
+        }
+        Relationships: []
+      }
+      exported_files: {
+        Row: {
+          content_type: string | null
+          created_at: string | null
+          download_count: number | null
+          expires_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string | null
+          download_count?: number | null
+          expires_at?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type: string
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string | null
+          download_count?: number | null
+          expires_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -137,6 +269,93 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_preferences: {
+        Row: {
+          alert_notifications: boolean | null
+          created_at: string | null
+          email_enabled: boolean | null
+          id: string
+          market_notifications: boolean | null
+          news_notifications: boolean | null
+          push_enabled: boolean | null
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          system_notifications: boolean | null
+          timezone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          alert_notifications?: boolean | null
+          created_at?: string | null
+          email_enabled?: boolean | null
+          id?: string
+          market_notifications?: boolean | null
+          news_notifications?: boolean | null
+          push_enabled?: boolean | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          system_notifications?: boolean | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          alert_notifications?: boolean | null
+          created_at?: string | null
+          email_enabled?: boolean | null
+          id?: string
+          market_notifications?: boolean | null
+          news_notifications?: boolean | null
+          push_enabled?: boolean | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          system_notifications?: boolean | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          expires_at: string | null
+          id: string
+          message: string
+          priority: string | null
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          expires_at?: string | null
+          id?: string
+          message: string
+          priority?: string | null
+          read?: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          expires_at?: string | null
+          id?: string
+          message?: string
+          priority?: string | null
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -344,8 +563,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_price_alerts: {
+        Args: { symbol_param: string; current_price: number }
+        Returns: {
+          alert_id: string
+          user_id: string
+          alert_type: string
+          condition_type: string
+          target_value: number
+        }[]
+      }
       cleanup_expired_cache: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_expired_files: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      cleanup_expired_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      create_default_dashboard_layout: {
+        Args: { user_id_param: string }
+        Returns: string
+      }
+      trigger_alert: {
+        Args: { alert_id_param: string; current_price: number }
         Returns: undefined
       }
     }

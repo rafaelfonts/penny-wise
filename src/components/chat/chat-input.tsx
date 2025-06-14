@@ -3,9 +3,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { useChatStore } from '@/store/chat-store'
+import { useChatStoreClient } from '@/hooks/use-chat-store'
 import { Send, Loader2, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { CommandSuggestions } from './command-suggestions'
 
 interface ChatInputProps {
   className?: string
@@ -16,12 +17,14 @@ export function ChatInput({ className }: ChatInputProps) {
   const [showCommands, setShowCommands] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   
-  const { 
+    const { 
     sendMessage, 
+    sendMessageStream,
     isLoading, 
-    currentConversationId, 
+    isStreaming,
+    currentConversationId,
     createNewConversation 
-  } = useChatStore()
+  } = useChatStoreClient()
 
   // Auto-resize textarea
   useEffect(() => {
@@ -34,33 +37,46 @@ export function ChatInput({ className }: ChatInputProps) {
 
   // Commands detection
   const isCommand = message.startsWith('/')
-  const commandSuggestions = [
-    { command: '/analyze', description: 'Analisar ação ou mercado' },
-    { command: '/compare', description: 'Comparar ativos' },
-    { command: '/alert', description: 'Criar alerta de preço' },
-    { command: '/portfolio', description: 'Visualizar portfólio' },
-    { command: '/help', description: 'Ver todos os comandos' }
-  ]
-
-  const filteredCommands = commandSuggestions.filter(cmd =>
-    cmd.command.toLowerCase().includes(message.toLowerCase())
-  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!message.trim() || isLoading) return
+    if (!message.trim() || isLoading || isStreaming) return
 
     // Create new conversation if none exists
     if (!currentConversationId) {
-      createNewConversation()
+      try {
+        await createNewConversation()
+      } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Failed to create new conversation:', error instanceof Error ? error.message : 'Unknown error')
+        }
+        return
+      }
     }
 
     const messageContent = message.trim()
     setMessage('')
     setShowCommands(false)
     
-    await sendMessage(messageContent)
+    try {
+      // Use streaming by default for better UX
+      await sendMessageStream(messageContent)
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Streaming failed, falling back to regular:', error instanceof Error ? error.message : 'Unknown error')
+      }
+      // Fallback to regular message sending
+      try {
+        await sendMessage(messageContent)
+      } catch (fallbackError) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Both streaming and regular send failed:', fallbackError instanceof Error ? fallbackError.message : 'Unknown error')
+        }
+        // Restore the message if both methods fail
+        setMessage(messageContent)
+      }
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -80,7 +96,7 @@ export function ChatInput({ className }: ChatInputProps) {
     setShowCommands(value.startsWith('/') && value.length > 1)
   }
 
-  const insertCommand = (command: string) => {
+  const handleSelectCommand = (command: string) => {
     setMessage(command + ' ')
     setShowCommands(false)
     textareaRef.current?.focus()
@@ -89,19 +105,11 @@ export function ChatInput({ className }: ChatInputProps) {
   return (
     <div className={cn('relative', className)}>
       {/* Command suggestions */}
-      {showCommands && filteredCommands.length > 0 && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-          {filteredCommands.map((cmd) => (
-            <button
-              key={cmd.command}
-              onClick={() => insertCommand(cmd.command)}
-              className="w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 first:rounded-t-lg last:rounded-b-lg"
-            >
-              <div className="font-medium text-sm">{cmd.command}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">{cmd.description}</div>
-            </button>
-          ))}
-        </div>
+      {showCommands && (
+        <CommandSuggestions
+          input={message}
+          onSelectCommand={handleSelectCommand}
+        />
       )}
 
       {/* Main input form */}
@@ -138,9 +146,14 @@ export function ChatInput({ className }: ChatInputProps) {
             type="button"
             variant="outline"
             size="icon"
-            onClick={createNewConversation}
+            onClick={() => createNewConversation().catch((error) => {
+              if (process.env.NODE_ENV === 'development') {
+                console.warn('Failed to create conversation from button:', error instanceof Error ? error.message : 'Unknown error')
+              }
+            })}
             className="shrink-0"
             title="Nova conversa"
+            disabled={isLoading || isStreaming}
           >
             <Plus className="h-4 w-4" />
           </Button>
@@ -148,11 +161,11 @@ export function ChatInput({ className }: ChatInputProps) {
           {/* Send button */}
           <Button
             type="submit"
-            disabled={!message.trim() || isLoading}
+            disabled={!message.trim() || isLoading || isStreaming}
             className="shrink-0"
             title="Enviar mensagem (Enter)"
           >
-            {isLoading ? (
+            {(isLoading || isStreaming) ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Send className="h-4 w-4" />

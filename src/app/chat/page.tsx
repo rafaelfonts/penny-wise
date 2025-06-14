@@ -1,24 +1,14 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import { ChatInterface } from '@/components/chat/chat-interface'
+import { ChatErrorBoundary } from '@/components/chat/chat-error-boundary'
 
-export default async function ChatPage() {
-  const supabase = await createClient()
-  
-  const { data: { session } } = await supabase.auth.getSession()
-  
-  if (!session) {
-    redirect('/auth/login')
-  }
-
+export default function ChatPage() {
   return (
-    <div className="h-screen w-full">
-      <ChatInterface />
+    <div className="h-screen">
+      <ChatErrorBoundary>
+        <ChatInterface />
+      </ChatErrorBoundary>
     </div>
   )
 }
 
-export const metadata = {
-  title: 'Chat - Penny Wise',
-  description: 'Chat inteligente para análise financeira com IA'
-} 
+// Note: Metadata removed since this became a client component during development 

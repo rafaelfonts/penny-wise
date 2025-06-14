@@ -1,45 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import chatMarketIntegrationService from '@/lib/services/chat-market-integration'
-
-// Mock DeepSeek API client for now - will be replaced with actual implementation
-const mockDeepSeekResponse = async (message: string) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  
-  // Default intelligent response for non-market queries
-  return {
-    response: `Entendo sua pergunta sobre "${message}".
-
-Como assistente especializado em análise financeira, posso ajudar com:
-
-🔍 **Análise de Ativos**: Análise técnica e fundamentalista
-📊 **Comparações**: Entre diferentes investimentos  
-📈 **Tendências**: Interpretação de movimentos do mercado
-💡 **Educação**: Explicações sobre conceitos financeiros
-
-Você pode fazer perguntas específicas ou usar comandos como:
-- \`/analyze PETR4\` para análise de ações
-- \`/compare VALE3 ITUB4\` para comparações
-- \`/help\` para ver todos os comandos
-
-Como posso ajudar com sua estratégia de investimentos?`,
-    metadata: {
-      model: 'deepseek-v3',
-      tokens: 124,
-      processing_time: 1200
-    }
-  }
-}
+import deepSeekService from '@/lib/services/deepseek'
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     
-    // Get user session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-    
-    if (sessionError || !session) {
+      // Get authenticated user (more secure than getSession)
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  
+  if (userError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -61,7 +32,7 @@ export async function POST(request: NextRequest) {
       .from('conversations')
       .select('*, messages(*)')
       .eq('id', conversation_id)
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .single()
 
     if (convError) {
@@ -77,8 +48,7 @@ export async function POST(request: NextRequest) {
       .insert({
         conversation_id,
         role: 'user',
-        content: message,
-        user_id: session.user.id
+        content: message
       })
 
     if (userMessageError) {
@@ -89,14 +59,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Try to process with market integration first
+    // Try to process with market integration first for specific commands
     let aiResponse: { response: string; metadata?: Record<string, unknown> }
+    let marketContext = ''
+    const commandsContext = ''
     
     try {
       const marketResponse = await chatMarketIntegrationService.processMessage(message)
       
       // Se o serviço de mercado processou com sucesso (comando ou símbolo detectado)
       if (marketResponse.metadata.command || (marketResponse.metadata.symbols && marketResponse.metadata.symbols.length > 0)) {
+        // Use market-specific response for commands
         aiResponse = {
           response: marketResponse.response,
           metadata: {
@@ -110,21 +83,72 @@ export async function POST(request: NextRequest) {
           }
         }
       } else {
-        // Se não foi um comando de mercado, usar resposta padrão
-        aiResponse = await mockDeepSeekResponse(message)
-        aiResponse.metadata = {
-          ...aiResponse.metadata,
-          market_data: false
+        // For general chat, use DeepSeek with market context if available
+        if (marketResponse.metadata.symbols && marketResponse.metadata.symbols.length > 0) {
+          marketContext = `Símbolos mencionados: ${marketResponse.metadata.symbols.join(', ')}`
+        }
+        
+        // Get conversation history for context
+        const conversationHistory = deepSeekService.convertToDeepSeekMessages(
+          conversation.messages.map(msg => ({
+            role: msg.role,
+            content: msg.content
+          }))
+        )
+        
+        // Use DeepSeek for general financial chat
+        const deepSeekResponse = await deepSeekService.processChatMessage(
+          message,
+          conversationHistory,
+          marketContext,
+          commandsContext
+        )
+        
+        aiResponse = {
+          response: deepSeekResponse.response,
+          metadata: {
+            model: deepSeekResponse.metadata.model,
+            tokens: deepSeekResponse.metadata.tokens,
+            processing_time: deepSeekResponse.metadata.processing_time,
+            finish_reason: deepSeekResponse.metadata.finish_reason,
+            market_data: !!marketContext,
+            ai_powered: true
+          }
         }
       }
-    } catch (marketError) {
-      console.error('Market integration error:', marketError)
-      // Fallback para resposta padrão em caso de erro
-      aiResponse = await mockDeepSeekResponse(message)
-      aiResponse.metadata = {
-        ...aiResponse.metadata,
-        market_data: false,
-        market_error: marketError instanceof Error ? marketError.message : 'Unknown error'
+    } catch (error) {
+      console.error('Chat processing error:', error)
+      
+      // Fallback to basic DeepSeek response
+      try {
+        const fallbackResponse = await deepSeekService.processChatMessage(message)
+        
+        aiResponse = {
+          response: fallbackResponse.response,
+          metadata: {
+            model: fallbackResponse.metadata.model,
+            tokens: fallbackResponse.metadata.tokens,
+            processing_time: fallbackResponse.metadata.processing_time,
+            finish_reason: fallbackResponse.metadata.finish_reason,
+            market_data: false,
+            ai_powered: true,
+            fallback: true,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          }
+        }
+      } catch (deepSeekError) {
+        console.error('DeepSeek fallback error:', deepSeekError)
+        
+        // Ultimate fallback
+        aiResponse = {
+          response: "Desculpe, estou enfrentando dificuldades técnicas no momento. Tente novamente em alguns instantes.",
+          metadata: {
+            model: 'fallback',
+            tokens: 0,
+            processing_time: 0,
+            error: deepSeekError instanceof Error ? deepSeekError.message : 'Service unavailable'
+          }
+        }
       }
     }
 
@@ -135,8 +159,7 @@ export async function POST(request: NextRequest) {
         conversation_id,
         role: 'assistant',
         content: aiResponse.response,
-        metadata: aiResponse.metadata ? JSON.parse(JSON.stringify(aiResponse.metadata)) : null,
-        user_id: session.user.id
+        metadata: aiResponse.metadata ? JSON.parse(JSON.stringify(aiResponse.metadata)) : null
       })
 
     if (aiMessageError) {
@@ -160,14 +183,14 @@ export async function POST(request: NextRequest) {
           updated_at: new Date().toISOString()
         })
         .eq('id', conversation_id)
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
     } else {
       // Just update the timestamp
       await supabase
         .from('conversations')
         .update({ updated_at: new Date().toISOString() })
         .eq('id', conversation_id)
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
     }
 
     return NextResponse.json({
