@@ -219,7 +219,7 @@ class OplabChatIntegrationService {
       if (!context.rankings) context.rankings = {};
 
       // Map results to ranking categories
-      const [topVolume, highestProfit, trending, oplabScore] = results;
+      const [topVolume, , trending, oplabScore] = results;
 
       if (topVolume.status === 'fulfilled' && topVolume.value?.success) {
         context.rankings.topOptions = topVolume.value.data;
@@ -370,16 +370,17 @@ class OplabChatIntegrationService {
     // Options Data
     if (context.options && Array.isArray(context.options) && context.options.length > 0) {
       prompt += '\n=== OPÇÕES DISPONÍVEIS ===\n';
-      context.options.slice(0, 8).forEach((option: Record<string, unknown>) => {
-        const info = option.info as Record<string, unknown>;
-        const market = option.market as Record<string, unknown>;
+      context.options.slice(0, 8).forEach((option: unknown) => {
+        const optionData = option as Record<string, unknown>;
+        const info = optionData.info as Record<string, unknown>;
+        const market = optionData.market as Record<string, unknown>;
         if (info && market) {
           const type = info.category === 'CALL' ? 'CALL' : 'PUT';
           const strike = info.strike as number;
           const price = market.close as number;
           const volume = market.vol as number;
           
-          prompt += `${option.symbol}: ${type} Strike R$${strike?.toFixed(2)} `;
+          prompt += `${optionData.symbol}: ${type} Strike R$${strike?.toFixed(2)} `;
           prompt += `Preço R$${price?.toFixed(2)} `;
           prompt += `Volume ${volume?.toLocaleString()} `;
           prompt += `Venc: ${info.due_date}\n`;
@@ -391,22 +392,25 @@ class OplabChatIntegrationService {
     if (context.rankings) {
       if (context.rankings.topOptions && Array.isArray(context.rankings.topOptions) && context.rankings.topOptions.length > 0) {
         prompt += '\n=== TOP OPÇÕES POR VOLUME ===\n';
-        context.rankings.topOptions.slice(0, 5).forEach((option: Record<string, unknown>, index: number) => {
-          prompt += `${index + 1}. ${option.symbol}: Volume ${(option.volume as number)?.toLocaleString()}\n`;
+        context.rankings.topOptions.slice(0, 5).forEach((option: unknown, index: number) => {
+          const optionData = option as Record<string, unknown>;
+          prompt += `${index + 1}. ${optionData.symbol}: Volume ${(optionData.volume as number)?.toLocaleString()}\n`;
         });
       }
 
       if (context.rankings.oplabScore && Array.isArray(context.rankings.oplabScore) && context.rankings.oplabScore.length > 0) {
         prompt += '\n=== RANKING OPLAB SCORE ===\n';
-        context.rankings.oplabScore.slice(0, 5).forEach((stock: Record<string, unknown>, index: number) => {
-          prompt += `${index + 1}. ${stock.symbol}: Score ${stock.score} Preço R$${(stock.price as number)?.toFixed(2)}\n`;
+        context.rankings.oplabScore.slice(0, 5).forEach((stock: unknown, index: number) => {
+          const stockData = stock as Record<string, unknown>;
+          prompt += `${index + 1}. ${stockData.symbol}: Score ${stockData.score} Preço R$${(stockData.price as number)?.toFixed(2)}\n`;
         });
       }
 
       if (context.rankings.fundamentals && Array.isArray(context.rankings.fundamentals) && context.rankings.fundamentals.length > 0) {
         prompt += '\n=== RANKING FUNDAMENTALISTA ===\n';
-        context.rankings.fundamentals.slice(0, 5).forEach((company: Record<string, unknown>, index: number) => {
-          prompt += `${index + 1}. ${company.symbol}: ${company.name}\n`;
+        context.rankings.fundamentals.slice(0, 5).forEach((company: unknown, index: number) => {
+          const companyData = company as Record<string, unknown>;
+          prompt += `${index + 1}. ${companyData.symbol}: ${companyData.name}\n`;
         });
       }
     }
@@ -414,17 +418,19 @@ class OplabChatIntegrationService {
     // Companies
     if (context.companies && Array.isArray(context.companies) && context.companies.length > 0) {
       prompt += '\n=== INFORMAÇÕES DAS EMPRESAS ===\n';
-      context.companies.forEach((company: Record<string, unknown>) => {
-        prompt += `${company.symbol}: ${company.name}\n`;
-        prompt += `Setor: ${company.sector} | Segmento: ${company.segment}\n`;
+      context.companies.forEach((company: unknown) => {
+        const companyData = company as Record<string, unknown>;
+        prompt += `${companyData.symbol}: ${companyData.name}\n`;
+        prompt += `Setor: ${companyData.sector} | Segmento: ${companyData.segment}\n`;
       });
     }
 
     // Search Results
     if (context.instruments && Array.isArray(context.instruments) && context.instruments.length > 0) {
       prompt += '\n=== INSTRUMENTOS ENCONTRADOS ===\n';
-      context.instruments.slice(0, 5).forEach((instrument: Record<string, unknown>) => {
-        prompt += `${instrument.symbol}: ${instrument.description} (${instrument.type}) - ${instrument.exchange}\n`;
+      context.instruments.slice(0, 5).forEach((instrument: unknown) => {
+        const instrumentData = instrument as Record<string, unknown>;
+        prompt += `${instrumentData.symbol}: ${instrumentData.description} (${instrumentData.type}) - ${instrumentData.exchange}\n`;
       });
     }
 
@@ -494,4 +500,5 @@ class OplabChatIntegrationService {
   }
 }
 
-export default new OplabChatIntegrationService(); 
+const oplabChatIntegrationService = new OplabChatIntegrationService();
+export default oplabChatIntegrationService; 
