@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { message, conversation_id } = body;
+    const { message, conversation_id, files = [] } = body;
 
     if (!message || !conversation_id) {
       return NextResponse.json(
@@ -107,7 +107,8 @@ export async function POST(request: NextRequest) {
           message,
           conversationHistory,
           marketContext,
-          commandsContext
+          commandsContext,
+          files.length > 0 ? files : undefined
         );
 
         aiResponse = {
@@ -127,8 +128,13 @@ export async function POST(request: NextRequest) {
 
       // Fallback to basic DeepSeek response
       try {
-        const fallbackResponse =
-          await deepSeekService.processChatMessage(message);
+        const fallbackResponse = await deepSeekService.processChatMessage(
+          message,
+          [],
+          '',
+          '',
+          files.length > 0 ? files : undefined
+        );
 
         aiResponse = {
           response: fallbackResponse.response,

@@ -3,10 +3,31 @@
 // ==========================================
 
 import OpenAI from 'openai';
+import type {
+  ChatCompletionMessageParam,
+  ChatCompletionContentPart,
+} from 'openai/resources/chat/completions';
 
 export interface DeepSeekMessage {
   role: 'system' | 'user' | 'assistant';
-  content: string;
+  content: string | Array<DeepSeekMessageContent>;
+}
+
+export interface DeepSeekMessageContent {
+  type: 'text' | 'image_url';
+  text?: string;
+  image_url?: {
+    url: string;
+    detail?: 'low' | 'high' | 'auto';
+  };
+}
+
+export interface FileUpload {
+  name: string;
+  type: string;
+  size: number;
+  content: string; // base64 encoded content
+  url?: string;
 }
 
 export interface DeepSeekResponse {
@@ -44,6 +65,208 @@ class DeepSeekService {
   }
 
   /**
+   * Convert DeepSeek messages to OpenAI compatible format
+   */
+  private convertToOpenAIMessages(
+    messages: DeepSeekMessage[]
+  ): ChatCompletionMessageParam[] {
+    return messages.map(msg => {
+      if (typeof msg.content === 'string') {
+        return {
+          role: msg.role,
+          content: msg.content,
+        } as ChatCompletionMessageParam;
+      } else {
+        // Handle multimodal content
+        const content: ChatCompletionContentPart[] = msg.content.map(part => {
+          if (part.type === 'text') {
+            return {
+              type: 'text',
+              text: part.text || '',
+            };
+          } else {
+            return {
+              type: 'image_url',
+              image_url: {
+                url: part.image_url?.url || '',
+                detail: part.image_url?.detail || 'auto',
+              },
+            };
+          }
+        });
+
+        return {
+          role: msg.role,
+          content,
+        } as ChatCompletionMessageParam;
+      }
+    });
+  }
+
+  /**
+   * Convert files to base64 format for DeepSeek API
+   */
+  async processFileUpload(file: File): Promise<FileUpload> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64Content = result.split(',')[1]; // Remove data:mime;base64, prefix
+
+        resolve({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          content: base64Content,
+        });
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /**
+   * Create multimodal message content from text and files
+   */
+  createMultimodalContent(
+    text: string,
+    files: FileUpload[] = []
+  ): Array<DeepSeekMessageContent> {
+    const content: Array<DeepSeekMessageContent> = [];
+
+    // Start with user text if provided
+    let combinedText = text.trim();
+
+    // Process each file
+    files.forEach(file => {
+      if (file.type.startsWith('image/')) {
+        // Add image files as image_url content
+        content.push({
+          type: 'image_url',
+          image_url: {
+            url: `data:${file.type};base64,${file.content}`,
+            detail: 'high', // Use high detail for better analysis
+          },
+        });
+      } else {
+        // For text-based files, decode and include content
+        try {
+          const fileContent = this.decodeFileContent(file);
+          const fileSection = `\n\n--- ARQUIVO: ${file.name} (${file.type}) ---\n${fileContent}\n--- FIM DO ARQUIVO ---\n`;
+          combinedText += fileSection;
+        } catch (error) {
+          console.warn(`Failed to decode file ${file.name}:`, error);
+          // Fallback to file info only
+          const fileInfo = `\n\n[Arquivo: ${file.name} (${file.type}, ${Math.round(file.size / 1024)}KB) - Não foi possível ler o conteúdo]`;
+          combinedText += fileInfo;
+        }
+      }
+    });
+
+    // Add combined text content if there's any text
+    if (combinedText.trim()) {
+      content.unshift({
+        type: 'text',
+        text: combinedText.trim(),
+      });
+    }
+
+    return content;
+  }
+
+  /**
+   * Decode file content from base64 based on file type
+   */
+  private decodeFileContent(file: FileUpload): string {
+    try {
+      // For text-based files, decode from base64
+      const textTypes = [
+        'text/plain',
+        'text/csv',
+        'text/markdown',
+        'text/html',
+        'text/css',
+        'text/javascript',
+        'application/json',
+        'text/xml',
+        'application/xml',
+      ];
+
+      if (textTypes.includes(file.type)) {
+        // Decode base64 to text
+        const decodedContent = atob(file.content);
+        return decodedContent;
+      } else {
+        // For binary files like PDF, Word docs, etc., provide metadata
+        return `[Arquivo binário: ${file.name} - Tipo: ${file.type} - Tamanho: ${Math.round(file.size / 1024)}KB]
+        
+Para arquivos como PDF, DOC, DOCX, XLS, PPT, é recomendado converter para texto ou extrair o conteúdo antes do upload para melhor análise.`;
+      }
+    } catch (error) {
+      throw new Error(
+        `Failed to decode file content: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Validate file types and sizes according to DeepSeek documentation
+   */
+  validateFile(file: File): { isValid: boolean; error?: string } {
+    const supportedImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const supportedDocumentTypes = [
+      'text/plain',
+      'text/markdown',
+      'text/csv',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'text/html',
+      'text/css',
+      'text/javascript',
+      'application/json',
+      'text/xml',
+      'application/xml',
+    ];
+
+    const maxFileSize = 10 * 1024 * 1024; // 10MB as per DeepSeek documentation
+
+    // Check file size
+    if (file.size > maxFileSize) {
+      return {
+        isValid: false,
+        error: `Arquivo muito grande. Tamanho máximo: 10MB (atual: ${Math.round(file.size / (1024 * 1024))}MB)`,
+      };
+    }
+
+    // Check file type
+    const isImage = supportedImageTypes.includes(file.type);
+    const isDocument = supportedDocumentTypes.includes(file.type);
+
+    if (!isImage && !isDocument) {
+      return {
+        isValid: false,
+        error: `Tipo de arquivo não suportado: ${file.type}. Formatos aceitos: JPEG, PNG, WebP, PDF, DOC, TXT, MD, CSV, entre outros.`,
+      };
+    }
+
+    // Additional validation for images
+    if (isImage && file.size > 5 * 1024 * 1024) {
+      // 5MB for images
+      return {
+        isValid: false,
+        error: 'Imagens devem ter no máximo 5MB',
+      };
+    }
+
+    return { isValid: true };
+  }
+
+  /**
    * Generate a complete response from DeepSeek
    */
   async generateResponse(
@@ -57,9 +280,11 @@ class DeepSeekService {
     const startTime = Date.now();
 
     try {
+      const openAIMessages = this.convertToOpenAIMessages(messages);
+
       const completion = await this.client.chat.completions.create({
         model: this.model,
-        messages: messages,
+        messages: openAIMessages,
         temperature: options?.temperature ?? this.temperature,
         max_tokens: options?.maxTokens ?? this.maxTokens,
         stream: false,
@@ -98,9 +323,11 @@ class DeepSeekService {
     const startTime = Date.now();
 
     try {
+      const openAIMessages = this.convertToOpenAIMessages(messages);
+
       const stream = await this.client.chat.completions.create({
         model: this.model,
-        messages: messages,
+        messages: openAIMessages,
         temperature: options?.temperature ?? this.temperature,
         max_tokens: options?.maxTokens ?? this.maxTokens,
         stream: true,
@@ -141,13 +368,14 @@ class DeepSeekService {
   }
 
   /**
-   * Process a chat message with financial context
+   * Process a chat message with financial context and file support
    */
   async processChatMessage(
     userMessage: string,
     conversationHistory: DeepSeekMessage[] = [],
     marketContext?: string,
-    commandsContext?: string
+    commandsContext?: string,
+    files: FileUpload[] = []
   ): Promise<DeepSeekResponse> {
     // Check for analyze commands and process them with intelligent market service
     if (userMessage.toLowerCase().includes('/analyze ')) {
@@ -177,146 +405,189 @@ class DeepSeekService {
 
     const systemPrompt = this.buildFinancialSystemPrompt(
       marketContext,
-      commandsContext
+      commandsContext,
+      files.length > 0
     );
+
+    // Create user message with multimodal content if files are present
+    let userContent: string | Array<DeepSeekMessageContent>;
+    if (files.length > 0) {
+      userContent = this.createMultimodalContent(userMessage, files);
+    } else {
+      userContent = userMessage;
+    }
 
     const messages: DeepSeekMessage[] = [
       { role: 'system', content: systemPrompt },
       ...conversationHistory.slice(-10), // Keep last 10 messages for context
-      { role: 'user', content: userMessage },
+      { role: 'user', content: userContent },
     ];
 
     return this.generateResponse(messages);
   }
 
   /**
-   * Process a chat message with streaming response
+   * Process a chat message with streaming response and file support
    */
   async *processChatMessageStream(
     userMessage: string,
     conversationHistory: DeepSeekMessage[] = [],
     marketContext?: string,
-    commandsContext?: string
+    commandsContext?: string,
+    files: FileUpload[] = []
   ): AsyncGenerator<DeepSeekStreamResponse, void, unknown> {
     const systemPrompt = this.buildFinancialSystemPrompt(
       marketContext,
-      commandsContext
+      commandsContext,
+      files.length > 0
     );
+
+    // Create user message with multimodal content if files are present
+    let userContent: string | Array<DeepSeekMessageContent>;
+    if (files.length > 0) {
+      userContent = this.createMultimodalContent(userMessage, files);
+    } else {
+      userContent = userMessage;
+    }
 
     const messages: DeepSeekMessage[] = [
       { role: 'system', content: systemPrompt },
       ...conversationHistory.slice(-10), // Keep last 10 messages for context
-      { role: 'user', content: userMessage },
+      { role: 'user', content: userContent },
     ];
 
     yield* this.generateStreamingResponse(messages);
   }
 
   /**
-   * Build specialized system prompt for financial chat
+   * Build enhanced system prompt for financial AI assistant with file support
    */
   private buildFinancialSystemPrompt(
     marketContext?: string,
-    commandsContext?: string
+    commandsContext?: string,
+    hasFiles?: boolean
   ): string {
-    let prompt = `Você é o Penny Wise, um assistente financeiro inteligente especializado no mercado brasileiro.
+    let systemPrompt = `Você é o Penny Wise, um assistente de IA especializado em mercado financeiro e investimentos. Sua função é ajudar usuários com:
 
-CARACTERÍSTICAS:
-- Especialista em ações brasileiras (B3), fundos, renda fixa e criptomoedas
-- Fornece análises técnicas e fundamentalistas precisas
-- Linguagem profissional mas acessível
-- Sempre contextualiza dados com data e fonte
-- Sugere comandos relevantes quando apropriado
+- Análise de ações, índices e mercados financeiros
+- Interpretação de dados de mercado e tendências
+- Educação financeira e estratégias de investimento
+- Análise técnica e fundamentalista
+- Notícias e eventos que impactam o mercado`;
 
-IMPORTANTE: 
-- NUNCA use placeholders como "[inserir valor]" ou templates genéricos
-- Se não houver dados reais, informe claramente que os dados não estão disponíveis
-- Para empresas brasileiras (PETR4, VALE3, etc.), indique se OpLab não está configurado
+    if (hasFiles) {
+      systemPrompt += `
 
-COMANDOS DISPONÍVEIS:
-- /analyze [SÍMBOLO] - Análise técnica e fundamentalista
-- /compare [SYM1] [SYM2] - Comparação entre ativos
-- /portfolio - Análise do portfólio
-- /alert [SÍMBOLO] [CONDIÇÃO] [VALOR] - Criar alertas
-- /help - Ajuda completa
-
-DIRETRIZES:
-1. Use dados reais quando fornecidos no contexto
-2. Indique claramente quando são estimativas ou dados históricos
-3. Forneça sempre disclaimers apropriados sobre investimentos
-4. Sugira próximos passos ou análises complementares
-5. Use emojis financeiros para melhor visualização (📈📉💹📊🎯)
-
-FORMATO DE RESPOSTA:
-- Resposta direta e objetiva
-- Dados organizados em tópicos/bullets
-- Conclusões claras e actionables
-- Próximos passos sugeridos`;
+CAPACIDADES MULTIMODAIS:
+- Você pode analisar imagens, gráficos, tabelas e documentos enviados pelo usuário
+- Para imagens de gráficos financeiros: identifique padrões, tendências, suporte/resistência
+- Para documentos de texto (TXT, CSV, MD, JSON, XML): analise o conteúdo completo fornecido
+- Para arquivos CSV: interprete dados tabulares, identifique trends e faça análises estatísticas
+- Para arquivos JSON/XML: extraia estruturas de dados e forneça insights
+- Para documentos financeiros: extraia informações relevantes e forneça análises detalhadas
+- Para tabelas de dados: interprete números, calcule métricas e forneça insights financeiros
+- Para arquivos binários (PDF, DOC, etc.): oriente sobre conversão para texto se necessário
+- Sempre cite informações específicas dos arquivos em suas respostas
+- Organize a resposta separando análises por arquivo quando múltiplos arquivos forem enviados`;
+    }
 
     if (marketContext) {
-      prompt += `\n\nCONTEXTO DE MERCADO ATUAL:\n${marketContext}`;
+      systemPrompt += `
+
+CONTEXTO DE MERCADO ATUAL:
+${marketContext}
+
+Use essas informações para contextualizar suas respostas com dados atuais do mercado.`;
     }
 
     if (commandsContext) {
-      prompt += `\n\nCOMANDOS EXECUTADOS:\n${commandsContext}`;
+      systemPrompt += `
+
+COMANDOS DISPONÍVEIS:
+${commandsContext}
+
+Quando apropriado, sugira comandos específicos que o usuário pode usar.`;
     }
 
-    prompt += `\n\nLembre-se: Investimentos envolvem risco. Esta é uma análise educacional, não uma recomendação de investimento.`;
+    systemPrompt += `
 
-    return prompt;
+DIRETRIZES:
+- Mantenha respostas objetivas e fundamentadas em dados
+- Sempre inclua avisos sobre riscos de investimento
+- Use linguagem acessível mas tecnicamente precisa
+- Forneça exemplos práticos quando relevante
+- Nunca dê conselhos financeiros específicos, apenas educação e análise
+
+Responda sempre em português brasileiro.`;
+
+    return systemPrompt;
   }
 
   /**
-   * Convert conversation messages to DeepSeek format
+   * Convert conversation history to DeepSeek message format
    */
   convertToDeepSeekMessages(
     messages: Array<{ role: string; content: string }>
   ): DeepSeekMessage[] {
-    return messages
-      .filter(msg => ['user', 'assistant'].includes(msg.role))
-      .map(msg => ({
-        role: msg.role as 'user' | 'assistant',
-        content: msg.content,
-      }));
+    return messages.map(msg => ({
+      role: msg.role as 'system' | 'user' | 'assistant',
+      content: msg.content,
+    }));
   }
 
   /**
-   * Summarize long conversation for context management
+   * Summarize conversation for context management
    */
   async summarizeConversation(messages: DeepSeekMessage[]): Promise<string> {
-    if (messages.length <= 4) return '';
+    if (messages.length === 0) return '';
 
     const summaryMessages: DeepSeekMessage[] = [
       {
         role: 'system',
         content:
-          'Resuma esta conversa de chat financeiro em 2-3 frases, mantendo os pontos-chave sobre investimentos, análises e decisões discutidas.',
+          'Resuma brevemente os pontos principais desta conversa sobre mercado financeiro em português, mantendo informações relevantes sobre análises, decisões e contexto.',
       },
-      ...messages.slice(0, -2), // All except last 2 messages
       {
         role: 'user',
-        content:
-          'Resuma nossa conversa anterior mantendo o contexto financeiro relevante.',
+        content: `Resuma esta conversa: ${messages
+          .map(
+            m =>
+              `${m.role}: ${typeof m.content === 'string' ? m.content : JSON.stringify(m.content)}`
+          )
+          .join('\n')}`,
       },
     ];
 
-    const response = await this.generateResponse(summaryMessages, {
-      maxTokens: 200,
-    });
-    return response.response;
+    try {
+      const response = await this.generateResponse(summaryMessages, {
+        maxTokens: 500,
+        temperature: 0.3,
+      });
+      return response.response;
+    } catch (error) {
+      console.error('Error summarizing conversation:', error);
+      return 'Conversa sobre análise financeira e mercado.';
+    }
   }
 
   /**
-   * Check if API is healthy
+   * Health check for DeepSeek service
    */
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await this.generateResponse(
-        [{ role: 'user', content: 'Hello' }],
-        { maxTokens: 10 }
-      );
+      const testMessages: DeepSeekMessage[] = [
+        {
+          role: 'user',
+          content: 'Test message',
+        },
+      ];
 
-      return !!response.response;
+      await this.generateResponse(testMessages, {
+        maxTokens: 10,
+        temperature: 0,
+      });
+
+      return true;
     } catch (error) {
       console.error('DeepSeek health check failed:', error);
       return false;
@@ -324,6 +595,5 @@ FORMATO DE RESPOSTA:
   }
 }
 
-// Export singleton instance
-export const deepSeekService = new DeepSeekService();
+const deepSeekService = new DeepSeekService();
 export default deepSeekService;

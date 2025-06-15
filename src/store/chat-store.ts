@@ -7,6 +7,20 @@ import {
 import { generateUUID } from '@/lib/utils/uuid';
 import { executeCommand, isCommand } from '@/lib/services/chat-commands';
 
+interface FileUploadRequest {
+  name: string;
+  type: string;
+  size: number;
+  content: string;
+}
+
+interface StreamChatRequestBody {
+  message: string;
+  conversation_id: string;
+  includeMarketData: boolean;
+  files?: FileUploadRequest[];
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -20,6 +34,7 @@ export interface Message {
     isCommand?: boolean;
     commandType?: 'success' | 'error' | 'info';
     commandData?: unknown;
+    attachments?: number; // Number of files attached
     marketContext?: {
       symbols: string[];
       prices: Record<string, number>;
@@ -77,8 +92,8 @@ interface ChatState {
   setSidebarOpen: (open: boolean) => void;
 
   // Chat actions
-  sendMessage: (content: string) => Promise<void>;
-  sendMessageStream: (content: string) => Promise<void>;
+  sendMessage: (content: string, files?: File[]) => Promise<void>;
+  sendMessageStream: (content: string, files?: File[]) => Promise<void>;
   createNewConversation: () => Promise<string>;
   clearCurrentConversation: () => void;
 
@@ -108,7 +123,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
   streamingMessageId: null,
 
   // Basic setters
-  setCurrentConversation: id => set({ currentConversationId: id }),
+  setCurrentConversation: id => {
+    // Persist current conversation ID to sessionStorage
+    if (typeof window !== 'undefined') {
+      if (id) {
+        sessionStorage.setItem('current-conversation', id);
+        console.debug('💾 Persisted conversation ID:', id.slice(-6));
+      } else {
+        sessionStorage.removeItem('current-conversation');
+        console.debug('🗑️ Removed persisted conversation ID');
+      }
+    }
+    set({ currentConversationId: id });
+  },
   setLoading: loading => set({ isLoading: loading }),
   setStreaming: streaming => set({ isStreaming: streaming }),
   setError: error => set({ error }),
@@ -332,7 +359,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  sendMessage: async (content: string) => {
+  sendMessage: async (content: string, files?: File[]) => {
     const { currentConversationId, addMessage, setLoading, setError } = get();
 
     if (!currentConversationId) {
@@ -361,6 +388,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
             role: 'user',
             content,
             timestamp: new Date().toISOString(),
+            metadata:
+              files && files.length > 0
+                ? { attachments: files.length }
+                : undefined,
           };
           addMessage(currentConversationId, userMessage);
 
@@ -396,6 +427,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       role: 'user',
       content,
       timestamp: new Date().toISOString(),
+      metadata:
+        files && files.length > 0 ? { attachments: files.length } : undefined,
     };
 
     addMessage(currentConversationId, userMessage);
@@ -403,18 +436,45 @@ export const useChatStore = create<ChatState>((set, get) => ({
     setError(null);
 
     try {
+      // Prepare request body with files
+      const requestBody: Record<string, unknown> = {
+        message: content,
+        conversationId: currentConversationId,
+        includeMarketData: true,
+        executeCommands: true,
+      };
+
+      // Convert files to base64 if present
+      if (files && files.length > 0) {
+        const fileUploads = await Promise.all(
+          files.map(async file => {
+            return new Promise<FileUploadRequest>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                const result = reader.result as string;
+                const base64Content = result.split(',')[1];
+                resolve({
+                  name: file.name,
+                  type: file.type,
+                  size: file.size,
+                  content: base64Content,
+                });
+              };
+              reader.onerror = () => reject(new Error('Failed to read file'));
+              reader.readAsDataURL(file);
+            });
+          })
+        );
+        requestBody.files = fileUploads;
+      }
+
       // Try enhanced API first (Day 6 feature)
       const enhancedResponse = await fetch('/api/chat/enhanced', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          message: content,
-          conversationId: currentConversationId,
-          includeMarketData: true,
-          executeCommands: true,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (enhancedResponse.ok) {
@@ -447,6 +507,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         body: JSON.stringify({
           message: content,
           conversation_id: currentConversationId,
+          files: requestBody.files,
         }),
       });
 
@@ -537,7 +598,43 @@ export const useChatStore = create<ChatState>((set, get) => ({
         })
       );
 
-      set({ conversations: formattedConversations });
+      // Auto-select conversation: priority order
+      // 1. Current conversation (if still exists)
+      // 2. Persisted conversation from sessionStorage
+      // 3. Most recent conversation
+      const { currentConversationId } = get();
+      let newCurrentId = currentConversationId;
+
+      if (!currentConversationId && formattedConversations.length > 0) {
+        // Try to restore from sessionStorage first
+        const persistedId =
+          typeof window !== 'undefined'
+            ? sessionStorage.getItem('current-conversation')
+            : null;
+
+        if (
+          persistedId &&
+          formattedConversations.some(c => c.id === persistedId)
+        ) {
+          newCurrentId = persistedId;
+          console.debug(
+            '🔄 Restored conversation from session:',
+            persistedId.slice(-6)
+          );
+        } else {
+          // Fallback to most recent conversation
+          newCurrentId = formattedConversations[0].id;
+          console.debug(
+            '🎯 Auto-selecting most recent conversation:',
+            newCurrentId.slice(-6)
+          );
+        }
+      }
+
+      set({
+        conversations: formattedConversations,
+        currentConversationId: newCurrentId,
+      });
     } catch (error) {
       console.error('Error loading conversations:', error);
     }
@@ -642,7 +739,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }));
   },
 
-  sendMessageStream: async (content: string) => {
+  sendMessageStream: async (content: string, files?: File[]) => {
     const {
       currentConversationId,
       addMessage,
@@ -664,6 +761,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       role: 'user',
       content,
       timestamp: new Date().toISOString(),
+      metadata:
+        files && files.length > 0 ? { attachments: files.length } : undefined,
     };
 
     addMessage(currentConversationId, userMessage);
@@ -684,16 +783,43 @@ export const useChatStore = create<ChatState>((set, get) => ({
     setStreamingMessageId(assistantMessageId);
 
     try {
+      // Prepare request body
+      const requestBody: StreamChatRequestBody = {
+        message: content,
+        conversation_id: currentConversationId,
+        includeMarketData: true,
+      };
+
+      // Convert files to base64 if present
+      if (files && files.length > 0) {
+        const fileUploads = await Promise.all(
+          files.map(async file => {
+            return new Promise<FileUploadRequest>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                const result = reader.result as string;
+                const base64Content = result.split(',')[1];
+                resolve({
+                  name: file.name,
+                  type: file.type,
+                  size: file.size,
+                  content: base64Content,
+                });
+              };
+              reader.onerror = () => reject(new Error('Failed to read file'));
+              reader.readAsDataURL(file);
+            });
+          })
+        );
+        requestBody.files = fileUploads;
+      }
+
       const response = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          message: content,
-          conversation_id: currentConversationId,
-          includeMarketData: true,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -778,7 +904,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  // Cleanup empty conversations
+  // Cleanup empty conversations - more conservative approach
   cleanupEmptyConversations: async () => {
     const supabase = createClient();
 
@@ -787,20 +913,29 @@ export const useChatStore = create<ChatState>((set, get) => ({
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        // Silently clear local state if no user
-        set({
-          conversations: [],
-          currentConversationId: null,
-        });
+        // Don't clear local state aggressively - only log warning
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('No user found during cleanup, skipping');
+        }
         return;
       }
 
-      // Delete conversations with no messages from database (older than 5 minutes to avoid race conditions)
+      const { currentConversationId, conversations } = get();
+
+      // Only cleanup conversations that are:
+      // 1. Empty (no messages)
+      // 2. Not the current conversation
+      // 3. Older than 10 minutes (increased to be more conservative)
+      // 4. Not pinned
+      const cutoffTime = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+
       const { error } = await supabase
         .from('conversations')
         .delete()
         .eq('user_id', user.id)
-        .lt('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString()) // Only delete if older than 5 minutes
+        .eq('is_pinned', false) // Don't delete pinned conversations
+        .lt('created_at', cutoffTime)
+        .neq('id', currentConversationId || '') // Don't delete current conversation
         .not(
           'id',
           'in',
@@ -815,70 +950,35 @@ export const useChatStore = create<ChatState>((set, get) => ({
         return; // Don't proceed if database error
       }
 
-      // Reload conversations but avoid calling cleanup again to prevent recursion
-      const { data: conversations, error: loadError } = await supabase
-        .from('conversations')
-        .select(
-          `
-          id,
-          title,
-          description,
-          is_pinned,
-          created_at,
-          updated_at,
-          messages (
-            id,
-            role,
-            content,
-            metadata,
-            created_at
-          )
-        `
-        )
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false });
+      // Only remove from local state conversations that were actually deleted
+      // Instead of reloading everything, just filter out empty old conversations locally
+      const updatedConversations = conversations.filter(conv => {
+        // Keep conversations that:
+        // - Have messages
+        // - Are the current conversation
+        // - Are pinned
+        // - Are newer than cutoff
+        return (
+          conv.messages.length > 0 ||
+          conv.id === currentConversationId ||
+          conv.is_pinned ||
+          new Date(conv.created_at) > new Date(cutoffTime)
+        );
+      });
 
-      if (loadError) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Error reloading conversations:', loadError.message);
-        }
-        return;
+      // Only update state if there's actually a difference
+      if (updatedConversations.length !== conversations.length) {
+        set({ conversations: updatedConversations });
+        console.debug(
+          `Cleaned up ${conversations.length - updatedConversations.length} empty conversations`
+        );
       }
-
-      // Transform to store format
-      const formattedConversations: Conversation[] = conversations.map(
-        conv => ({
-          id: conv.id,
-          title: conv.title || 'Nova Conversa',
-          description: conv.description || undefined,
-          is_pinned: conv.is_pinned || false,
-          created_at: conv.created_at || new Date().toISOString(),
-          updated_at: conv.updated_at || new Date().toISOString(),
-          messages: conv.messages
-            .map(msg => ({
-              id: msg.id,
-              role: msg.role as 'user' | 'assistant',
-              content: msg.content,
-              timestamp: msg.created_at || new Date().toISOString(),
-              metadata: msg.metadata
-                ? (msg.metadata as Message['metadata'])
-                : undefined,
-            }))
-            .sort(
-              (a, b) =>
-                new Date(a.timestamp).getTime() -
-                new Date(b.timestamp).getTime()
-            ),
-        })
-      );
-
-      set({ conversations: formattedConversations });
     } catch (error) {
       // Silently handle cleanup errors to prevent UI disruption
       if (process.env.NODE_ENV === 'development' && error instanceof Error) {
         console.warn('Cleanup function warning:', error.message);
       }
-      // On error, don't clear state to prevent data loss
+      // On error, don't change state to prevent data loss
     }
   },
 }));

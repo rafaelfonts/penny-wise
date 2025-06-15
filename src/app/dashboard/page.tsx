@@ -2,12 +2,12 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
-  PortfolioOverviewWidget,
-  MarketSummaryWidget,
   RecentAlertsWidget,
   WatchlistWidget,
   QuickStatsWidget,
 } from '@/components/dashboard';
+import { MarketSummaryOplabWidget } from '@/components/dashboard/market-summary-widget-oplab';
+import { PortfolioOplabWidget } from '@/components/dashboard/portfolio-oplab-widget';
 import { NotificationDropdown } from '@/components/notifications';
 import Link from 'next/link';
 
@@ -76,11 +76,11 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           {/* Left Column - Main Widgets */}
           <div className="space-y-6 lg:col-span-8">
-            {/* Portfolio Overview - Full Width */}
-            <PortfolioOverviewWidget />
+            {/* Portfolio Overview - OpLab Integration */}
+            <PortfolioOplabWidget />
 
-            {/* Market Summary - Full Width */}
-            <MarketSummaryWidget />
+            {/* Market Summary - OpLab Integration */}
+            <MarketSummaryOplabWidget />
 
             {/* Watchlist - Full Width */}
             <WatchlistWidget />

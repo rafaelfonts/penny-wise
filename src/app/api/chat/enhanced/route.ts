@@ -14,6 +14,12 @@ export interface EnhancedChatRequest {
   conversationId?: string;
   includeMarketData?: boolean;
   executeCommands?: boolean;
+  files?: Array<{
+    name: string;
+    type: string;
+    size: number;
+    content: string; // base64 encoded
+  }>;
 }
 
 export interface EnhancedChatResponse {
@@ -60,6 +66,7 @@ export async function POST(request: NextRequest) {
       conversationId,
       includeMarketData = true,
       executeCommands = true,
+      files = [],
     } = body;
 
     if (!message?.trim()) {
@@ -113,12 +120,13 @@ CONTEXTO: Você é um assistente financeiro especializado. Use os dados de merca
     // Import and use DeepSeek service directly
     const deepSeekService = (await import('@/lib/services/deepseek')).default;
 
-    // Process with DeepSeek
+    // Process with DeepSeek, including files if provided
     const aiData = await deepSeekService.processChatMessage(
       enhancedPrompt,
       [], // No conversation history for enhanced mode for now
       marketPromptContext,
-      commandsResponse
+      commandsResponse,
+      files.length > 0 ? files : undefined
     );
     const processingTime = Date.now() - startTime;
 

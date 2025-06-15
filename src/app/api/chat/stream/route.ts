@@ -12,6 +12,12 @@ export interface StreamChatRequest {
   message: string;
   conversation_id: string;
   includeMarketData?: boolean;
+  files?: Array<{
+    name: string;
+    type: string;
+    size: number;
+    content: string; // base64 encoded
+  }>;
 }
 
 export async function POST(request: NextRequest) {
@@ -36,7 +42,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body: StreamChatRequest = await request.json();
-    const { message, conversation_id, includeMarketData = true } = body;
+    const {
+      message,
+      conversation_id,
+      includeMarketData = true,
+      files = [],
+    } = body;
 
     if (!message || !conversation_id) {
       return new Response(
@@ -275,11 +286,13 @@ export async function POST(request: NextRequest) {
           // Create placeholder for assistant message
           assistantMessageId = generateUUID();
 
-          // Stream from DeepSeek
+          // Stream from DeepSeek, including files if provided
           const streamGenerator = deepSeekService.processChatMessageStream(
             message,
             conversationHistory,
-            marketContext
+            marketContext,
+            '',
+            files.length > 0 ? files : undefined
           );
 
           for await (const chunk of streamGenerator) {
