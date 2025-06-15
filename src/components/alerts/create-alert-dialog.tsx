@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { alertService } from '@/lib/services/alerts-temp';
+import { alertService } from '@/lib/services/alerts';
 import type {
   Alert,
   CreateAlert,

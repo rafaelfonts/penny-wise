@@ -1,5 +1,55 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { loggers } from '@/lib/utils/logger';
+
+// Security headers
+const securityHeaders = {
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'X-XSS-Protection': '1; mode=block',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+};
+
+// Rate limiting store (in-memory for demo)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+function getClientIP(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  const realIp = request.headers.get('x-real-ip');
+
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+
+  if (realIp) {
+    return realIp;
+  }
+
+  return 'unknown';
+}
+
+function checkRateLimit(
+  ip: string,
+  limit: number = 100,
+  windowMs: number = 60000
+): boolean {
+  const now = Date.now();
+  const entry = rateLimitStore.get(ip);
+
+  if (!entry || now >= entry.resetTime) {
+    rateLimitStore.set(ip, { count: 1, resetTime: now + windowMs });
+    return true;
+  }
+
+  if (entry.count >= limit) {
+    return false;
+  }
+
+  entry.count++;
+  return true;
+}
 
 export async function middleware(request: NextRequest) {
   // Skip auth check for API routes, static files, and other non-page requests
@@ -9,9 +59,45 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.includes('.') ||
     request.nextUrl.pathname.startsWith('/favicon');
 
-  // If it's an API route or static file, just pass through
+  // Get client IP for rate limiting
+  const clientIP = getClientIP(request);
+
+  // Apply rate limiting to API routes
+  if (isApiRoute) {
+    const limit = request.nextUrl.pathname.startsWith('/api/chat/') ? 60 : 100;
+
+    if (!checkRateLimit(clientIP, limit)) {
+      return new Response(
+        JSON.stringify({
+          error: 'Rate limit exceeded',
+          message: 'Too many requests. Please try again later.',
+        }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'Retry-After': '60',
+          },
+        }
+      );
+    }
+  }
+
+  // If it's an API route or static file, apply security headers and pass through
   if (isApiRoute || isStaticFile) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+
+    // Apply security headers
+    Object.entries(securityHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+
+    if (isApiRoute) {
+      response.headers.set('Cache-Control', 'no-store');
+      response.headers.set('X-API-Version', '1.0');
+    }
+
+    return response;
   }
 
   let response = NextResponse.next({
@@ -75,7 +161,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/dashboard', request.url));
       }
     } catch (error) {
-      console.error('Auth error in middleware:', error);
+      loggers.middleware.error('Auth error in middleware', error);
       // If auth fails, allow the request to continue for non-protected paths
       if (isProtectedPath) {
         const redirectUrl = new URL('/auth/login', request.url);
@@ -88,8 +174,17 @@ export async function middleware(request: NextRequest) {
   // Special handling for /chat - allow access but let client-side handle auth
   if (request.nextUrl.pathname.startsWith('/chat')) {
     // Pass through to client-side auth handling
+    // Apply security headers
+    Object.entries(securityHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
     return response;
   }
+
+  // Apply security headers to all responses
+  Object.entries(securityHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
 
   return response;
 }

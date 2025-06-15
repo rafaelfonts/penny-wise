@@ -2,6 +2,12 @@ import type { Metadata } from 'next';
 import { Outfit, Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/lib/auth/context';
+import { replaceConsoleLog } from '@/lib/utils/logger';
+
+// Initialize professional logging in production
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+  replaceConsoleLog();
+}
 
 const outfit = Outfit({
   subsets: ['latin'],

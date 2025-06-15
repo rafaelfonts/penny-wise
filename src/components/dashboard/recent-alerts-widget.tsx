@@ -12,7 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { alertService } from '@/lib/services/alerts-temp';
+import { alertService } from '@/lib/services/alerts';
 import type { Alert } from '@/lib/types/alerts';
 
 interface RecentAlertsWidgetProps {

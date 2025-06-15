@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { notificationService } from '@/lib/services/notifications-temp';
+import { notificationService } from '@/lib/services/notifications';
 
 type RouteContext = {
   params: Promise<{ id: string }>;

@@ -102,7 +102,12 @@ export function MarketSummaryOplabWidget({
         .slice(0, 5);
 
       setMarketData({
-        marketStatus: marketStatusResult.data,
+        marketStatus: marketStatusResult.data || {
+          open: false,
+          session: 'closed',
+          next_session: '',
+          time: '',
+        },
         topStocks,
         totalVolume,
         averageChange,

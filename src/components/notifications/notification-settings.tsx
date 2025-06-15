@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { notificationService } from '@/lib/services/notifications-temp';
+import { notificationService } from '@/lib/services/notifications';
 import type {
   NotificationPreferences,
   UpdateNotificationPreferences,
@@ -141,7 +141,13 @@ export function NotificationSettings({
 
   const testNotification = async () => {
     try {
-      await notificationService.createDemoNotification('system');
+      await notificationService.createNotification({
+        title: 'Test Notification',
+        message: 'This is a test notification to verify your settings',
+        type: 'system',
+        priority: 'medium',
+        data: { test: true },
+      });
     } catch (err) {
       console.error('Failed to send test notification:', err);
     }

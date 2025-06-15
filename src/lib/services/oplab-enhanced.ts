@@ -10,6 +10,7 @@ import {
   MarketStatus,
   Portfolio,
 } from './oplab';
+import { loggers } from '@/lib/utils/logger';
 
 export interface HealthCheckResult {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -72,9 +73,7 @@ export class EnhancedOplabService {
   ) {
     if (!this.config.enableLogging) return;
 
-    const timestamp = new Date().toISOString();
     const logEntry = {
-      timestamp,
       level,
       service: 'OpLab Enhanced',
       message,
@@ -82,15 +81,18 @@ export class EnhancedOplabService {
       requestCount: this.requestCount,
     };
 
-    console[level](
-      `[${timestamp}] OpLab Enhanced [${level.toUpperCase()}]:`,
-      message,
-      data || ''
-    );
-
-    // Store critical errors for later analysis
-    if (level === 'error') {
-      this.storeCriticalError(logEntry);
+    // Use professional logger instead of console
+    switch (level) {
+      case 'error':
+        loggers.oplab.error(message, data);
+        this.storeCriticalError(logEntry);
+        break;
+      case 'warn':
+        loggers.oplab.warn(message, data);
+        break;
+      case 'info':
+        loggers.oplab.info(message, data);
+        break;
     }
   }
 

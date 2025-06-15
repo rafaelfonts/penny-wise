@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { NotificationItem } from './notification-item';
 import { NotificationSettings } from './notification-settings';
-import { notificationService } from '@/lib/services/notifications-temp';
+import { notificationService } from '@/lib/services/notifications';
 import type {
   Notification,
   NotificationsResponse,

@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { loggers } from '@/lib/utils/logger';
 import marketContextService from '@/lib/services/market-context';
 import { executeCommand, isCommand } from '@/lib/services/chat-commands';
 
@@ -88,22 +89,70 @@ export async function POST(request: NextRequest) {
         marketContextService.formatContextForPrompt(context);
     }
 
-    // Process commands (simplified for now)
-    let executedCommands;
-    let commandsResponse = '';
-
+    // Process commands - PRIORITY: Return OpLab commands directly without AI reprocessing
     if (executeCommands && isCommand(message)) {
+      loggers.api.info('Processing OpLab command', { message });
       try {
         const result = await executeCommand(message, user.id);
         if (result) {
-          commandsResponse = result.content;
-          executedCommands = { result };
+          loggers.api.info('OpLab command successful', { type: result.type });
+          // ✅ RETURN OPLAB RESPONSE DIRECTLY - DO NOT REPROCESS WITH DEEPSEEK
+          const processingTime = Date.now() - startTime;
+
+          const response: EnhancedChatResponse = {
+            response: result.content,
+            conversationId: conversationId || generateUUID(),
+            metadata: {
+              processingTime,
+              tokensUsed: Math.ceil(result.content.length / 4), // Estimate tokens
+              dataSource: 'oplab-commands',
+            },
+          };
+
+          // Add metadata for OpLab commands
+          if (result.data && typeof result.data === 'object') {
+            response.executedCommands = {
+              alerts: [],
+              analysis: [result.data],
+              portfolio: [],
+            };
+          }
+
+          loggers.api.info('Returning OpLab response directly', {
+            contentLength: result.content.length,
+          });
+          return NextResponse.json(response);
         }
       } catch (error) {
-        console.error('Error executing command:', error);
-        commandsResponse = 'Erro ao executar comando.';
+        loggers.api.error('OpLab command execution failed', error);
+        // Return error for failed OpLab commands instead of fallback to AI
+        const processingTime = Date.now() - startTime;
+
+        return NextResponse.json({
+          response: `❌ **Erro no comando OpLab**: ${message}
+
+Detalhes: ${error instanceof Error ? error.message : 'Erro desconhecido'}
+
+**Comandos disponíveis:**
+• Digite \`/help\` para ver todos os comandos OpLab
+• Use \`/market-status\` para verificar o mercado
+• Experimente \`/stocks\` para ver ações disponíveis
+
+*Problema técnico reportado automaticamente.*`,
+          conversationId: conversationId || generateUUID(),
+          metadata: {
+            processingTime,
+            tokensUsed: 50,
+            dataSource: 'oplab-error-handler',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+        });
       }
     }
+
+    // For non-command messages, continue with AI processing
+    let executedCommands;
+    const commandsResponse = '';
 
     // Prepare enhanced prompt for AI
     const enhancedPrompt = `
@@ -163,7 +212,7 @@ CONTEXTO: Você é um assistente financeiro especializado. Use os dados de merca
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Enhanced chat error:', error);
+    loggers.api.error('Enhanced chat error', error);
 
     const processingTime = Date.now() - startTime;
 

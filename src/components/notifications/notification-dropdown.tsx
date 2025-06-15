@@ -10,7 +10,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { NotificationCenter } from './notification-center';
-import { notificationService } from '@/lib/services/notifications-temp';
+import { notificationService } from '@/lib/services/notifications';
 import type { NotificationStats } from '@/lib/types/alerts';
 
 export function NotificationDropdown() {

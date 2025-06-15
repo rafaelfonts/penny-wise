@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="64" failures="0" errors="0" time="1.359">
+  <testsuite name="Utility Functions Tests" errors="0" failures="0" skipped="0" timestamp="2025-06-15T13:03:46" time="0.496" tests="16">
+    <testcase classname="Utility Functions Tests Date Formatting should format dates correctly" name="Utility Functions Tests Date Formatting should format dates correctly" time="0.039">
+    </testcase>
+    <testcase classname="Utility Functions Tests Date Formatting should handle invalid dates" name="Utility Functions Tests Date Formatting should handle invalid dates" time="0.001">
+    </testcase>
+    <testcase classname="Utility Functions Tests Currency Formatting should format currency correctly" name="Utility Functions Tests Currency Formatting should format currency correctly" time="0.003">
+    </testcase>
+    <testcase classname="Utility Functions Tests Currency Formatting should handle different currencies" name="Utility Functions Tests Currency Formatting should handle different currencies" time="0">
+    </testcase>
+    <testcase classname="Utility Functions Tests Email Validation should validate email addresses" name="Utility Functions Tests Email Validation should validate email addresses" time="0">
+    </testcase>
+    <testcase classname="Utility Functions Tests Text Processing should truncate long text" name="Utility Functions Tests Text Processing should truncate long text" time="0">
+    </testcase>
+    <testcase classname="Utility Functions Tests Text Processing should sanitize HTML content" name="Utility Functions Tests Text Processing should sanitize HTML content" time="0.001">
+    </testcase>
+    <testcase classname="Utility Functions Tests ID Generation should generate unique IDs" name="Utility Functions Tests ID Generation should generate unique IDs" time="0">
+    </testcase>
+    <testcase classname="Utility Functions Tests ID Generation should generate UUIDs" name="Utility Functions Tests ID Generation should generate UUIDs" time="0">
+    </testcase>
+    <testcase classname="Utility Functions Tests Data Processing should sort notifications by priority" name="Utility Functions Tests Data Processing should sort notifications by priority" time="0">
+    </testcase>
+    <testcase classname="Utility Functions Tests Data Processing should filter notifications by type" name="Utility Functions Tests Data Processing should filter notifications by type" time="0">
+    </testcase>
+    <testcase classname="Utility Functions Tests Data Processing should group notifications by date" name="Utility Functions Tests Data Processing should group notifications by date" time="0">
+    </testcase>
+    <testcase classname="Utility Functions Tests Validation Functions should validate component props" name="Utility Functions Tests Validation Functions should validate component props" time="0">
+    </testcase>
+    <testcase classname="Utility Functions Tests Validation Functions should validate URL formats" name="Utility Functions Tests Validation Functions should validate URL formats" time="0.001">
+    </testcase>
+    <testcase classname="Utility Functions Tests Performance Utilities should debounce function calls" name="Utility Functions Tests Performance Utilities should debounce function calls" time="0.152">
+    </testcase>
+    <testcase classname="Utility Functions Tests Performance Utilities should throttle function calls" name="Utility Functions Tests Performance Utilities should throttle function calls" time="0.152">
+    </testcase>
+  </testsuite>
+  <testsuite name="Security Tests" errors="0" failures="0" skipped="0" timestamp="2025-06-15T13:03:47" time="0.289" tests="13">
+    <testcase classname="Security Tests Environment Variables Security should not expose sensitive environment variables" name="Security Tests Environment Variables Security should not expose sensitive environment variables" time="0">
+    </testcase>
+    <testcase classname="Security Tests Environment Variables Security should have secure default values in .env.example" name="Security Tests Environment Variables Security should have secure default values in .env.example" time="0.001">
+    </testcase>
+    <testcase classname="Security Tests Logging Security should not log sensitive data" name="Security Tests Logging Security should not log sensitive data" time="0.003">
+    </testcase>
+    <testcase classname="Security Tests Logging Security should sanitize nested sensitive data" name="Security Tests Logging Security should sanitize nested sensitive data" time="0">
+    </testcase>
+    <testcase classname="Security Tests Input Validation Security should handle XSS payloads safely" name="Security Tests Input Validation Security should handle XSS payloads safely" time="0.001">
+    </testcase>
+    <testcase classname="Security Tests Input Validation Security should handle SQL injection payloads safely" name="Security Tests Input Validation Security should handle SQL injection payloads safely" time="0.001">
+    </testcase>
+    <testcase classname="Security Tests Error Handling Security should not expose stack traces in production logs" name="Security Tests Error Handling Security should not expose stack traces in production logs" time="0">
+    </testcase>
+    <testcase classname="Security Tests Error Handling Security should handle circular references without crashing" name="Security Tests Error Handling Security should handle circular references without crashing" time="0">
+    </testcase>
+    <testcase classname="Security Tests Headers Security should validate security headers configuration" name="Security Tests Headers Security should validate security headers configuration" time="0">
+    </testcase>
+    <testcase classname="Security Tests Rate Limiting &amp; DoS Protection should handle high volume requests gracefully" name="Security Tests Rate Limiting &amp; DoS Protection should handle high volume requests gracefully" time="0.011">
+    </testcase>
+    <testcase classname="Security Tests Rate Limiting &amp; DoS Protection should handle large payload logging" name="Security Tests Rate Limiting &amp; DoS Protection should handle large payload logging" time="0.001">
+    </testcase>
+    <testcase classname="Security Tests Authentication Security should not log authentication tokens" name="Security Tests Authentication Security should not log authentication tokens" time="0.001">
+    </testcase>
+    <testcase classname="Security Tests Session Security should handle session data safely" name="Security Tests Session Security should handle session data safely" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="API Validation Tests" errors="0" failures="0" skipped="0" timestamp="2025-06-15T13:03:47" time="0.064" tests="14">
+    <testcase classname="API Validation Tests Request Validation should validate JSON payloads" name="API Validation Tests Request Validation should validate JSON payloads" time="0">
+    </testcase>
+    <testcase classname="API Validation Tests Request Validation should detect malformed JSON" name="API Validation Tests Request Validation should detect malformed JSON" time="0.007">
+    </testcase>
+    <testcase classname="API Validation Tests Request Validation should validate required fields" name="API Validation Tests Request Validation should validate required fields" time="0">
+    </testcase>
+    <testcase classname="API Validation Tests Security Validation should detect XSS attempts in payloads" name="API Validation Tests Security Validation should detect XSS attempts in payloads" time="0.001">
+    </testcase>
+    <testcase classname="API Validation Tests Security Validation should detect SQL injection attempts" name="API Validation Tests Security Validation should detect SQL injection attempts" time="0">
+    </testcase>
+    <testcase classname="API Validation Tests Security Validation should validate content types" name="API Validation Tests Security Validation should validate content types" time="0.008">
+    </testcase>
+    <testcase classname="API Validation Tests Response Format Validation should validate success response format" name="API Validation Tests Response Format Validation should validate success response format" time="0">
+    </testcase>
+    <testcase classname="API Validation Tests Response Format Validation should validate error response format" name="API Validation Tests Response Format Validation should validate error response format" time="0.001">
+    </testcase>
+    <testcase classname="API Validation Tests Response Format Validation should validate notification response format" name="API Validation Tests Response Format Validation should validate notification response format" time="0.001">
+    </testcase>
+    <testcase classname="API Validation Tests Rate Limiting Validation should handle multiple rapid requests" name="API Validation Tests Rate Limiting Validation should handle multiple rapid requests" time="0">
+    </testcase>
+    <testcase classname="API Validation Tests Rate Limiting Validation should validate request size limits" name="API Validation Tests Rate Limiting Validation should validate request size limits" time="0">
+    </testcase>
+    <testcase classname="API Validation Tests Authentication Validation should validate JWT token format" name="API Validation Tests Authentication Validation should validate JWT token format" time="0.001">
+    </testcase>
+    <testcase classname="API Validation Tests Authentication Validation should validate API key format" name="API Validation Tests Authentication Validation should validate API key format" time="0">
+    </testcase>
+    <testcase classname="API Validation Tests Authentication Validation should validate session data" name="API Validation Tests Authentication Validation should validate session data" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="Logger Service" errors="0" failures="0" skipped="0" timestamp="2025-06-15T13:03:47" time="0.042" tests="13">
+    <testcase classname="Logger Service Service Logger Creation should create logger with service name" name="Logger Service Service Logger Creation should create logger with service name" time="0">
+    </testcase>
+    <testcase classname="Logger Service Service Logger Creation should log different levels correctly" name="Logger Service Service Logger Creation should log different levels correctly" time="0.001">
+    </testcase>
+    <testcase classname="Logger Service Specialized Logging Methods should log API requests" name="Logger Service Specialized Logging Methods should log API requests" time="0">
+    </testcase>
+    <testcase classname="Logger Service Specialized Logging Methods should log API errors" name="Logger Service Specialized Logging Methods should log API errors" time="0">
+    </testcase>
+    <testcase classname="Logger Service Specialized Logging Methods should log database operations" name="Logger Service Specialized Logging Methods should log database operations" time="0">
+    </testcase>
+    <testcase classname="Logger Service Specialized Logging Methods should log cache operations" name="Logger Service Specialized Logging Methods should log cache operations" time="0.001">
+    </testcase>
+    <testcase classname="Logger Service Specialized Logging Methods should log user actions" name="Logger Service Specialized Logging Methods should log user actions" time="0">
+    </testcase>
+    <testcase classname="Logger Service Pre-configured Service Loggers should have all required service loggers" name="Logger Service Pre-configured Service Loggers should have all required service loggers" time="0">
+    </testcase>
+    <testcase classname="Logger Service Pre-configured Service Loggers should use correct service names in logs" name="Logger Service Pre-configured Service Loggers should use correct service names in logs" time="0.001">
+    </testcase>
+    <testcase classname="Logger Service Data Sanitization should not expose sensitive data in logs" name="Logger Service Data Sanitization should not expose sensitive data in logs" time="0">
+    </testcase>
+    <testcase classname="Logger Service Data Sanitization should sanitize API keys and tokens" name="Logger Service Data Sanitization should sanitize API keys and tokens" time="0">
+    </testcase>
+    <testcase classname="Logger Service Error Handling should handle Error objects properly" name="Logger Service Error Handling should handle Error objects properly" time="0">
+    </testcase>
+    <testcase classname="Logger Service Error Handling should handle non-Error objects" name="Logger Service Error Handling should handle non-Error objects" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="Logger Basic Functionality" errors="0" failures="0" skipped="0" timestamp="2025-06-15T13:03:47" time="0.039" tests="8">
+    <testcase classname="Logger Basic Functionality should create logger instance" name="Logger Basic Functionality should create logger instance" time="0">
+    </testcase>
+    <testcase classname="Logger Basic Functionality should log error messages (always visible)" name="Logger Basic Functionality should log error messages (always visible)" time="0.001">
+    </testcase>
+    <testcase classname="Logger Basic Functionality should log warning messages (visible in test)" name="Logger Basic Functionality should log warning messages (visible in test)" time="0">
+    </testcase>
+    <testcase classname="Logger Basic Functionality should have pre-configured loggers" name="Logger Basic Functionality should have pre-configured loggers" time="0">
+    </testcase>
+    <testcase classname="Logger Basic Functionality should sanitize sensitive data in error logs" name="Logger Basic Functionality should sanitize sensitive data in error logs" time="0.001">
+    </testcase>
+    <testcase classname="Logger Basic Functionality should handle Error objects properly" name="Logger Basic Functionality should handle Error objects properly" time="0.002">
+    </testcase>
+    <testcase classname="Logger Basic Functionality should handle specialized logging methods" name="Logger Basic Functionality should handle specialized logging methods" time="0">
+    </testcase>
+    <testcase classname="Logger Basic Functionality should not crash with circular references" name="Logger Basic Functionality should not crash with circular references" time="0">
+    </testcase>
+  </testsuite>
+</testsuites>

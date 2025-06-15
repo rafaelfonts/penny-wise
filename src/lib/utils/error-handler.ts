@@ -5,6 +5,83 @@
 
 import { ApiError, StandardApiResponse } from '@/lib/types/api-response';
 
+export enum ErrorType {
+  // Authentication errors
+  AUTH_INVALID_CREDENTIALS = 'AUTH_INVALID_CREDENTIALS',
+  AUTH_SESSION_EXPIRED = 'AUTH_SESSION_EXPIRED',
+  AUTH_UNAUTHORIZED = 'AUTH_UNAUTHORIZED',
+
+  // API errors
+  API_NETWORK_ERROR = 'API_NETWORK_ERROR',
+  API_TIMEOUT = 'API_TIMEOUT',
+  API_RATE_LIMIT = 'API_RATE_LIMIT',
+  API_INVALID_RESPONSE = 'API_INVALID_RESPONSE',
+  API_SERVER_ERROR = 'API_SERVER_ERROR',
+
+  // Database errors
+  DB_CONNECTION_ERROR = 'DB_CONNECTION_ERROR',
+  DB_QUERY_ERROR = 'DB_QUERY_ERROR',
+  DB_CONSTRAINT_ERROR = 'DB_CONSTRAINT_ERROR',
+
+  // Cache errors
+  CACHE_CONNECTION_ERROR = 'CACHE_CONNECTION_ERROR',
+  CACHE_OPERATION_ERROR = 'CACHE_OPERATION_ERROR',
+
+  // Chat errors
+  CHAT_INVALID_MESSAGE = 'CHAT_INVALID_MESSAGE',
+  CHAT_PROCESSING_ERROR = 'CHAT_PROCESSING_ERROR',
+  CHAT_STREAM_ERROR = 'CHAT_STREAM_ERROR',
+
+  // Market data errors
+  MARKET_INVALID_SYMBOL = 'MARKET_INVALID_SYMBOL',
+  MARKET_DATA_UNAVAILABLE = 'MARKET_DATA_UNAVAILABLE',
+  MARKET_API_ERROR = 'MARKET_API_ERROR',
+
+  // File errors
+  FILE_UPLOAD_ERROR = 'FILE_UPLOAD_ERROR',
+  FILE_SIZE_ERROR = 'FILE_SIZE_ERROR',
+  FILE_TYPE_ERROR = 'FILE_TYPE_ERROR',
+
+  // Validation errors
+  VALIDATION_REQUIRED_FIELD = 'VALIDATION_REQUIRED_FIELD',
+  VALIDATION_INVALID_FORMAT = 'VALIDATION_INVALID_FORMAT',
+  VALIDATION_OUT_OF_RANGE = 'VALIDATION_OUT_OF_RANGE',
+
+  // Generic errors
+  UNKNOWN_ERROR = 'UNKNOWN_ERROR',
+  INTERNAL_ERROR = 'INTERNAL_ERROR',
+}
+
+export enum ErrorSeverity {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical',
+}
+
+export interface ErrorContext {
+  userId?: string;
+  sessionId?: string;
+  requestId?: string;
+  component?: string;
+  action?: string;
+  additionalData?: Record<string, unknown>;
+}
+
+export interface StandardError {
+  type: ErrorType;
+  severity: ErrorSeverity;
+  message: string;
+  userMessage: string;
+  code: string;
+  timestamp: number;
+  context?: ErrorContext;
+  originalError?: Error;
+  stack?: string;
+  retryable: boolean;
+  retryAfter?: number; // seconds
+}
+
 export class ErrorHandler {
   private static logError(error: unknown, context?: string): void {
     const timestamp = new Date().toISOString();

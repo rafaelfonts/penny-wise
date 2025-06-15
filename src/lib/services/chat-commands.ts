@@ -203,6 +203,550 @@ class CommandHandlers {
     }
   }
 
+  // OpLab stocks list
+  static async handleStocks(): Promise<CommandResult> {
+    try {
+      const response = await fetch('/api/market/oplab?action=stocks');
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Não foi possível obter lista de ações.',
+        };
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        return {
+          type: 'error',
+          content: result.error || 'Erro ao consultar ações.',
+        };
+      }
+
+      let content = `📈 **Lista de Ações Disponíveis**\n\n`;
+
+      if (result.data && Array.isArray(result.data)) {
+        result.data
+          .slice(0, 20)
+          .forEach((stock: Record<string, unknown>, index: number) => {
+            content += `${index + 1}. **${stock.symbol}** - ${stock.name || 'N/A'}\n`;
+          });
+
+        if (result.data.length > 20) {
+          content += `\n... e mais ${result.data.length - 20} ações.\n`;
+        }
+      } else {
+        content += 'Nenhuma ação encontrada.';
+      }
+
+      return {
+        type: 'success',
+        content,
+        data: { stocks: result.data },
+      };
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao consultar lista de ações.',
+      };
+    }
+  }
+
+  // OpLab stocks with options
+  static async handleStocksWithOptions(): Promise<CommandResult> {
+    try {
+      const response = await fetch(
+        '/api/market/oplab?action=stocks-with-options'
+      );
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Não foi possível obter ações com opções.',
+        };
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        return {
+          type: 'error',
+          content: result.error || 'Erro ao consultar ações com opções.',
+        };
+      }
+
+      let content = `🎯 **Ações com Opções Disponíveis**\n\n`;
+
+      if (result.data && Array.isArray(result.data)) {
+        result.data
+          .slice(0, 15)
+          .forEach((stock: Record<string, unknown>, index: number) => {
+            content += `${index + 1}. **${stock.symbol}** - ${stock.name || 'N/A'}\n`;
+          });
+
+        if (result.data.length > 15) {
+          content += `\n... e mais ${result.data.length - 15} ações.\n`;
+        }
+      } else {
+        content += 'Nenhuma ação com opções encontrada.';
+      }
+
+      return {
+        type: 'success',
+        content,
+        data: { stocksWithOptions: result.data },
+      };
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao consultar ações com opções.',
+      };
+    }
+  }
+
+  // OpLab companies list
+  static async handleCompanies(): Promise<CommandResult> {
+    try {
+      const response = await fetch('/api/market/oplab?action=companies');
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Não foi possível obter lista de empresas.',
+        };
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        return {
+          type: 'error',
+          content: result.error || 'Erro ao consultar empresas.',
+        };
+      }
+
+      let content = `🏢 **Lista de Empresas**\n\n`;
+
+      if (result.data && Array.isArray(result.data)) {
+        result.data
+          .slice(0, 15)
+          .forEach((company: Record<string, unknown>, index: number) => {
+            content += `${index + 1}. **${company.symbol}** - ${company.name || 'N/A'}\n`;
+            if (company.sector) {
+              content += `   Setor: ${company.sector}\n`;
+            }
+          });
+
+        if (result.data.length > 15) {
+          content += `\n... e mais ${result.data.length - 15} empresas.\n`;
+        }
+      } else {
+        content += 'Nenhuma empresa encontrada.';
+      }
+
+      return {
+        type: 'success',
+        content,
+        data: { companies: result.data },
+      };
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao consultar lista de empresas.',
+      };
+    }
+  }
+
+  // OpLab company details
+  static async handleCompany(args: string[]): Promise<CommandResult> {
+    if (args.length === 0) {
+      return {
+        type: 'error',
+        content: 'Uso: /company SYMBOL\nExemplo: /company PETR4',
+      };
+    }
+
+    try {
+      const symbol = args[0].toUpperCase();
+
+      const response = await fetch(
+        `/api/market/oplab?action=company&symbol=${symbol}`
+      );
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Não foi possível obter informações da empresa.',
+        };
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        return {
+          type: 'error',
+          content: result.error || 'Erro ao consultar empresa.',
+        };
+      }
+
+      const company = result.data as Record<string, unknown>;
+
+      let content = `🏢 **Informações da Empresa: ${symbol}**\n\n`;
+      content += `• **Nome**: ${company.name || 'N/A'}\n`;
+      content += `• **Setor**: ${company.sector || 'N/A'}\n`;
+      content += `• **Segmento**: ${company.segment || 'N/A'}\n`;
+
+      if (company.description) {
+        content += `• **Descrição**: ${company.description}\n`;
+      }
+
+      return {
+        type: 'success',
+        content,
+        data: { company, symbol },
+      };
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao consultar informações da empresa.',
+      };
+    }
+  }
+
+  // OpLab covered options
+  static async handleCoveredOptions(args: string[]): Promise<CommandResult> {
+    if (args.length === 0) {
+      return {
+        type: 'error',
+        content:
+          'Uso: /covered-options SYMBOL\nExemplo: /covered-options PETR4',
+      };
+    }
+
+    try {
+      const symbol = args[0].toUpperCase();
+
+      const response = await fetch(
+        `/api/market/oplab?action=covered-options&symbol=${symbol}`
+      );
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Não foi possível obter opções cobertas.',
+        };
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        return {
+          type: 'error',
+          content: result.error || 'Erro ao consultar opções cobertas.',
+        };
+      }
+
+      let content = `🛡️ **Opções Cobertas para ${symbol}**\n\n`;
+
+      if (result.data && Array.isArray(result.data)) {
+        result.data.slice(0, 10).forEach((option: Record<string, unknown>) => {
+          const optionInfo = option.info as Record<string, unknown>;
+          const optionMarket = option.market as Record<string, unknown>;
+
+          content += `• **${option.symbol}**\n`;
+          content += `  Strike: R$ ${(optionInfo?.strike as number)?.toFixed(2) || 'N/A'}\n`;
+          content += `  Preço: R$ ${(optionMarket?.close as number)?.toFixed(2) || 'N/A'}\n`;
+          content += `  Vencimento: ${optionInfo?.due_date || 'N/A'}\n\n`;
+        });
+
+        if (result.data.length === 0) {
+          content += 'Nenhuma opção coberta encontrada.';
+        }
+      } else {
+        content += 'Nenhuma opção coberta encontrada.';
+      }
+
+      return {
+        type: 'success',
+        content,
+        data: { coveredOptions: result.data, symbol },
+      };
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao consultar opções cobertas.',
+      };
+    }
+  }
+
+  // OpLab IBOV correlation options
+  static async handleIbovCorrelation(): Promise<CommandResult> {
+    try {
+      const response = await fetch(
+        '/api/market/oplab?action=ibov-correlation-options'
+      );
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Não foi possível obter correlação com IBOV.',
+        };
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        return {
+          type: 'error',
+          content: result.error || 'Erro ao consultar correlação IBOV.',
+        };
+      }
+
+      let content = `📊 **Opções por Correlação com IBOV**\n\n`;
+
+      if (result.data && Array.isArray(result.data)) {
+        result.data
+          .slice(0, 10)
+          .forEach((option: Record<string, unknown>, index: number) => {
+            content += `${index + 1}. **${option.symbol}**\n`;
+            content += `   Correlação: ${option.correlation || 'N/A'}\n`;
+            content += `   Volume: ${(option.volume as number)?.toLocaleString() || 'N/A'}\n\n`;
+          });
+      } else {
+        content += 'Dados não disponíveis no momento.';
+      }
+
+      return {
+        type: 'success',
+        content,
+        data: { ibovCorrelation: result.data },
+      };
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao consultar correlação IBOV.',
+      };
+    }
+  }
+
+  // OpLab instruments list
+  static async handleInstruments(): Promise<CommandResult> {
+    try {
+      const response = await fetch('/api/market/oplab?action=instruments');
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Não foi possível obter lista de instrumentos.',
+        };
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        return {
+          type: 'error',
+          content: result.error || 'Erro ao consultar instrumentos.',
+        };
+      }
+
+      let content = `🔧 **Lista de Instrumentos**\n\n`;
+
+      if (result.data && Array.isArray(result.data)) {
+        result.data
+          .slice(0, 15)
+          .forEach((instrument: Record<string, unknown>, index: number) => {
+            content += `${index + 1}. **${instrument.symbol}** - ${instrument.description || 'N/A'}\n`;
+            content += `   Tipo: ${instrument.type || 'N/A'} | Bolsa: ${instrument.exchange || 'N/A'}\n\n`;
+          });
+
+        if (result.data.length > 15) {
+          content += `\n... e mais ${result.data.length - 15} instrumentos.\n`;
+        }
+      } else {
+        content += 'Nenhum instrumento encontrado.';
+      }
+
+      return {
+        type: 'success',
+        content,
+        data: { instruments: result.data },
+      };
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao consultar lista de instrumentos.',
+      };
+    }
+  }
+
+  // OpLab instrument details
+  static async handleInstrument(args: string[]): Promise<CommandResult> {
+    if (args.length === 0) {
+      return {
+        type: 'error',
+        content: 'Uso: /instrument SYMBOL\nExemplo: /instrument PETR4',
+      };
+    }
+
+    try {
+      const symbol = args[0].toUpperCase();
+
+      const response = await fetch(
+        `/api/market/oplab?action=instrument&symbol=${symbol}`
+      );
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Não foi possível obter informações do instrumento.',
+        };
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        return {
+          type: 'error',
+          content: result.error || 'Erro ao consultar instrumento.',
+        };
+      }
+
+      const instrument = result.data as Record<string, unknown>;
+
+      let content = `🔧 **Instrumento: ${symbol}**\n\n`;
+      content += `• **Descrição**: ${instrument.description || 'N/A'}\n`;
+      content += `• **Tipo**: ${instrument.type || 'N/A'}\n`;
+      content += `• **Bolsa**: ${instrument.exchange || 'N/A'}\n`;
+
+      if (instrument.lot_size) {
+        content += `• **Lote**: ${instrument.lot_size}\n`;
+      }
+
+      if (instrument.currency) {
+        content += `• **Moeda**: ${instrument.currency}\n`;
+      }
+
+      return {
+        type: 'success',
+        content,
+        data: { instrument, symbol },
+      };
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao consultar informações do instrumento.',
+      };
+    }
+  }
+
+  // OpLab current quotes
+  static async handleCurrentQuotes(args: string[]): Promise<CommandResult> {
+    if (args.length === 0) {
+      return {
+        type: 'error',
+        content:
+          'Uso: /current-quotes SYMBOL1 [SYMBOL2 ...]\nExemplo: /current-quotes PETR4 VALE3',
+      };
+    }
+
+    try {
+      const symbols = args.map(s => s.toUpperCase()).join(',');
+
+      const response = await fetch(
+        `/api/market/oplab?action=current-quotes&symbols=${symbols}`
+      );
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Não foi possível obter cotações atuais.',
+        };
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        return {
+          type: 'error',
+          content: result.error || 'Erro ao consultar cotações.',
+        };
+      }
+
+      let content = `💰 **Cotações Atuais**\n\n`;
+
+      if (result.data && Array.isArray(result.data)) {
+        result.data.forEach((quote: Record<string, unknown>) => {
+          const change = (quote.change as number) || 0;
+          const emoji = change >= 0 ? '🟢' : '🔴';
+
+          content += `${emoji} **${quote.symbol}**\n`;
+          content += `   Preço: R$ ${(quote.price as number)?.toFixed(2) || 'N/A'}\n`;
+          content += `   Variação: ${change >= 0 ? '+' : ''}${change.toFixed(2)} (${((quote.changePercent as number) || 0).toFixed(2)}%)\n`;
+          content += `   Volume: ${(quote.volume as number)?.toLocaleString() || 'N/A'}\n\n`;
+        });
+      } else {
+        content += 'Nenhuma cotação encontrada.';
+      }
+
+      return {
+        type: 'success',
+        content,
+        data: { quotes: result.data, symbols: args },
+      };
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao consultar cotações atuais.',
+      };
+    }
+  }
+
+  // OpLab chart data
+  static async handleChartData(args: string[]): Promise<CommandResult> {
+    if (args.length === 0) {
+      return {
+        type: 'error',
+        content: 'Uso: /chart SYMBOL [resolution]\nExemplo: /chart PETR4 1D',
+      };
+    }
+
+    try {
+      const symbol = args[0].toUpperCase();
+      const resolution = args[1] || '1D';
+
+      const response = await fetch(
+        `/api/market/oplab?action=chart-data&symbol=${symbol}&resolution=${resolution}`
+      );
+      if (!response.ok) {
+        return {
+          type: 'error',
+          content: 'Não foi possível obter dados do gráfico.',
+        };
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        return {
+          type: 'error',
+          content: result.error || 'Erro ao consultar dados do gráfico.',
+        };
+      }
+
+      let content = `📈 **Dados do Gráfico: ${symbol}**\n\n`;
+      content += `• **Resolução**: ${resolution}\n`;
+
+      if (result.data) {
+        const data = result.data as Record<string, unknown>;
+        if (data.c && Array.isArray(data.c)) {
+          const prices = data.c as number[];
+          const lastPrice = prices[prices.length - 1];
+          const firstPrice = prices[0];
+          const change = lastPrice - firstPrice;
+          const changePercent = (change / firstPrice) * 100;
+
+          content += `• **Último Preço**: R$ ${lastPrice.toFixed(2)}\n`;
+          content += `• **Variação**: ${change >= 0 ? '+' : ''}${change.toFixed(2)} (${changePercent.toFixed(2)}%)\n`;
+          content += `• **Pontos de Dados**: ${prices.length}\n`;
+        }
+      }
+
+      return {
+        type: 'success',
+        content,
+        data: { chartData: result.data, symbol, resolution },
+      };
+    } catch {
+      return {
+        type: 'error',
+        content: 'Erro ao consultar dados do gráfico.',
+      };
+    }
+  }
+
   // OpLab top options by volume
   static async handleTopOptions(args: string[]): Promise<CommandResult> {
     const rankingType = args[0] || 'volume';
@@ -260,14 +804,17 @@ class CommandHandlers {
         result.data
           .slice(0, 10)
           .forEach((option: Record<string, unknown>, index: number) => {
-            content += `${index + 1}. **${option.symbol || option.ticker}**\n`;
-            if (option.price)
-              content += `   Preço: R$ ${(option.price as number).toFixed(2)}\n`;
-            if (option.volume)
-              content += `   Volume: ${(option.volume as number).toLocaleString()}\n`;
-            if (option.variation)
-              content += `   Variação: ${(option.variation as number) >= 0 ? '+' : ''}${(option.variation as number).toFixed(2)}%\n`;
-            content += '\n';
+            content += `${index + 1}. **${option.symbol}**\n`;
+
+            if (rankingType === 'volume') {
+              content += `   Volume: ${(option.volume as number)?.toLocaleString() || 'N/A'}\n`;
+            } else if (rankingType === 'profit') {
+              content += `   Lucro: ${((option.profit as number) || 0).toFixed(2)}%\n`;
+            } else if (rankingType === 'variation') {
+              content += `   Variação: ${((option.variation as number) || 0).toFixed(2)}%\n`;
+            }
+
+            content += `   Preço: R$ ${(option.price as number)?.toFixed(2) || 'N/A'}\n\n`;
           });
       } else {
         content += 'Dados não disponíveis no momento.';
@@ -608,24 +1155,60 @@ class CommandHandlers {
   static async handleHelp(): Promise<CommandResult> {
     return {
       type: 'info',
-      content: `🤖 **Comandos Disponíveis**
+      content: `🤖 **Comandos Disponíveis - OpLab & Penny Wise**
 
-**Cotações & Análise:**
-• \`/quote SYMBOL\` - Obter cotação atual
-• \`/analyze SYMBOL\` - Análise técnica
+**📈 Cotações & Análise:**
+• \`/quote SYMBOL\` - Obter cotação atual (Alpha Vantage)
+• \`/analyze SYMBOL\` - Análise técnica detalhada
+• \`/current-quotes SYMBOL1 [SYMBOL2]\` - Cotações OpLab em tempo real
 • \`/search TERMO\` - Buscar instrumentos
 
-**OpLab Market:**
-• \`/market-status\` - Status do mercado
-• \`/top-options [volume|profit|variation|trending]\` - Rankings de opções
-• \`/options SYMBOL\` - Cadeia de opções
+**📊 Status do Mercado:**
+• \`/market-status\` - Status do mercado brasileiro (B3)
+• \`/chart SYMBOL [resolution]\` - Dados históricos do gráfico
+
+**🏢 Ações & Empresas:**
+• \`/stocks\` - Lista todas as ações disponíveis
+• \`/stocks-with-options\` - Ações que possuem opções
+• \`/companies\` - Lista de empresas
+• \`/company SYMBOL\` - Informações detalhadas da empresa
+
+**🎯 Opções (OpLab):**
+• \`/options SYMBOL\` - Cadeia de opções do ativo
+• \`/covered-options SYMBOL\` - Opções para estratégias cobertas
 • \`/black-scholes OPTION\` - Cálculo Black-Scholes
+• \`/top-options [volume|profit|variation|trending]\` - Rankings de opções
+• \`/ibov-correlation\` - Opções por correlação com IBOV
+
+**💼 Análise Fundamentalista:**
 • \`/fundamentals [pl|roe|roce|dividend_yield]\` - Ranking fundamentalista
 • \`/oplab-score\` - Ranking OpLab Score
 
-**Outros:**
+**🔧 Instrumentos:**
+• \`/instruments\` - Lista todos os instrumentos
+• \`/instrument SYMBOL\` - Detalhes de um instrumento específico
+
+**⚙️ Utilitários:**
 • \`/help\` - Mostrar esta ajuda
 • \`/clear\` - Limpar conversa
+
+**💡 Exemplos Práticos:**
+\`\`\`
+/market-status
+/current-quotes PETR4 VALE3
+/options PETR4
+/fundamentals pl
+/top-options volume
+/company PETR4
+/black-scholes PETR4C45
+\`\`\`
+
+**🚀 Recursos Avançados:**
+• Detecção automática de mercado (BR/US)
+• Integração completa com OpLab API
+• Análises fundamentalistas em tempo real
+• Rankings dinâmicos de opções
+• Cálculos Black-Scholes automáticos
 
 Digite qualquer comando para ver mais detalhes de uso.`,
     };
@@ -670,10 +1253,74 @@ export const chatCommands: Record<string, ChatCommand> = {
 
   'market-status': {
     name: 'market-status',
-    description: 'Verificar status do mercado',
+    description: 'Verificar status do mercado brasileiro',
     usage: '/market-status',
     examples: ['/market-status'],
     handler: CommandHandlers.handleMarketStatus,
+  },
+
+  stocks: {
+    name: 'stocks',
+    description: 'Lista todas as ações disponíveis',
+    usage: '/stocks',
+    examples: ['/stocks'],
+    handler: CommandHandlers.handleStocks,
+  },
+
+  'stocks-with-options': {
+    name: 'stocks-with-options',
+    description: 'Ações que possuem opções',
+    usage: '/stocks-with-options',
+    examples: ['/stocks-with-options'],
+    handler: CommandHandlers.handleStocksWithOptions,
+  },
+
+  companies: {
+    name: 'companies',
+    description: 'Lista de empresas do mercado brasileiro',
+    usage: '/companies',
+    examples: ['/companies'],
+    handler: CommandHandlers.handleCompanies,
+  },
+
+  company: {
+    name: 'company',
+    description: 'Informações detalhadas de uma empresa',
+    usage: '/company SYMBOL',
+    examples: ['/company PETR4', '/company VALE3'],
+    handler: CommandHandlers.handleCompany,
+  },
+
+  'current-quotes': {
+    name: 'current-quotes',
+    description: 'Cotações atuais em tempo real (OpLab)',
+    usage: '/current-quotes SYMBOL1 [SYMBOL2 ...]',
+    examples: ['/current-quotes PETR4', '/current-quotes PETR4 VALE3'],
+    handler: CommandHandlers.handleCurrentQuotes,
+  },
+
+  chart: {
+    name: 'chart',
+    description: 'Dados históricos do gráfico',
+    usage: '/chart SYMBOL [resolution]',
+    examples: ['/chart PETR4', '/chart PETR4 1D'],
+    handler: CommandHandlers.handleChartData,
+  },
+
+  instruments: {
+    name: 'instruments',
+    description: 'Lista todos os instrumentos financeiros',
+    usage: '/instruments',
+    examples: ['/instruments'],
+    handler: CommandHandlers.handleInstruments,
+  },
+
+  instrument: {
+    name: 'instrument',
+    description: 'Detalhes de um instrumento específico',
+    usage: '/instrument SYMBOL',
+    examples: ['/instrument PETR4', '/instrument IBOV'],
+    handler: CommandHandlers.handleInstrument,
   },
 
   'top-options': {
@@ -692,12 +1339,28 @@ export const chatCommands: Record<string, ChatCommand> = {
     handler: CommandHandlers.handleOptionsChain,
   },
 
+  'covered-options': {
+    name: 'covered-options',
+    description: 'Opções para estratégias cobertas',
+    usage: '/covered-options SYMBOL',
+    examples: ['/covered-options PETR4', '/covered-options VALE3'],
+    handler: CommandHandlers.handleCoveredOptions,
+  },
+
   'black-scholes': {
     name: 'black-scholes',
     description: 'Cálculo Black-Scholes para opções',
     usage: '/black-scholes OPTION_SYMBOL',
     examples: ['/black-scholes PETR4C45', '/black-scholes VALE3P30'],
     handler: CommandHandlers.handleBlackScholes,
+  },
+
+  'ibov-correlation': {
+    name: 'ibov-correlation',
+    description: 'Opções ordenadas por correlação com IBOV',
+    usage: '/ibov-correlation',
+    examples: ['/ibov-correlation'],
+    handler: CommandHandlers.handleIbovCorrelation,
   },
 
   fundamentals: {

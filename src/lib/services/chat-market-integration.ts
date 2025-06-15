@@ -5,6 +5,7 @@
 import marketDataService from './market-data';
 import { intelligentMarket } from './intelligent-market';
 import { classifySymbol } from './market-classifier';
+import { loggers } from '@/lib/utils/logger';
 import {
   StockQuote,
   CompanyOverview,
@@ -48,6 +49,9 @@ interface ChatMarketResponse {
     model: string;
     tokens: number;
     processing_time: number;
+    oplab_priority?: boolean;
+    error?: string;
+    import_error?: string;
   };
 }
 
@@ -59,12 +63,15 @@ class ChatMarketIntegrationService {
   parseCommand(message: string): ChatCommand | null {
     const text = message.trim().toLowerCase();
 
-    // Comando /analyze [SYMBOL]
-    if (
-      text.startsWith('/analyze') ||
-      text.includes('analise') ||
-      text.includes('análise')
-    ) {
+    // CRITICAL: Do not parse commands that start with '/' as they should be handled by OpLab
+    // This prevents legacy command conflict with OpLab commands
+    if (text.startsWith('/')) {
+      loggers.chat.debug('Skipping slash command for OpLab', { message });
+      return null;
+    }
+
+    // Comando analyze (linguagem natural apenas)
+    if (text.includes('analise') || text.includes('análise')) {
       const symbols = this.extractSymbols(message);
       return {
         command: 'analyze',
@@ -72,9 +79,8 @@ class ChatMarketIntegrationService {
       };
     }
 
-    // Comando /compare [SYMBOL1] [SYMBOL2]
+    // Comando compare (linguagem natural apenas)
     if (
-      text.startsWith('/compare') ||
       text.includes('compar') ||
       text.includes('versus') ||
       text.includes('vs')
@@ -86,23 +92,15 @@ class ChatMarketIntegrationService {
       };
     }
 
-    // Comando /portfolio
-    if (
-      text.startsWith('/portfolio') ||
-      text.includes('carteira') ||
-      text.includes('portfólio')
-    ) {
+    // Comando portfolio (linguagem natural apenas)
+    if (text.includes('carteira') || text.includes('portfólio')) {
       return {
         command: 'portfolio',
       };
     }
 
-    // Comando /alert [SYMBOL] [PRICE]
-    if (
-      text.startsWith('/alert') ||
-      text.includes('alerta') ||
-      text.includes('avisar')
-    ) {
+    // Comando alert (linguagem natural apenas)
+    if (text.includes('alerta') || text.includes('avisar')) {
       const symbols = this.extractSymbols(message);
       const prices = this.extractNumbers(message);
       return {
@@ -112,27 +110,17 @@ class ChatMarketIntegrationService {
       };
     }
 
-    // Comando /search [TERM]
-    if (
-      text.startsWith('/search') ||
-      text.includes('buscar') ||
-      text.includes('procurar')
-    ) {
-      const searchTerm = message
-        .replace(/\/(search|buscar|procurar)/i, '')
-        .trim();
+    // Comando search (linguagem natural apenas)
+    if (text.includes('buscar') || text.includes('procurar')) {
+      const searchTerm = message.replace(/(buscar|procurar)/i, '').trim();
       return {
         command: 'search',
         parameters: { term: searchTerm },
       };
     }
 
-    // Comando /news [SYMBOL]
-    if (
-      text.startsWith('/news') ||
-      text.includes('notícias') ||
-      text.includes('noticias')
-    ) {
+    // Comando news (linguagem natural apenas)
+    if (text.includes('notícias') || text.includes('noticias')) {
       const symbols = this.extractSymbols(message);
       return {
         command: 'news',
@@ -140,12 +128,8 @@ class ChatMarketIntegrationService {
       };
     }
 
-    // Comando /help
-    if (
-      text.startsWith('/help') ||
-      text.includes('ajuda') ||
-      text.includes('comandos')
-    ) {
+    // Comando help (linguagem natural apenas)
+    if (text.includes('ajuda') || text.includes('comandos')) {
       return {
         command: 'help',
       };
@@ -783,6 +767,91 @@ ${
   // ==========================================
 
   async processMessage(message: string): Promise<ChatMarketResponse> {
+    // PRIORITY 1: Check if this is a OpLab-specific command
+    // OpLab commands ALWAYS take precedence over legacy commands
+    try {
+      const { isCommand, executeCommand } = await import('./chat-commands');
+
+      if (isCommand(message)) {
+        loggers.oplab.info('Processing OpLab command', { message });
+        try {
+          const result = await executeCommand(message);
+          if (result) {
+            loggers.oplab.info('OpLab command executed successfully', {
+              command: message,
+              type: result.type,
+            });
+            return {
+              response: result.content,
+              followUp: result.requiresFollowup
+                ? ['Ver mais detalhes', 'Analisar outro ativo']
+                : undefined,
+              metadata: {
+                command: message.split(' ')[0].slice(1), // Remove /
+                model: 'oplab-commands',
+                tokens: result.content.length / 4,
+                processing_time: 100,
+                oplab_priority: true,
+              },
+            };
+          }
+        } catch (opLabError) {
+          loggers.oplab.error('OpLab command execution failed', opLabError);
+          // For OpLab commands, return error instead of falling back
+          return {
+            response: `❌ **Erro no comando OpLab**: ${message}
+
+Detalhes: ${opLabError instanceof Error ? opLabError.message : 'Erro desconhecido'}
+
+**Comandos disponíveis:**
+• Digite \`/help\` para ver todos os comandos OpLab
+• Use \`/market-status\` para verificar o mercado
+• Experimente \`/stocks\` para ver ações disponíveis
+
+*Problema técnico reportado automaticamente.*`,
+            metadata: {
+              command: message.split(' ')[0].slice(1),
+              model: 'oplab-error-handler',
+              tokens: 50,
+              processing_time: 50,
+              error:
+                opLabError instanceof Error
+                  ? opLabError.message
+                  : 'Unknown error',
+              oplab_priority: true,
+            },
+          };
+        }
+      }
+    } catch (importError) {
+      loggers.oplab.error('OpLab import failed', importError);
+      // If OpLab import fails completely, show technical error
+      if (message.startsWith('/')) {
+        return {
+          response: `⚠️ **Sistema OpLab Temporariamente Indisponível**
+
+Comando solicitado: \`${message}\`
+
+**Ação Temporária:**
+• Tente novamente em alguns segundos
+• Use comandos básicos como símbolos de ações (ex: "PETR4")
+• Para análise básica, digite: "Analise PETR4"
+
+**Problema técnico em correção...**`,
+          metadata: {
+            model: 'oplab-fallback-error',
+            tokens: 40,
+            processing_time: 50,
+            import_error:
+              importError instanceof Error
+                ? importError.message
+                : 'Unknown import error',
+          },
+        };
+      }
+    }
+
+    // PRIORITY 2: Legacy command parsing (only for non-slash commands)
     const command = this.parseCommand(message);
 
     if (!command) {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { notificationService } from '@/lib/services/notifications-temp';
+import { notificationService } from '@/lib/services/notifications';
 
 // GET /api/notifications/stats - Get notification statistics
 export async function GET() {
