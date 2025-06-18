@@ -8,8 +8,8 @@
 
 **Frontend:**
 
-- **Next.js 14** (App Router) - Performance otimizada
-- **React 18** + **TypeScript**
+- **Next.js 15.3.2** (App Router) - Performance otimizada
+- **React 19.0.0** + **TypeScript**
 - **Tailwind CSS** + **Framer Motion**
 - **Zustand** - Estado global leve
 - **React Query/TanStack Query** - Cache e sincronização
@@ -661,7 +661,7 @@ module.exports = {
 **Por que next-intl:**
 
 - **Open source** e mantido ativamente
-- **Integração nativa** com Next.js 14 App Router
+- **Integração nativa** com Next.js 15.3.2 App Router
 - **Type-safe** com TypeScript
 - **Performance otimizada** com Server Components
 - **Pluralização** e formatação avançada
@@ -1537,7 +1537,7 @@ penny-wise/
 
 ### Setup Unificado do Projeto
 
-- [ ] Criar projeto Next.js 14 com TypeScript
+- [x] Criar projeto Next.js 15.3.2 com TypeScript
 - [ ] Configurar Tailwind CSS + shadcn/ui
 - [ ] Configurar ESLint + Prettier + Husky
 - [ ] Setup do Supabase (projeto + CLI)
@@ -2249,7 +2249,7 @@ penny-wise/
 ### 1. **Arquitetura Unificada Full-Stack**
 
 **Antes:** Frontend e backend separados  
-**Agora:** Next.js 14 com API Routes integradas
+**Agora:** Next.js 15.3.2 com API Routes integradas
 
 **Vantagens:**
 
@@ -2391,58 +2391,58 @@ export function useRealtimeMarketData(symbols: string[]) {
 ```json
 {
   "dependencies": {
-    "next": "^14.0.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
+    "next": "^15.3.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "typescript": "^5.0.0",
-    "@supabase/supabase-js": "^2.0.0",
-    "zustand": "^4.0.0",
-    "@tanstack/react-query": "^5.0.0",
-    "tailwindcss": "^3.0.0",
-    "framer-motion": "^10.0.0",
-    "lucide-react": "^0.300.0",
-    "@tabler/icons-react": "^2.47.0",
-    "recharts": "^2.0.0",
-    "react-hook-form": "^7.0.0",
-    "zod": "^3.0.0",
-    "@upstash/redis": "^1.0.0",
-    "@radix-ui/react-dialog": "^1.0.0",
-    "@radix-ui/react-dropdown-menu": "^2.0.0",
-    "@radix-ui/react-select": "^2.0.0",
-    "@radix-ui/react-toast": "^1.0.0",
-    "class-variance-authority": "^0.7.0",
-    "clsx": "^2.0.0",
-    "tailwind-merge": "^2.0.0",
-    "react-markdown": "^9.0.0",
-    "react-syntax-highlighter": "^15.0.0",
-    "date-fns": "^2.0.0",
-    "react-dropzone": "^14.0.0",
-    "papaparse": "^5.0.0",
-    "react-beautiful-dnd": "^13.0.0",
-    "react-virtualized": "^9.0.0",
-    "ws": "^8.0.0",
-    "openai": "^4.0.0",
-    "node-fetch": "^3.0.0",
-    "next-intl": "^3.0.0"
+    "@supabase/supabase-js": "^2.49.8",
+    "zustand": "^5.0.5",
+    "@tanstack/react-query": "^5.79.0",
+    "tailwindcss": "^4.0.0",
+    "framer-motion": "^12.15.0",
+    "lucide-react": "^0.511.0",
+    "@tabler/icons-react": "^3.33.0",
+    "recharts": "^2.15.3",
+    "react-hook-form": "^7.56.4",
+    "zod": "^3.25.64",
+    "@upstash/redis": "^1.34.9",
+    "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-select": "^2.2.5",
+    "@radix-ui/react-tabs": "^1.1.12",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.3.0",
+    "react-markdown": "^10.1.0",
+    "date-fns": "^4.1.0",
+    "axios": "^1.9.0",
+    "ioredis": "^5.6.1",
+    "openai": "^5.1.1",
+    "next-intl": "^4.1.0",
+    "@langchain/community": "^0.3.46",
+    "@langchain/core": "^0.3.58",
+    "langchain": "^0.3.28"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
-    "@types/papaparse": "^5.0.0",
-    "@types/react-beautiful-dnd": "^13.0.0",
-    "@types/react-virtualized": "^9.0.0",
-    "@types/ws": "^8.0.0",
-    "@types/node-fetch": "^2.0.0",
-    "eslint": "^8.0.0",
-    "eslint-config-next": "^14.0.0",
-    "prettier": "^3.0.0",
-    "husky": "^8.0.0",
-    "lint-staged": "^15.0.0",
-    "@testing-library/react": "^14.0.0",
-    "@testing-library/jest-dom": "^6.0.0",
-    "jest": "^29.0.0",
-    "jest-environment-jsdom": "^29.0.0"
+    "@types/node": "^20.17.51",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/jest": "^29.5.14",
+    "@types/file-saver": "^2.0.7",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^15.3.2",
+    "prettier": "^3.5.3",
+    "prettier-plugin-tailwindcss": "^0.6.11",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.0",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/user-event": "^14.6.1",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^30.0.0-beta.3",
+    "jest-junit": "^16.0.0",
+    "@playwright/test": "^1.53.0",
+    "playwright": "^1.53.0",
+    "typescript": "^5.0.0"
   }
 }
 ```
@@ -2458,7 +2458,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 # APIs Externas
 DEEPSEEK_API_KEY=
 ALPHA_VANTAGE_API_KEY=
-OPLAB_API_KEY=
+OPLAB_ACCESS_TOKEN=
 
 # Multi-Model APIs
 HF_TOKEN=hf_your_hugging_face_token

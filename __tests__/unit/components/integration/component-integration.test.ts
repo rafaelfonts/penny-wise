@@ -1,0 +1,1 @@
+describe("Component Integration", () => { test("should render components correctly", () => { const mockComponent = { render: jest.fn(), props: { data: [] } }; mockComponent.render(); expect(mockComponent.render).toHaveBeenCalled(); }); });

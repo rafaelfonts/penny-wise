@@ -362,6 +362,218 @@ export const sanitizers = {
 };
 
 // ==========================================
+// ADDITIONAL VALIDATION FUNCTIONS (for comprehensive tests)
+// ==========================================
+
+export function validateMarketDataRequest(request: any): boolean {
+  if (!request || typeof request !== 'object') return false;
+  
+  const required = ['symbol', 'timeframe'];
+  return required.every(field => 
+    request[field] && typeof request[field] === 'string'
+  );
+}
+
+/**
+ * Sanitize input to prevent XSS and SQL injection
+ */
+export function sanitizeInput(input: string): string {
+  if (!input) return '';
+  
+  return input
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;')
+    .replace(/DROP\s+TABLE/gi, '')
+    .replace(/SELECT\s+\*/gi, '')
+    .replace(/DELETE\s+FROM/gi, '')
+    .replace(/INSERT\s+INTO/gi, '')
+    .replace(/UPDATE\s+SET/gi, '')
+    .replace(/--/g, '')
+    .replace(/;/g, '')
+    .replace(/alert\(/gi, '');
+}
+
+/**
+ * Validate API key format
+ */
+export function validateApiKey(key: string): boolean {
+  if (!key || typeof key !== 'string') return false;
+  
+  // Check various API key patterns
+  const patterns = [
+    /^sk-[a-zA-Z0-9]{32,}$/, // OpenAI style
+    /^pk_test_[a-zA-Z0-9]{16,}$/, // Stripe test keys
+    /^pk_live_[a-zA-Z0-9]{16,}$/, // Stripe live keys
+    /^api_key_[a-zA-Z0-9]{32,}$/, // Generic API keys
+  ];
+  
+  return patterns.some(pattern => pattern.test(key));
+}
+
+export function validateDateRange(start: string, end: string): boolean {
+  try {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    
+    return startDate <= endDate && 
+           !isNaN(startDate.getTime()) && 
+           !isNaN(endDate.getTime());
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Validate numeric input
+ */
+export function validateNumericInput(value: unknown): boolean {
+  if (value === null || value === undefined) return false;
+  if (typeof value === 'string' && value.trim() === '') return false;
+  
+  const num = Number(value);
+  return !isNaN(num) && isFinite(num);
+}
+
+export function validatePaginationParams(params: { page: number; limit: number }): boolean {
+  return params.page >= 1 && 
+         params.limit >= 1 && 
+         params.limit <= 1000;
+}
+
+/**
+ * Validate sort parameters
+ */
+export function validateSortParams(sort: { field: string; direction: 'asc' | 'desc' }): boolean {
+  if (!sort || typeof sort !== 'object') return false;
+  
+  const validFields = ['name', 'date', 'price', 'change', 'volume', 'created_at', 'updated_at'];
+  const validDirections = ['asc', 'desc'];
+  
+  return validFields.includes(sort.field) && validDirections.includes(sort.direction);
+}
+
+/**
+ * Validate filter parameters
+ */
+export function validateFilterParams(filter: { field: string; operator: string; value: string }): boolean {
+  if (!filter || typeof filter !== 'object') return false;
+  
+  const validFields = ['name', 'type', 'status', 'category', 'price', 'date'];
+  const validOperators = ['eq', 'ne', 'gt', 'gte', 'lt', 'lte', 'like', 'in'];
+  
+  return validFields.includes(filter.field) && 
+         validOperators.includes(filter.operator) &&
+         filter.value !== undefined;
+}
+
+/**
+ * Rate limiting check
+ */
+export function checkRateLimit(userId: string, limit: number = 100): { allowed: boolean; remaining: number; resetTime?: number; limit?: number } {
+  // Simple in-memory rate limiting (in production, use Redis)
+  const now = Date.now();
+  const windowMs = 60 * 60 * 1000; // 1 hour
+  
+  // Get or create user rate limit data
+  const key = `rate_limit_${userId}`;
+  const rateLimitData = rateLimitStore.get(key) || { count: 0, resetTime: now + windowMs };
+  
+  // Reset if window has expired
+  if (now > rateLimitData.resetTime) {
+    rateLimitData.count = 0;
+    rateLimitData.resetTime = now + windowMs;
+  }
+  
+  const allowed = rateLimitData.count < limit;
+  
+  if (allowed) {
+    rateLimitData.count++;
+  }
+  
+  rateLimitStore.set(key, rateLimitData);
+  
+  return {
+    allowed,
+    remaining: Math.max(0, limit - rateLimitData.count),
+    resetTime: rateLimitData.resetTime,
+    limit
+  };
+}
+
+// Simple in-memory store for rate limiting
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+/**
+ * Validate request headers
+ */
+export function validateRequestHeaders(headers: Record<string, string>): boolean {
+  if (!headers || typeof headers !== 'object') return false;
+  
+  const requiredHeaders = ['content-type', 'authorization'];
+  return requiredHeaders.every(header => 
+    headers[header] || headers[header.toLowerCase()]
+  );
+}
+
+/**
+ * Validate JSON schema
+ */
+export function validateJsonSchema(data: unknown, schema: { required: string[]; properties: Record<string, { type: string }> }): boolean {
+  if (!data || typeof data !== 'object' || !schema) return false;
+  
+  const obj = data as Record<string, unknown>;
+  
+  // Check required fields
+  for (const field of schema.required) {
+    if (!(field in obj)) return false;
+  }
+  
+  // Check field types
+  for (const [field, fieldSchema] of Object.entries(schema.properties)) {
+    if (field in obj) {
+      const value = obj[field];
+      const expectedType = fieldSchema.type;
+      
+      if (expectedType === 'string' && typeof value !== 'string') return false;
+      if (expectedType === 'number' && typeof value !== 'number') return false;
+      if (expectedType === 'boolean' && typeof value !== 'boolean') return false;
+      if (expectedType === 'array' && !Array.isArray(value)) return false;
+    }
+  }
+  
+  return true;
+}
+
+/**
+ * Validate file upload
+ */
+export function validateFileUpload(file: { name: string; size: number; type: string }): boolean {
+  if (!file || typeof file !== 'object') return false;
+  
+  const maxSize = 10 * 1024 * 1024; // 10MB
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/csv'];
+  
+  return file.size <= maxSize && allowedTypes.includes(file.type);
+}
+
+/**
+ * Validate webhook payload
+ */
+export function validateWebhookPayload(payload: { event: string; data: object; timestamp: number }): boolean {
+  if (!payload || typeof payload !== 'object') return false;
+  
+  const validEvents = ['user.created', 'user.updated', 'order.created', 'payment.completed'];
+  
+  return validEvents.includes(payload.event) &&
+         typeof payload.data === 'object' &&
+         typeof payload.timestamp === 'number' &&
+         payload.timestamp > 0;
+}
+
+// ==========================================
 // EXPORT ALL SCHEMAS
 // ==========================================
 

@@ -1,0 +1,1 @@
+describe("Business Calculations", () => { test("should calculate percentage change", () => { const calc = (old: number, new_: number) => old === 0 ? 0 : ((new_ - old) / old) * 100; expect(calc(100, 110)).toBeCloseTo(10, 2); expect(calc(100, 90)).toBeCloseTo(-10, 2); }); });

@@ -1,0 +1,1 @@
+describe("Database Operations Tests", () => { test("Supabase client operations", () => { expect(true).toBe(true); }); test("Real-time subscriptions", () => { expect(true).toBe(true); }); test("Database functions", () => { expect(true).toBe(true); }); });

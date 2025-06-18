@@ -32,14 +32,17 @@ A modern, AI-powered personal finance assistant built with Next.js, featuring re
 
 ## Tech Stack
 
-- **Frontend**: Next.js 15, React 19, TypeScript
-- **UI Components**: Radix UI, Tailwind CSS
-- **Authentication**: Supabase Auth
-- **Database**: Supabase (PostgreSQL)
-- **API Integration**: Alpha Vantage, Yahoo Finance
-- **State Management**: Zustand
-- **Charts**: Recharts
-- **Styling**: Tailwind CSS with custom components
+- **Frontend**: Next.js 15.3.2, React 19.0.0, TypeScript 5.x
+- **UI Components**: Radix UI, Tailwind CSS 4.x, shadcn/ui
+- **Authentication**: Supabase Auth with OAuth
+- **Database**: Supabase (PostgreSQL) with RLS
+- **AI Integration**: LangChain, DeepSeek API, OpenAI
+- **API Integration**: Alpha Vantage, OpLab (B3), Yahoo Finance
+- **Cache**: Redis (Upstash), React Query
+- **State Management**: Zustand 5.x
+- **Charts**: Recharts 2.15.3
+- **Testing**: Jest, Playwright, React Testing Library
+- **Styling**: Tailwind CSS 4.x with custom components
 
 ## Getting Started
 
@@ -72,10 +75,13 @@ cp .env.example .env.local
 
 Fill in your environment variables:
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `ALPHA_VANTAGE_API_KEY`
+- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anon key
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key
+- `DEEPSEEK_API_KEY` - DeepSeek AI API key
+- `OPLAB_ACCESS_TOKEN` - OpLab API access token
+- `ALPHA_VANTAGE_API_KEY` - Alpha Vantage API key
+- `REDIS_URL` - Redis database URL
 
 4. Run the development server:
 

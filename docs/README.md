@@ -1,220 +1,206 @@
-# 📚 Documentação do Penny Wise
+# 🚀 Penny Wise - Documentação
 
-## 🗂️ **Índice de Documentação**
-
-Este diretório contém toda a documentação do projeto Penny Wise, organizada cronologicamente seguindo o padrão `day-X-xxx.md`.
+> **Plataforma de análise financeira com IA que combina chat conversacional inteligente com dados de mercado em tempo real.**
 
 ---
 
-## 📋 **Arquivos de Documentação**
+## 🎯 Navegação Rápida
 
-### **📘 [development-plan.md](./development-plan.md)**
-
-- **Descrição**: Plano de desenvolvimento completo do projeto
-- **Conteúdo**: Arquitetura, cronograma, tecnologias, especificações
-- **Status**: Documento mestre - **NÃO MODIFICAR**
-- **Tamanho**: 78KB, 2672 linhas
-
-### **🟢 [day-1-setup.md](./day-1-setup.md)**
-
-- **Descrição**: Setup inicial do projeto e configuração base
-- **Conteúdo**: Next.js setup, design system, tipografia, ícones, Supabase config
-- **Status**: ✅ Concluído
-- **Tamanho**: 12KB, 458 linhas
-
-### **🔐 [day-2-authentication.md](./day-2-authentication.md)**
-
-- **Descrição**: Sistema de autenticação completo
-- **Conteúdo**: Auth middleware, OAuth setup (Google/Discord/Twitter), componentes
-- **Status**: ✅ Concluído
-- **Tamanho**: 11KB, 335 linhas
-
-### **🤖 [day-3-chat-implementation.md](./day-3-chat-implementation.md)**
-
-- **Descrição**: Chat inteligente com IA
-- **Conteúdo**: Zustand store, interface de chat, componentes, API routes
-- **Status**: ✅ Concluído
-- **Tamanho**: 5.9KB, 205 linhas
-
-### **📈 [day-4-market-data-status.md](./day-4-market-data-status.md)**
-
-- **Descrição**: Integração completa de dados de mercado
-- **Conteúdo**: Alpha Vantage, Yahoo Finance, tipos, serviços, API routes
-- **Status**: ✅ Priority 1 Concluída
-- **Tamanho**: 5.5KB, 164 linhas
-
-### **🔗 [day-4-priority-2-chat-integration-status.md](./day-4-priority-2-chat-integration-status.md)**
-
-- **Descrição**: Integração chat com market data e comandos inteligentes
-- **Conteúdo**: Chat commands, parsing NLP, análise automática, comparações
-- **Status**: ✅ Priority 2 Concluída
-- **Tamanho**: 10.2KB, 285 linhas
+| 🚀 Para Começar | 👥 Usuários | 🛠️ Desenvolvedores | 📚 Recursos |
+|-----------------|-------------|-------------------|-------------|
+| [Quick Start](./01-getting-started/quick-start.md) | [Instalação](./02-user-guides/installation.md) | [Contribuindo](./03-developer-guides/contributing.md) | [FAQ](./09-resources/faq.md) |
+| [Setup](./01-getting-started/setup-guide.md) | [Configuração](./02-user-guides/configuration.md) | [Testes](./03-developer-guides/testing.md) | [Glossário](./09-resources/glossary.md) |
+| [Arquitetura](./01-getting-started/architecture-overview.md) | [Uso Básico](./02-user-guides/basic-usage.md) | [Deploy](./03-developer-guides/deployment.md) | [Changelog](./09-resources/changelog.md) |
 
 ---
 
-## 🏗️ **Estrutura de Implementação**
+## 📋 Estrutura da Documentação
 
-```
-Penny Wise Development Timeline
-│
-├── 📋 Day 1: Setup & Design System
-│   ├── Next.js 15 + TypeScript
-│   ├── Outfit + Inter Light (Google Fonts)
-│   ├── Lucide + Tabler Icons
-│   ├── shadcn/ui + Tailwind CSS
-│   └── Supabase Configuration
-│
-├── 🔐 Day 2: Authentication System
-│   ├── Supabase Auth Integration
-│   ├── Email/Password Authentication
-│   ├── OAuth Setup (Google/Discord/Twitter)
-│   ├── Route Protection Middleware
-│   └── Login/Signup Components
-│
-├── 🤖 Day 3: Chat Intelligence
-│   ├── Zustand State Management
-│   ├── Chat Interface & Components
-│   ├── Command System (/analyze, /compare, etc.)
-│   ├── Mock AI Responses
-│   └── Database Integration
-│
-├── 📈 Day 4: Market Data Integration
-│   ├── Priority 1: Market Data APIs ✅
-│   │   ├── Alpha Vantage Service
-│   │   ├── Yahoo Finance Backup
-│   │   ├── Market Data Types
-│   │   └── API Routes (/quote, /analyze)
-│   │
-│   └── Priority 2: Chat Integration ✅
-│       ├── ChatMarketIntegrationService
-│       ├── Command Parsing (/analyze, /compare, /news)
-│       ├── Natural Language Processing
-│       └── Enhanced Chat API
-│
-└── 📊 Future Days: Advanced Features
-    ├── Priority 3: UI Components
-    ├── Real-time WebSocket Updates
-    ├── Portfolio Management
-    └── Advanced Analytics
-```
+### 🚀 01. Getting Started
+> **Primeiros passos com o Penny Wise**
 
----
+- 📖 [Quick Start Guide](./01-getting-started/quick-start.md) - Configure em 5 minutos
+- ⚙️ [Setup Guide](./01-getting-started/setup-guide.md) - Instalação completa
+- 🌐 [Development Environment](./01-getting-started/development-environment.md) - Ambiente de desenvolvimento
+- 🏗️ [Architecture Overview](./01-getting-started/architecture-overview.md) - Visão geral da arquitetura
 
-## 🎯 **Status Atual do Projeto**
+### 👥 02. User Guides
+> **Guias para usuários finais**
 
-### **✅ Implementado**
+- 💾 [Installation](./02-user-guides/installation.md) - Como instalar a aplicação
+- ⚙️ [Configuration](./02-user-guides/configuration.md) - Configurações básicas
+- 📱 [Basic Usage](./02-user-guides/basic-usage.md) - Como usar as funcionalidades
+- 🔥 [Advanced Features](./02-user-guides/advanced-features.md) - Recursos avançados
 
-- [x] **Design System Completo** (Day 1)
-- [x] **Sistema de Autenticação** (Day 2)
-- [x] **Chat Inteligente** (Day 3)
-- [x] **Market Data Integration** (Day 4 - Priority 1)
-- [x] **Chat Market Commands** (Day 4 - Priority 2)
-- [x] **Database Schema**
-- [x] **Middleware de Proteção**
-- [x] **Componentes UI Base**
+### 🛠️ 03. Developer Guides
+> **Documentação para desenvolvedores**
 
-### **🔄 Em Desenvolvimento**
+- 🤝 [Contributing](./03-developer-guides/contributing.md) - Como contribuir
+- 📝 [Code Style](./03-developer-guides/code-style.md) - Padrões de código
+- 🧪 [Testing](./03-developer-guides/testing.md) - Guia de testes
+- 🚀 [Deployment](./03-developer-guides/deployment.md) - Deploy e produção
 
-- [ ] UI Components (Day 4 - Priority 3)
-- [ ] Real-time Features
-- [ ] Portfolio Management
-- [ ] DeepSeek Integration
+### ⚡ 04. Features
+> **Documentação das funcionalidades**
 
-### **⏳ Planejado**
+- 🔐 [Authentication](./04-features/authentication.md) - Sistema de autenticação
+- 💬 [Chat System](./04-features/chat-system.md) - Chat com IA
+- 📈 [Market Data](./04-features/market-data.md) - Dados de mercado
+- 🔗 [OpLab Integration](./04-features/oplab-integration.md) - Integração OpLab
+- 🤖 [LangChain AI](./04-features/langchain-ai.md) - Sistema de IA avançado
 
-- [ ] Advanced Analytics
-- [ ] Alertas Inteligentes
-- [ ] Internacionalização
-- [ ] PWA Features
+### 📡 05. API Reference
+> **Referência completa das APIs**
 
----
+- 📖 [Overview](./05-api-reference/overview.md) - Visão geral das APIs
+- 🔐 [Authentication API](./05-api-reference/authentication-api.md) - APIs de autenticação
+- 💬 [Chat API](./05-api-reference/chat-api.md) - APIs do chat
+- 📈 [Market Data API](./05-api-reference/market-data-api.md) - APIs de mercado
+- 🔔 [Webhooks](./05-api-reference/webhooks.md) - Sistema de webhooks
 
-## 🔍 **Como Navegar na Documentação**
+### 🔒 06. Security
+> **Segurança e boas práticas**
 
-### **Para Desenvolvedores Novos**
+- 🛡️ [Security Guide](./06-security/security-guide.md) - Guia de segurança
+- 📋 [Audit Reports](./06-security/audit-reports.md) - Relatórios de auditoria
+- ✅ [Best Practices](./06-security/best-practices.md) - Melhores práticas
 
-1. **Comece com**: [`development-plan.md`](./development-plan.md) - Visão geral completa
-2. **Setup inicial**: [`day-1-setup.md`](./day-1-setup.md) - Configuração do ambiente
-3. **Autenticação**: [`day-2-authentication.md`](./day-2-authentication.md) - Sistema de login
-4. **Chat**: [`day-3-chat-implementation.md`](./day-3-chat-implementation.md) - Interface principal
+### 🔧 07. Operations
+> **Operações e manutenção**
 
-### **Para Revisão de Código**
+- 📊 [Monitoring](./07-operations/monitoring.md) - Monitoramento
+- ⚡ [Performance](./07-operations/performance.md) - Otimização de performance
+- 🔍 [Troubleshooting](./07-operations/troubleshooting.md) - Resolução de problemas
+- 🔧 [Maintenance](./07-operations/maintenance.md) - Manutenção
 
-- **Day 1**: Verificar estrutura e design system
-- **Day 2**: Revisar fluxos de autenticação e segurança
-- **Day 3**: Analisar estado global e componentes de chat
+### 📜 08. Project History
+> **Histórico do desenvolvimento**
 
-### **Para Deploy**
+- 📅 [Development Timeline](./08-project-history/development-timeline.md) - Linha do tempo
+- 📊 [Phase Reports](./08-project-history/phase-reports/) - Relatórios por fase
+- 📈 [Weekly Reports](./08-project-history/weekly-reports/) - Relatórios semanais
 
-- **Day 1**: Variáveis de ambiente e configuração
-- **Day 2**: OAuth providers e URLs de callback
-- **Day 3**: API routes e integração com banco
+### 📚 09. Resources
+> **Recursos adicionais**
+
+- ❓ [FAQ](./09-resources/faq.md) - Perguntas frequentes
+- 📖 [Glossary](./09-resources/glossary.md) - Glossário de termos
+- 🔗 [External Links](./09-resources/external-links.md) - Links externos
+- 📝 [Changelog](./09-resources/changelog.md) - Histórico de mudanças
 
 ---
 
-## 📊 **Métricas de Documentação**
+## 🎯 Casos de Uso Comuns
 
-| Arquivo                                     | Linhas    | Tamanho     | Última Atualização   |
-| ------------------------------------------- | --------- | ----------- | -------------------- |
-| development-plan.md                         | 2,672     | 78KB        | Documento mestre     |
-| day-1-setup.md                              | 458       | 12KB        | Setup concluído      |
-| day-2-authentication.md                     | 335       | 11KB        | Auth concluído       |
-| day-3-chat-implementation.md                | 205       | 5.9KB       | Chat concluído       |
-| day-4-market-data-status.md                 | 164       | 5.5KB       | Priority 1 concluída |
-| day-4-priority-2-chat-integration-status.md | 285       | 10.2KB      | Priority 2 concluída |
-| **Total**                                   | **3,670** | **106.9KB** | **6 arquivos**       |
+### 🆕 **Novo no projeto?**
+1. Leia o [Quick Start](./01-getting-started/quick-start.md)
+2. Configure com o [Setup Guide](./01-getting-started/setup-guide.md)
+3. Explore as [Features](./04-features/)
 
----
+### 👨‍💻 **Desenvolvedor?**
+1. Configure o [Development Environment](./01-getting-started/development-environment.md)
+2. Leia o [Contributing Guide](./03-developer-guides/contributing.md)
+3. Execute os [Tests](./03-developer-guides/testing.md)
 
-## 🏷️ **Convenções de Nomenclatura**
+### 🔌 **Integrando APIs?**
+1. Consulte a [API Reference](./05-api-reference/)
+2. Veja exemplos em [Basic Usage](./02-user-guides/basic-usage.md)
+3. Configure [Authentication](./04-features/authentication.md)
 
-### **Padrão Estabelecido**
-
-- `day-X-nome-da-feature.md` - Documentação de implementação por dia
-- `development-plan.md` - Documento mestre (não modificar)
-- `README.md` - Índice de navegação (este arquivo)
-
-### **Estrutura Interna dos Documentos**
-
-- **📋 Resumo Executivo** - Status e objetivos
-- **🏗️ Implementação** - Detalhes técnicos
-- **🎯 Funcionalidades** - Features implementadas
-- **🚀 Como Usar** - Instruções práticas
-- **✅ Status Final** - Conclusões e próximos passos
+### 🐛 **Problemas?**
+1. Consulte o [Troubleshooting](./07-operations/troubleshooting.md)
+2. Veja o [FAQ](./09-resources/faq.md)
+3. Verifique o [Glossary](./09-resources/glossary.md)
 
 ---
 
-## 🔄 **Histórico de Mudanças**
+## 🚀 Stack Tecnológico
 
-### **Reorganização da Documentação**
+### Frontend
+- **Next.js 15.3.2** (App Router) - Framework React
+- **TypeScript** - Tipagem estática
+- **Tailwind CSS** - Styling
+- **Zustand** - Estado global
+- **React Query** - Cache e sincronização
 
-- **Motivo**: Padronização com nomenclatura `day-X-xxx`
-- **Arquivos Mesclados**:
-  - `authentication-implementation.md` + `oauth-setup.md` → `day-2-authentication.md`
-  - `supabase-config.md` → integrado ao `day-1-setup.md`
-  - `chat-implementation.md` → `day-3-chat-implementation.md`
-- **Arquivos Mantidos**:
-  - `development-plan.md` (documento mestre, não modificado)
-- **Arquivo Criado**:
-  - `README.md` (este arquivo de índice)
+### Backend
+- **Supabase** - Backend as a Service
+- **PostgreSQL** - Database
+- **Edge Functions** - Serverless API
 
----
-
-## 📞 **Suporte e Contribuição**
-
-### **Para Contribuir com a Documentação**
-
-1. Siga o padrão `day-X-nome-da-feature.md`
-2. Use as convenções de estrutura estabelecidas
-3. Mantenha o `development-plan.md` intocado
-4. Atualize este README.md quando necessário
-
-### **Para Reportar Problemas**
-
-- Verifique primeiro a documentação relevante
-- Use os exemplos práticos fornecidos
-- Consulte as seções de troubleshooting
+### Integrações
+- **DeepSeek-V3** - IA conversacional
+- **Alpha Vantage** - Dados de mercado
+- **OpLab** - Dados do mercado brasileiro
+- **LangChain** - Framework de IA
+  - `@langchain/community@0.3.46` - Integrações comunitárias
+  - `@langchain/core@0.3.58` - Core do framework
+  - `langchain@0.3.28` - Framework principal
 
 ---
 
-_Documentação organizada em $(date) - Penny Wise v1.0_
+## 📊 Status do Projeto
+
+| Componente | Status | Versão | Documentação |
+|------------|--------|--------|--------------|
+| **Core System** | ✅ Produção | v2.0 | [Architecture](./01-getting-started/architecture-overview.md) |
+| **Authentication** | ✅ Produção | v1.5 | [Auth Guide](./04-features/authentication.md) |
+| **Chat System** | ✅ Produção | v2.1 | [Chat Docs](./04-features/chat-system.md) |
+| **Market Data** | ✅ Produção | v1.8 | [Market API](./04-features/market-data.md) |
+| **OpLab Integration** | ✅ Produção | v1.3 | [OpLab Guide](./04-features/oplab-integration.md) |
+| **LangChain AI** | ✅ Produção | v1.0 | [AI Docs](./04-features/langchain-ai.md) |
+
+---
+
+## 🤝 Contribuindo
+
+Adoramos contribuições! Por favor, leia nosso [Contributing Guide](./03-developer-guides/contributing.md) para saber como:
+
+- 🐛 Reportar bugs
+- ✨ Sugerir features
+- 📝 Melhorar documentação
+- 🔧 Contribuir com código
+
+### Quick Links para Contribuidores
+
+- [Code Style Guide](./03-developer-guides/code-style.md)
+- [Testing Guide](./03-developer-guides/testing.md)
+- [Development Environment](./01-getting-started/development-environment.md)
+
+---
+
+## 📞 Suporte
+
+### 🆘 Precisa de Ajuda?
+
+1. **Documentação**: Procure na seção apropriada acima
+2. **FAQ**: Consulte as [Perguntas Frequentes](./09-resources/faq.md)
+3. **Issues**: Abra uma issue no GitHub
+4. **Discord**: Junte-se ao nosso servidor
+
+### 📧 Contatos
+
+- **Email**: suporte@pennywise.com.br
+- **Website**: https://pennywise.com.br
+- **GitHub**: https://github.com/penny-wise/penny-wise
+
+---
+
+## 📄 Licença
+
+Este projeto está licenciado sob a MIT License - veja o arquivo [LICENSE](../LICENSE) para detalhes.
+
+---
+
+## 🏷️ Convenções desta Documentação
+
+- **🚀 Emojis**: Usados para facilitar navegação visual
+- **Links relativos**: Todos os links são relativos para funcionar offline
+- **Estrutura hierárquica**: Organização lógica por propósito
+- **Templates consistentes**: Todos os documentos seguem padrões similares
+
+---
+
+*📅 Atualizado em: Janeiro 2025*  
+*👤 Maintainer: Penny Wise Team*  
+*🔄 Próxima revisão: Março 2025* 

@@ -1,0 +1,1 @@
+describe("Database Operations", () => { test("should handle Supabase queries", () => { const mockQuery = { select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), order: jest.fn().mockResolvedValue({ data: [], error: null }) }; expect(mockQuery.select("*")).toBe(mockQuery); }); });

@@ -7,6 +7,18 @@ import { z } from 'zod';
 import { ChatOpenAI } from '@langchain/openai';
 import { StructuredTool } from '@langchain/core/tools';
 import Redis from 'ioredis';
+import { ConversationChain } from 'langchain/chains';
+import { BufferMemory, ConversationSummaryMemory } from 'langchain/memory';
+import { PromptTemplate } from '@langchain/core/prompts';
+import { RunnableSequence } from '@langchain/core/runnables';
+import { BaseOutputParser } from '@langchain/core/output_parsers';
+import { Document } from '@langchain/core/documents';
+import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import { MemoryVectorStore } from 'langchain/vectorstores/memory';
+import { OpenAIEmbeddings } from '@langchain/openai';
+import { loggers } from '@/lib/utils/logger';
+
+const logger = loggers.chat;
 
 // Import existing services
 import { executeCommand } from './chat-commands';
@@ -290,6 +302,12 @@ class LangChainIntegrationService {
   private cacheManager: CacheManager;
   private model: ChatOpenAI;
   private tools: StructuredTool[];
+  private chatModel: ChatOpenAI;
+  private memory: BufferMemory;
+  private summaryMemory: ConversationSummaryMemory;
+  private vectorStore: MemoryVectorStore;
+  private embeddings: OpenAIEmbeddings;
+  private outputParser: FinancialAnalysisOutputParser;
 
   constructor() {
     this.rateLimiter = new RateLimiter();
@@ -316,6 +334,108 @@ class LangChainIntegrationService {
       '[LangChain] Service initialized with tools:',
       this.tools.map(t => t.name)
     );
+
+    this.chatModel = new ChatOpenAI({
+      temperature: 0.3,
+      modelName: 'gpt-4-turbo',
+      apiKey: process.env.OPENAI_API_KEY,
+      maxTokens: 2000,
+    });
+
+    this.embeddings = new OpenAIEmbeddings({ apiKey: process.env.OPENAI_API_KEY });
+    this.outputParser = new FinancialAnalysisOutputParser();
+
+    this.memory = new BufferMemory({
+      memoryKey: 'chat_history',
+      returnMessages: true,
+    });
+
+    this.summaryMemory = new ConversationSummaryMemory({
+      llm: this.chatModel,
+      memoryKey: 'summary',
+      returnMessages: true,
+    });
+
+    this.initializeVectorStore();
+  }
+
+  private async initializeVectorStore(): Promise<void> {
+    try {
+      // Initialize with financial knowledge base
+      const financialDocs = await this.getFinancialKnowledgeBase();
+      this.vectorStore = await MemoryVectorStore.fromDocuments(
+        financialDocs,
+        this.embeddings
+      );
+      logger.info('Vector store initialized with financial knowledge base');
+    } catch (error) {
+      logger.error('Failed to initialize vector store:', { error });
+      // Fallback to empty vector store
+      this.vectorStore = new MemoryVectorStore(this.embeddings);
+    }
+  }
+
+  private async getFinancialKnowledgeBase(): Promise<Document[]> {
+    const knowledgeBase = [
+      {
+        content: `Technical Analysis Fundamentals:
+        - Moving averages (SMA, EMA) help identify trends
+        - RSI (Relative Strength Index) indicates overbought/oversold conditions
+        - MACD (Moving Average Convergence Divergence) shows momentum
+        - Bollinger Bands indicate volatility and potential reversal points
+        - Support and resistance levels are key price levels
+        - Volume analysis confirms price movements`,
+        metadata: { type: 'technical', topic: 'indicators' }
+      },
+      {
+        content: `Fundamental Analysis Principles:
+        - P/E ratio compares stock price to earnings per share
+        - Price-to-Book ratio compares market value to book value
+        - Debt-to-Equity ratio measures financial leverage
+        - Return on Equity (ROE) measures profitability
+        - Free Cash Flow indicates company's cash generation
+        - Revenue growth shows business expansion`,
+        metadata: { type: 'fundamental', topic: 'ratios' }
+      },
+      {
+        content: `Risk Management Guidelines:
+        - Diversification reduces portfolio risk
+        - Position sizing should match risk tolerance
+        - Stop-loss orders limit downside risk
+        - Risk-reward ratio should be at least 1:2
+        - Never risk more than 2% of portfolio on single trade
+        - Regular portfolio rebalancing maintains target allocation`,
+        metadata: { type: 'risk', topic: 'management' }
+      },
+      {
+        content: `Market Psychology and Sentiment:
+        - Fear and greed drive market cycles
+        - Contrarian indicators can signal reversals
+        - News and events create short-term volatility
+        - Market sentiment affects price movements
+        - Behavioral biases influence investor decisions
+        - Crowd psychology creates trends and bubbles`,
+        metadata: { type: 'psychology', topic: 'sentiment' }
+      }
+    ];
+
+    const textSplitter = new RecursiveCharacterTextSplitter({
+      chunkSize: 1000,
+      chunkOverlap: 200,
+    });
+
+    const documents: Document[] = [];
+    for (const doc of knowledgeBase) {
+      const chunks = await textSplitter.splitText(doc.content);
+      for (const chunk of chunks) {
+        documents.push(new Document({
+          pageContent: chunk,
+          metadata: doc.metadata,
+        }));
+      }
+    }
+
+    return documents;
   }
 
   // ==========================================
@@ -658,6 +778,196 @@ ${error instanceof Error ? error.message : 'Erro desconhecido'}
       console.log('[LangChain] Cleanup completed');
     } catch (error) {
       console.error('[LangChain] Cleanup error:', error);
+    }
+  }
+
+  async analyzeFinancialData(
+    query: string,
+    context: FinancialContext = {}
+  ): Promise<AnalysisResult> {
+    try {
+      logger.info('Starting financial analysis', { query, context });
+
+      // Retrieve relevant knowledge
+      const similarDocs = await this.vectorStore.similaritySearch(query, 3);
+      const relevantKnowledge = similarDocs.map(doc => doc.pageContent).join('\n\n');
+
+      // Create context-aware prompt
+      const prompt = PromptTemplate.fromTemplate(`
+You are an expert financial analyst with deep knowledge of markets, trading, and investment strategies.
+
+Query: {query}
+
+Context Information:
+- Symbol: {symbol}
+- Timeframe: {timeframe}
+- Analysis Type: {analysisType}
+- Market Data: {marketData}
+- Portfolio Data: {portfolioData}
+
+Relevant Knowledge:
+{relevantKnowledge}
+
+Please provide a comprehensive financial analysis addressing the query. Consider:
+1. Technical indicators and chart patterns
+2. Fundamental factors and ratios
+3. Risk assessment and management
+4. Market sentiment and psychology
+5. Actionable recommendations
+
+{formatInstructions}
+      `);
+
+      // Create analysis chain
+      const chain = RunnableSequence.from([
+        prompt,
+        this.chatModel,
+        this.outputParser,
+      ]);
+
+      // Execute analysis
+      const result = await chain.invoke({
+        query,
+        symbol: context.symbol || 'N/A',
+        timeframe: context.timeframe || 'N/A',
+        analysisType: context.analysisType || 'general',
+        marketData: JSON.stringify(context.marketData || {}),
+        portfolioData: JSON.stringify(context.portfolioData || {}),
+        relevantKnowledge,
+        formatInstructions: this.outputParser.getFormatInstructions(),
+      });
+
+      logger.info('Financial analysis completed', { result });
+      return result;
+
+    } catch (error) {
+      logger.error('Financial analysis failed:', { error, query, context });
+      throw new Error(`Analysis failed: ${error}`);
+    }
+  }
+
+  async generatePortfolioInsights(
+    portfolioData: unknown,
+    marketConditions: unknown
+  ): Promise<AnalysisResult> {
+    const query = `Analyze this portfolio performance and provide optimization recommendations based on current market conditions.`;
+    
+    return await this.analyzeFinancialData(query, {
+      analysisType: 'fundamental',
+      portfolioData,
+      marketData: marketConditions,
+    });
+  }
+
+  async generateTradingSignals(
+    symbol: string,
+    technicalData: unknown,
+    timeframe: string = '1d'
+  ): Promise<AnalysisResult> {
+    const query = `Generate trading signals and entry/exit recommendations for ${symbol} based on technical analysis.`;
+    
+    return await this.analyzeFinancialData(query, {
+      symbol,
+      timeframe,
+      analysisType: 'technical',
+      marketData: technicalData,
+    });
+  }
+
+  async generateRiskAssessment(
+    portfolioData: unknown,
+    userProfile: Record<string, unknown>
+  ): Promise<AnalysisResult> {
+    const query = `Perform comprehensive risk assessment for this portfolio considering user risk tolerance and investment goals.`;
+    
+    return await this.analyzeFinancialData(query, {
+      analysisType: 'fundamental',
+      portfolioData,
+      userPreferences: userProfile,
+    });
+  }
+
+  async generateMarketOutlook(
+    marketData: unknown,
+    economicIndicators: unknown
+  ): Promise<AnalysisResult> {
+    const query = `Provide market outlook and sector analysis based on current economic indicators and market conditions.`;
+    
+    return await this.analyzeFinancialData(query, {
+      analysisType: 'fundamental',
+      marketData: {
+        ...marketData as object,
+        economicIndicators,
+      },
+    });
+  }
+
+  async conversationalAnalysis(
+    message: string,
+    context: FinancialContext = {}
+  ): Promise<string> {
+    try {
+      const conversationChain = new ConversationChain({
+        llm: this.chatModel,
+        memory: this.memory,
+        prompt: PromptTemplate.fromTemplate(`
+You are a helpful financial advisor assistant. Use the following context to provide personalized advice:
+
+Context: {context}
+Current conversation:
+{chat_history}
+Human: {input}
+Assistant: `),
+      });
+
+      const response = await conversationChain.call({
+        input: message,
+        context: JSON.stringify(context),
+      });
+
+      return response.response;
+    } catch (error) {
+      logger.error('Conversational analysis failed:', { error, message });
+      throw error;
+    }
+  }
+
+  async addToKnowledgeBase(documents: Document[]): Promise<void> {
+    try {
+      await this.vectorStore.addDocuments(documents);
+      logger.info('Documents added to knowledge base', { count: documents.length });
+    } catch (error) {
+      logger.error('Failed to add documents to knowledge base:', { error });
+      throw error;
+    }
+  }
+
+  async searchKnowledgeBase(query: string, k: number = 5): Promise<Document[]> {
+    try {
+      return await this.vectorStore.similaritySearch(query, k);
+    } catch (error) {
+      logger.error('Knowledge base search failed:', { error, query });
+      return [];
+    }
+  }
+
+  async getSummary(conversationId: string): Promise<string> {
+    try {
+      const summary = await this.summaryMemory.loadMemoryVariables({});
+      return summary.summary || 'No conversation summary available.';
+    } catch (error) {
+      logger.error('Failed to get conversation summary:', { error, conversationId });
+      return 'Failed to generate summary.';
+    }
+  }
+
+  async clearMemory(): Promise<void> {
+    try {
+      await this.memory.clear();
+      await this.summaryMemory.clear();
+      logger.info('Memory cleared successfully');
+    } catch (error) {
+      logger.error('Failed to clear memory:', { error });
     }
   }
 }
